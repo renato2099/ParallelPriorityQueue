@@ -1,0 +1,5 @@
+# SIMPLE MAKEFILE
+all:
+	g++ main.cpp skipLists.cpp skipnode.cpp -o main.o
+clean:
+	rm -rf *.o 
