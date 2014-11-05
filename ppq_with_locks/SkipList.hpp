@@ -135,8 +135,77 @@ template <class T> class SkipList
 			insert(data[i]);
 		}
 	}
-	void *find(T data) { return NULL; };
-	void remove(T data) {};
+	T    *find(T data)
+	{
+#ifdef THREAD_SAFE
+		std::lock_guard<std::mutex> guard(mtx);
+#endif
+		Node<T> *p;
+
+		// searches the node with the greatest key that does not exceed the desired key
+		p = head;
+		for (int i = level; i >= 0; i--)
+		{
+			while (p->forward[i] != NULL && p->forward[i]->data < data)
+			{
+				p = p->forward[i];
+			}
+		}
+
+		/* p now points to the node with the greateset key that does not exceed the desired key
+		 * thus the next node in the skip list will be the right one, or the node with that key does not exist
+		 */
+		p = p->forward[0];
+		if (p != NULL && p->data == data)
+		{
+			return p->data;
+		}
+		else
+		{
+			return NULL;
+		}
+	};
+	void remove(T data)
+	{
+#ifdef THREAD_SAFE
+		std::lock_guard<std::mutex> guard(mtx);
+#endif
+		Node<T> *p, *update[MAX_LEVEL];
+
+		/* searches the node with the greatest key that does not exceed the desired key
+		 * and keeps track of the places where the search drops down one level
+		 */
+		p = head;
+		for (int i = level; i >= 0; i--)
+		{
+			while (p->forward[i] != NULL && p->forward[i]->data < data)
+			{
+				p = p->forward[i];
+			}
+			update[i] = p;
+		}
+
+		/* if the next node on the lowest level is the right on
+		 * the node has to been deleted and the level of the skip list may decrease
+		 * depending on wheter that node was the only with the highest level or not
+		 */
+		p = p->forward[0];
+		if (p != NULL)
+		{
+			for (int i = 0; i <= p->level; i++)
+			{
+				update[i]->forward[i] = p->forward[i];
+			}
+			delete p;
+
+			// if the top level of the skip list head points to NULL, that level is redundatn
+			while (level > 0 && head->forward[level - 1] == NULL)
+			{
+				level--;
+			}
+		}
+
+	};
 	T    pop_front()
 	{
 		Node<T> *p;
