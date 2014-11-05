@@ -1,8 +1,8 @@
 # Makefile for GNU make
 
-LDLIBS = -lm -lpthread
+LDLIBS = -pthread
 CC = g++
-CFLAGS = -g -std=gnu++0x -O2 -Wall
+CFLAGS = -g -std=c++11 -O2 -Wall -pthread
 
 OBJECTS = main.o PPQ.o SkipList.o
 
