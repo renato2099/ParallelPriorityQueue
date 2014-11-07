@@ -14,7 +14,7 @@
 
 using namespace std;
 
-template <class T> class Node
+template <class T>  class Node
 {
 public:
 	/* data */
@@ -27,11 +27,21 @@ public:
 	struct Node *forward[MAX_LEVEL];
 };
 
-template <class T> class SkipList
+template <class T, class Comparator> class SkipList;
+/*template <class T, class Comparator> bool comparator_(const T& t1, const T& t2)
+{
+	return Comparator()(t1, t2);
+};*/
+
+
+template <class T, class Comparator> class SkipList
 {
 	private:
 	int level;
 	Node<T> *head;
+	//friend bool comparator_ <T,Comparator> (const T& t1, const T& t2);
+	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
+	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); };
 
 #ifdef THREAD_SAFE
 	mutex mtx;
@@ -64,6 +74,7 @@ template <class T> class SkipList
 		}
 		//delete tmp; //TODO is this necessary?
 	};
+
 	void insert(T data)
 	{
 		int min_level;
@@ -96,7 +107,7 @@ template <class T> class SkipList
 		p = this->head;
 		for (int i = this->level; i >= 0; i--)
 		{
-			while (p->forward[i] != NULL && p->forward[i]->data < data)
+			while (p->forward[i] != NULL && comp(p->forward[i]->data, data))
 			{
 				p = p->forward[i];
 			}
@@ -134,8 +145,8 @@ template <class T> class SkipList
 		{
 			insert(data[i]);
 		}
-	}
-	T    *find(T data)
+	};
+	T    find(T data)
 	{
 #ifdef THREAD_SAFE
 		std::lock_guard<std::mutex> guard(mtx);
@@ -146,7 +157,7 @@ template <class T> class SkipList
 		p = head;
 		for (int i = level; i >= 0; i--)
 		{
-			while (p->forward[i] != NULL && p->forward[i]->data < data)
+			while (p->forward[i] != NULL && Comparator()(p->forward[i]->data,  data))
 			{
 				p = p->forward[i];
 			}
@@ -156,13 +167,13 @@ template <class T> class SkipList
 		 * thus the next node in the skip list will be the right one, or the node with that key does not exist
 		 */
 		p = p->forward[0];
-		if (p != NULL && p->data == data)
+		if (p != NULL && equal(p->data, data))
 		{
 			return p->data;
 		}
 		else
 		{
-			return NULL;
+			return T();
 		}
 	};
 	void remove(T data)
@@ -178,7 +189,7 @@ template <class T> class SkipList
 		p = head;
 		for (int i = level; i >= 0; i--)
 		{
-			while (p->forward[i] != NULL && p->forward[i]->data < data)
+			while (p->forward[i] != NULL && comp(p->forward[i]->data, data))
 			{
 				p = p->forward[i];
 			}
@@ -210,7 +221,7 @@ template <class T> class SkipList
 	{
 		Node<T> *p;
 #ifdef THREAD_SAFE
-		mtx.lock();
+		std::lock_guard<std::mutex> guard(mtx);
 #endif
 		p = head->forward[0];
 		if (p != NULL)
@@ -219,14 +230,9 @@ template <class T> class SkipList
 			{
 				head->forward[i] = p->forward[i];
 			}
-#ifdef THREAD_SAFE
-			mtx.unlock();
-#endif
 			return p->data;
 		}
-#ifdef THREAD_SAFE
-		return NULL;
-#endif
+		return T();
 	};
 	T*	  pop_front(int k)
 	{
@@ -235,7 +241,7 @@ template <class T> class SkipList
 			pop_front();
 		}
 		return NULL;
-	}
+	};
 	void print()
 	{
 		Node<T> *p;
@@ -246,7 +252,7 @@ template <class T> class SkipList
 			cout << "--" << p->data << ", (" << p->level << ")--" << endl;
 			p = p->forward[0];
 		}
-	}
+	};
 	void printLevel(int l)
 	{
 		Node<T> *p;
@@ -257,7 +263,7 @@ template <class T> class SkipList
 			cout << p->data << endl;
 			p = p->forward[l];
 		}
-	}
+	};
 };
 
 #endif
