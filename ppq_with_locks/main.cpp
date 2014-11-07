@@ -7,16 +7,34 @@
 
 using namespace std;
 
+#define THREAD_SAFE 1
+
 #define THREADS 10
 
-void thread_routine(int id, PPQ *ppq)
+struct Point
 {
-	int i, data[10];
+	int x;
+	int y;
+	Point() {x=0; y=0;};
+	Point(int a, int b) { x=a; y=b; };
+};
+
+struct ComparePoints
+{
+	bool operator()(const Point& p1, const Point& p2)
+	{
+		return p1.x < p2.x;
+	}
+};
+
+void thread_routine(int id, PPQ<int> *ppq)
+{
+	int i;//, data[10];
 
 	for (i = 0; i < 10; i++)
 	{
-		data[i] = id * 10 + i + 1;
-		ppq->insert((void *) &data[i], 10 * (id * 10 + i + 1));
+		ppq->insert(10 * (id * 10 + i + 1));
+
 	}
 
 	for (i = 1; i < 10; i++)
@@ -25,14 +43,35 @@ void thread_routine(int id, PPQ *ppq)
 	}
 }
 
+
+void point_routine(int id, PPQ<Point, ComparePoints>* ppq)
+{
+	for (int i = 0; i < 10; i++)
+	{
+		ppq->insert(Point(i, i*2));
+	}
+
+	for (int i = 0; i < 9; i++)
+	{
+		Point p;
+		p = ppq->find(Point(1, 0));
+		p = ppq->pop_front();
+		//std::cout << p.x << " " << p.y << std::endl;
+	}
+}
+
 int main()
 {
 	int i;
-	PPQ *ppq;
+	PPQ<int> *ppq;
+	PPQ<Point, ComparePoints> *points;
 	thread tid[THREADS];
 
-	ppq = new PPQ();
+	ppq = new PPQ<int>();
+	points = new PPQ<Point, ComparePoints>();
 
+
+	//work on integers
 	for (i = 0; i < THREADS; i++)
 	{
 		tid[i] = thread(thread_routine, i, ppq);
@@ -43,9 +82,22 @@ int main()
 		tid[i].join();
 	}
 
+	//work on points
+	for (i = 0; i < THREADS; i++)
+	{
+		tid[i] = thread(point_routine, i, points);
+	}
+
+	for (i = 0; i < THREADS; i++)
+	{
+		tid[i].join();
+	}
+
 	ppq->print();
+	//points->print();
 
 	delete ppq;
+	delete points;
 
 	return 0;
 }

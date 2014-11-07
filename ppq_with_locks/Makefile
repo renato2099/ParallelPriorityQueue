@@ -4,7 +4,7 @@ LDLIBS = -pthread
 CC = g++
 CFLAGS = -g -std=c++11 -O2 -Wall -pthread
 
-OBJECTS = main.o PPQ.o SkipList.o
+OBJECTS = main.o #PPQ.o SkipList.o
 
 ifdef version
   ifeq "$(version)" "par"
