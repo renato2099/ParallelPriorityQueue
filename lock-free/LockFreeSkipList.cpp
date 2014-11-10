@@ -183,7 +183,10 @@ bool LockFreeSkipList::insert(uint64_t key)
 	}
 	return false;
 }
-
+void LockFreeSkipList::remove(uint64_t key)
+{
+	
+}
 bool LockFreeSkipList::contains(uint64_t key)
 {
 	int bottomLevel = 0;

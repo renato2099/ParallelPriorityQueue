@@ -43,8 +43,8 @@ class LockFreeSkipList
 	bool insert(uint64_t key);
 	bool find(uint64_t key, Node* preds, Node* succs);
 	bool contains(uint64_t key);
-	/*void insert(void *data[], uint64_t key[], int k);
 	void remove(uint64_t key);
+	/*
 	void *pop_front();
 	void **pop_front(int k);
 	void print();
