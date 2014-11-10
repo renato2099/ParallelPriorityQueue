@@ -1,10 +1,10 @@
 # Makefile for GNU make
 
-LDLIBS = -pthread
+LDLIBS = -pthread -lboost_program_options
 CC = g++
 CFLAGS = -g -std=c++11 -O2 -Wall -pthread
 
-OBJECTS = main.o PPQ.o SkipList.o
+OBJECTS = main.o #PPQ.o SkipList.o
 
 ifdef version
   ifeq "$(version)" "par"
