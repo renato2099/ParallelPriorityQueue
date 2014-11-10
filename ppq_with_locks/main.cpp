@@ -1,13 +1,15 @@
 #include <iostream>
 #include "PPQ.hpp"
 #include <stdlib.h>
+#include "boost/program_options.hpp"
 
 #include <thread>
 #include <mutex>
 
-using namespace std;
+#include "tests.hpp"
 
-#define THREAD_SAFE 1
+using namespace std;
+namespace po = boost::program_options;
 
 #define THREADS 10
 
@@ -60,8 +62,46 @@ void point_routine(int id, PPQ<Point, ComparePoints>* ppq)
 	}
 }
 
-int main()
+int main(int argc, char** argv)
 {
+	bool benchEn = false;
+	int numThreads = 1;
+	// program options
+	po::options_description desc;
+	desc.add_options()
+		("help,h", "produce help message")
+		("benchmark,b", po::bool_switch(&benchEn)->default_value(false), "run benchmarks")
+		("threads,t", po::value<int>(&numThreads)->default_value(1), "number of threads")
+		;
+	po::variables_map vm;
+	try
+	{
+		po::store(po::parse_command_line(argc, argv, desc), vm); // can throw
+		
+		// help option
+		if (vm.count("help"))
+		{
+			std::cout << desc << std::endl;
+			return 0;
+		}
+		po::notify(vm);
+	}
+	catch(po::error& e)
+	{
+		std::cerr << "ERROR:" << e.what() << std::endl << std::endl;
+		std::cerr << desc << std::endl;
+		return 1;
+	}
+
+	if (benchEn)
+	{
+		cout << "Benchmarks are running." << endl;
+		if (numThreads > 32)
+			numThreads = 32;
+		basic_benchmark(numThreads);
+	}
+	
+	
 	int i;
 	PPQ<int> *ppq;
 	PPQ<Point, ComparePoints> *points;

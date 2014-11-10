@@ -1,6 +1,6 @@
 # Makefile for GNU make
 
-LDLIBS = -pthread
+LDLIBS = -pthread -lboost_program_options
 CC = g++
 CFLAGS = -g -std=c++11 -O2 -Wall -pthread
 

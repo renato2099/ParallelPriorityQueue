@@ -10,7 +10,8 @@
 
 #define SEED		10
 #define MAX_LEVEL	10
-#define P			0.5
+//#define P			0.5
+#define PROB		0.5
 
 using namespace std;
 
@@ -93,7 +94,7 @@ template <class T, class Comparator> class SkipList
 	 	* its level may exceed the current level of the list, at most, by 1
 	 	*/
 		q->level = 0;
-		while (q->level < MAX_LEVEL && q->level <= this->level && ((float) rand() / RAND_MAX) < P)
+		while (q->level < MAX_LEVEL && q->level <= this->level && ((float) rand() / RAND_MAX) < PROB)
 		{
 			q->level++;
 		}
