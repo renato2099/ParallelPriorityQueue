@@ -56,6 +56,7 @@ bool LockFreeSkipList::find(uint64_t key, Node* preds, Node* succs)
 				//If there is not a successor then stop
 				if (curr == NULL)
 					break;
+				//TODO this should also be an atomic operation
 				succ = curr->forward[level];
 				mark = &curr->mark[level];
 				// check if the node is marked
@@ -173,10 +174,75 @@ bool LockFreeSkipList::insert(uint64_t key)
 	}
 	return false;
 }
-void LockFreeSkipList::remove(uint64_t key)
+bool LockFreeSkipList::remove(uint64_t key)
 {
+	int bottomLevel = 0;
+	Node* preds = new Node[MAX_LEVEL];
+	Node* succs = new Node[MAX_LEVEL];
+	Node* succ;
 	
+	while(true)
+	{
+		bool found = find(key, preds, succs);
+		if(!found)
+		{
+			return false;
+		}
+		else
+		{
+			Node* node2rm = &succs[bottomLevel];
+			for(int level = node2rm->level; level >= bottomLevel; level--)
+			{
+				atomic_bool* mark;
+				//TODO this should be an atomic operation
+				succ = node2rm->forward[level];
+				mark = &node2rm->mark[level];
+				while(!*mark)
+				{
+					//TODO this should be an atomic operation
+					if (node2rm->forward[level] == succ)
+					{
+						node2rm->forward[level]->mark[level] = true;
+					}
+					//TODO this should be an atomic operation
+					succ = node2rm->forward[level];
+					mark = &node2rm->mark[level];
+				}
+			}
+			//TODO this should be an atomic operation
+			succ = node2rm->forward[bottomLevel];
+			atomic_bool* marked = &node2rm->mark[bottomLevel];
+			bool fals = false, tru = true;
+			while(true)
+			{
+				bool iMark = false, iMark1 = false, iMark2 = false;
+				//TODO this should be an atomic operation
+				if (node2rm->forward[bottomLevel] == succ)
+				{
+					node2rm->forward[bottomLevel] = succ;
+					iMark1 = true;
+				}
+				iMark2 = node2rm->mark[bottomLevel].compare_exchange_strong(fals, tru);
+				if (iMark1 && iMark2)
+				{
+					iMark = true;
+				}
+				succ = succs[bottomLevel].forward[bottomLevel];
+				marked = &succs[bottomLevel].mark[bottomLevel];
+				if (iMark)
+				{
+					find(key, preds, succs);
+					return true;
+				}
+				else if (&marked)
+				{
+					return false;
+				}
+			}
+		}
+	}
 }
+
 bool LockFreeSkipList::contains(uint64_t key)
 {
 	int bottomLevel = 0;
