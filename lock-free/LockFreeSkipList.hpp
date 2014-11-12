@@ -6,7 +6,7 @@
 #define LOCKFREESKIPLIST_HPP
 
 #define SEED		13
-#define MAX_LEVEL	10
+#define MAX_LEVEL	5
 #define P			0.5
 
 using namespace std;
@@ -32,12 +32,8 @@ typedef struct Node
 
 class LockFreeSkipList
 {
-	private:
-	int level;
-	
-	Node *tail;
-
-	public:Node *head;
+	public:
+	Node *head;
 	LockFreeSkipList();
 	~LockFreeSkipList();
 	bool insert(uint64_t key);

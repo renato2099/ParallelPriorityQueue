@@ -11,7 +11,8 @@ LockFreeSkipList::LockFreeSkipList()
 	//srand(SEED);
 	srand(time(NULL));
 
-	this->head = (Node *) malloc(sizeof(Node));
+	//this->head = (Node *) malloc(sizeof(Node));
+	this->head = new Node; //(Node *) malloc(sizeof(Node));
 	for (int i = 0; i < MAX_LEVEL; i++) 
 	{
 		this->head->forward[i] = NULL;
@@ -29,10 +30,10 @@ LockFreeSkipList::~LockFreeSkipList()
 	{
 		tmp = p;
 		p = p->forward[0];
-		free(tmp);
+		delete tmp;
 	}
 
-	free(this->head);
+	delete this->head;
 }
 
 bool LockFreeSkipList::find(uint64_t key, Node* preds, Node* succs)
@@ -50,9 +51,7 @@ bool LockFreeSkipList::find(uint64_t key, Node* preds, Node* succs)
 		pred = this->head;
 		for (int level = MAX_LEVEL-1; level >= bottomLevel; level--)
 		{
-			
 			curr = pred->forward[level];
-			
 
 			if (curr != NULL)
 			{
@@ -60,7 +59,6 @@ bool LockFreeSkipList::find(uint64_t key, Node* preds, Node* succs)
 				{
 					succ = curr->forward[level];
 					mark = &curr->mark[level];
-					
 					// check if the node is marked
 					while(*mark)
 					{
@@ -80,6 +78,7 @@ bool LockFreeSkipList::find(uint64_t key, Node* preds, Node* succs)
 						{
 							goto retry;
 						}
+
 						curr = pred->forward[level];
 						succ = curr->forward[level];
 						mark = &curr->mark[level];
@@ -111,14 +110,12 @@ bool LockFreeSkipList::insert(uint64_t key)
 {
 	int topLevel = rand()%MAX_LEVEL;
 	int bottomLevel = 0;
-	Node * preds = new Node[MAX_LEVEL + 1];
-	Node * succs = new Node[MAX_LEVEL + 1];
+	Node * preds = new Node[MAX_LEVEL];
+	Node * succs = new Node[MAX_LEVEL];
 	
 	while(true)
 	{
-
 		bool found = find(key, preds, succs);
-
 		if (found)
 		{
 			return false;
@@ -145,16 +142,15 @@ bool LockFreeSkipList::insert(uint64_t key)
 			nnode->forward[bottomLevel] = succ;
 
 			//TODO this should be a single line of compare and swap
-			if (!(pred->forward[bottomLevel] == succ))
+			if ((pred->forward[bottomLevel] == succ) && pred->mark[bottomLevel] == false)
 			{
-				
-				if (pred->mark[bottomLevel] == false)
-				{
 					pred->forward[bottomLevel] = nnode;
 					pred->mark[bottomLevel] = false;
-					continue;
-				}	
-			}
+			} 
+			else
+			{
+				continue;
+			}	
 
 			for(int level = bottomLevel; level <=topLevel; level++)
 			{
@@ -164,15 +160,11 @@ bool LockFreeSkipList::insert(uint64_t key)
 					pred = preds->forward[level];
 					succ = succs->forward[level];
 					//TODO this should be done in a single operation
-					if (pred->forward[level] == succ)
+					if (pred->forward[level] == succ && pred->mark[level] == false)
 					{
-
-						if (pred->mark[level] == false) 
-						{
-							pred->forward[level] = nnode;
-							pred->mark[level] = false;
-							break;
-						}
+						pred->forward[level] = nnode;
+						pred->mark[level] = false;
+						break;
 					}
 					find(key, preds, succs);
 				}

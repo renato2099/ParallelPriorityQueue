@@ -14,3 +14,5 @@ main: $(OBJECTS)
 
 clean:
 	rm -f *.o main *~
+
+all:    $(TARGET)
