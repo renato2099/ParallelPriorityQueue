@@ -6,7 +6,7 @@
 #define LOCKFREESKIPLIST_HPP
 
 #define SEED		13
-#define MAX_LEVEL	5
+#define MAX_LEVEL	100
 #define P			0.5
 
 using namespace std;

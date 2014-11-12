@@ -11,8 +11,7 @@ LockFreeSkipList::LockFreeSkipList()
 	//srand(SEED);
 	srand(time(NULL));
 
-	//this->head = (Node *) malloc(sizeof(Node));
-	this->head = new Node; //(Node *) malloc(sizeof(Node));
+	this->head = new Node;
 	for (int i = 0; i < MAX_LEVEL; i++) 
 	{
 		this->head->forward[i] = NULL;
@@ -52,47 +51,46 @@ bool LockFreeSkipList::find(uint64_t key, Node* preds, Node* succs)
 		for (int level = MAX_LEVEL-1; level >= bottomLevel; level--)
 		{
 			curr = pred->forward[level];
-
-			if (curr != NULL)
+			while(true)
 			{
-				while(true)
+				//If there is not a successor then stop
+				if (curr == NULL)
+					break;
+				succ = curr->forward[level];
+				mark = &curr->mark[level];
+				// check if the node is marked
+				while(*mark)
 				{
+					// TODO this should be a single operation of compare and swap
+					//snip1 = pred->forward[level].compare_exchange_strong(curr, succ);
+					if (pred->forward[level] == curr)
+					{
+						pred->forward[level] = succ;
+						snip1 = true;
+					} 
+					else
+					{
+						snip1 = false;
+					}
+					snip2 = pred->mark[level].compare_exchange_strong(fal, fal);
+					if (!snip1 && !snip2) 
+					{
+						goto retry;
+					}
+
+					curr = pred->forward[level];
 					succ = curr->forward[level];
 					mark = &curr->mark[level];
-					// check if the node is marked
-					while(*mark)
-					{
-						// TODO this should be a single operation of compare and swap
-						//snip1 = pred->forward[level].compare_exchange_strong(curr, succ);
-						if (pred->forward[level] == curr)
-						{
-							pred->forward[level] = succ;
-							snip1 = true;
-						} 
-						else
-						{
-							snip1 = false;
-						}
-						snip2 = pred->mark[level].compare_exchange_strong(fal, fal);
-						if (!snip1 && !snip2) 
-						{
-							goto retry;
-						}
-
-						curr = pred->forward[level];
-						succ = curr->forward[level];
-						mark = &curr->mark[level];
-					}
-					//if it is not marked
-					if (curr->key < key)
-					{
-						pred = curr;
-						curr = succ;
-					}
-					else 
-					{
-						break;
-					}
+				}
+				//if it is not marked
+				if (curr->key < key)
+				{
+					pred = curr;
+					curr = succ;
+				}
+				else 
+				{
+					break;
 				}
 			}
 			preds->forward[level] = pred;
@@ -108,7 +106,7 @@ bool LockFreeSkipList::find(uint64_t key, Node* preds, Node* succs)
 
 bool LockFreeSkipList::insert(uint64_t key)
 {
-	int topLevel = rand()%MAX_LEVEL;
+	int topLevel = rand()%MAX_LEVEL - 1;
 	int bottomLevel = 0;
 	Node * preds = new Node[MAX_LEVEL];
 	Node * succs = new Node[MAX_LEVEL];
@@ -151,8 +149,8 @@ bool LockFreeSkipList::insert(uint64_t key)
 			{
 				continue;
 			}	
-
-			for(int level = bottomLevel; level <=topLevel; level++)
+			// Update predecessors
+			for(int level = bottomLevel+1; level <=topLevel; level++)
 			{
 
 				while(true)
@@ -187,26 +185,26 @@ bool LockFreeSkipList::contains(uint64_t key)
 	for (int level = MAX_LEVEL-1; level >= bottomLevel; level--)
 	{
 		curr = pred->forward[level];
-		if (curr != NULL)
+		while(true)
 		{
-			while(true)
+			//If there is not a successor then stop
+			if (curr == NULL)
+				break;
+			succ = curr->forward[level];
+			mark = curr->mark[level].load();
+			while(mark)
 			{
+				curr = pred->forward[level];
 				succ = curr->forward[level];
 				mark = curr->mark[level].load();
-				while(mark)
-				{
-					curr = pred->forward[level];
-					succ = curr->forward[level];
-					mark = curr->mark[level].load();
-				}
-				if (curr->key < key)
-				{
-					pred = curr;
-					curr = succ;
-				}
-				else {
-					break;
-				}
+			}
+			if (curr->key < key)
+			{
+				pred = curr;
+				curr = succ;
+			}
+			else {
+				break;
 			}
 		}
 	}
