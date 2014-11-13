@@ -13,6 +13,14 @@ int main(){
 	{
 		if (sk->insert(i)) cout<<"expected "<<i<<endl;
 		if (sk->contains(i)) cout << "found "<<i<<endl;
+		//if (!sk->contains(i)) cout<<" not found -> expected"<<endl;
+	}
+	for (int i = 0; i < MAX_LEVEL; i++)
+	{
+	//	if (sk->insert(i)) cout<<"expected "<<i<<endl;
+		if (sk->contains(i)) cout << "found "<<i<<endl;
+		if (sk->remove(i)) cout<<"removed "<<i<<endl;
+		if (!sk->contains(i)) cout<<" not found -> expected"<<endl;
 	}
 	cout<<"--2"<<endl;
 	//Node* preds = new Node[MAX_LEVEL + 1]; 

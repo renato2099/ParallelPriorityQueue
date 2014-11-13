@@ -80,11 +80,19 @@ bool LockFreeSkipList::find(uint64_t key, Node* preds, Node* succs)
 					}
 
 					curr = pred->forward[level];
-					succ = curr->forward[level];
-					mark = &curr->mark[level];
+					if (curr != NULL)
+					{
+						succ = curr->forward[level];
+						mark = &curr->mark[level];
+					}
+					else 
+					{
+						succ = NULL;
+						break;
+					}
 				}
 				//if it is not marked
-				if (curr->key < key)
+				if (curr != NULL && curr->key < key)
 				{
 					pred = curr;
 					curr = succ;
@@ -190,24 +198,26 @@ bool LockFreeSkipList::remove(uint64_t key)
 		}
 		else
 		{
-			Node* node2rm = &succs[bottomLevel];
-			for(int level = node2rm->level; level >= bottomLevel; level--)
+			Node* node2rm = succs->forward[bottomLevel];
+			for(int level = node2rm->level; level >= bottomLevel+1; level--)
 			{
 				atomic_bool* mark;
 				//TODO this should be an atomic operation
 				succ = node2rm->forward[level];
 				mark = &node2rm->mark[level];
+				
 				while(!*mark)
 				{
+					
 					//TODO this should be an atomic operation
 					if (node2rm->forward[level] == succ)
 					{
-						node2rm->forward[level]->mark[level] = true;
+						node2rm->mark[level] = true;
 					}
 					//TODO this should be an atomic operation
 					succ = node2rm->forward[level];
-					mark = &node2rm->mark[level];
 				}
+				
 			}
 			//TODO this should be an atomic operation
 			succ = node2rm->forward[bottomLevel];
@@ -217,12 +227,16 @@ bool LockFreeSkipList::remove(uint64_t key)
 			{
 				bool iMark = false, iMark1 = false, iMark2 = false;
 				//TODO this should be an atomic operation
-				if (node2rm->forward[bottomLevel] == succ)
-				{
-					node2rm->forward[bottomLevel] = succ;
-					iMark1 = true;
-				}
 				iMark2 = node2rm->mark[bottomLevel].compare_exchange_strong(fals, tru);
+				if (iMark2)
+				{
+					if (node2rm->forward[bottomLevel] == succ)
+					{
+						node2rm->forward[bottomLevel] = succ;
+						iMark1 = true;
+					}
+				}
+				
 				if (iMark1 && iMark2)
 				{
 					iMark = true;
