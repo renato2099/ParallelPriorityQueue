@@ -6,7 +6,7 @@
 #define LOCKFREESKIPLIST_HPP
 
 #define SEED		13
-#define MAX_LEVEL	5
+#define MAX_LEVEL	100
 #define P			0.5
 
 using namespace std;
@@ -39,7 +39,7 @@ class LockFreeSkipList
 	bool insert(uint64_t key);
 	bool find(uint64_t key, Node* preds, Node* succs);
 	bool contains(uint64_t key);
-	void remove(uint64_t key);
+	bool remove(uint64_t key);
 	/*
 	void *pop_front();
 	void **pop_front(int k);
