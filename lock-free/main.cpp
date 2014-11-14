@@ -5,28 +5,47 @@
 #include "LockFreeSkipList.hpp"
 
 using namespace std;
+
+void thread_routine(int id, LockFreeSkipList* list)
+{
+	for (int i = 0; i < MAX_LEVEL; i++)
+	{
+		int value = i + (id*MAX_LEVEL);
+		if (list->insert(value)) cout<<"expected " << value <<endl;
+		if (list->contains(value)) cout << "found "<< value <<endl;
+	}
+	for (int i = 0; i < MAX_LEVEL; i++)
+	{
+		int value = i + (id*MAX_LEVEL);
+		if (list->contains(value)) cout << "found "<< value <<endl;
+		if (list->remove(value)) cout<<"removed "  << value <<endl;
+		if (!list->contains(value)) cout<<" not found -> expected"<<endl;
+	}
+}
+
 int main(){
-    
-    LockFreeSkipList * sk = new LockFreeSkipList();
+   thread tid[10]; 
+   LockFreeSkipList* sk = new LockFreeSkipList();
 	cout<<"--1"<<endl;
-	for (int i = 0; i < MAX_LEVEL; i++)
+	//create
+	/*for (int j = 0; j < 10; j++)
 	{
-		if (sk->insert(i)) cout<<"expected "<<i<<endl;
-		if (sk->contains(i)) cout << "found "<<i<<endl;
-		//if (!sk->contains(i)) cout<<" not found -> expected"<<endl;
+		tid[j] = thread(thread_routine, j, sk);	
 	}
-	for (int i = 0; i < MAX_LEVEL; i++)
+	//join
+	for (int j = 0; j < 10; j++)
 	{
-	//	if (sk->insert(i)) cout<<"expected "<<i<<endl;
-		if (sk->contains(i)) cout << "found "<<i<<endl;
-		if (sk->remove(i)) cout<<"removed "<<i<<endl;
-		if (!sk->contains(i)) cout<<" not found -> expected"<<endl;
+		tid[j].join();	
+	}*/
+	for (int i = 0; i < 10; i++)
+	{
+		sk->insert(i);
 	}
+	sk->print();
+	sk->remove(5);
+	sk->print();
 	cout<<"--2"<<endl;
-	//Node* preds = new Node[MAX_LEVEL + 1]; 
-    //Node* succs = new Node[MAX_LEVEL + 1];
-    //if (sk->find(12, preds, succs)) cout << "expected too 4"<<endl;
-    
-	sk->~LockFreeSkipList();
-    return 0;
+
+	delete sk;
+   return 0;
 }

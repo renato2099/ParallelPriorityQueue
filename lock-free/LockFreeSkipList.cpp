@@ -12,11 +12,11 @@ LockFreeSkipList::LockFreeSkipList()
 	srand(time(NULL));
 
 	this->head = new Node;
-	for (int i = 0; i < MAX_LEVEL; i++) 
+	/*for (int i = 0; i < MAX_LEVEL; i++) 
 	{
 		this->head->forward[i] = NULL;
 		this->head->mark[i] = false;
-	}
+	}*/
 	this->head->level = MAX_LEVEL;
 }
 
@@ -24,25 +24,25 @@ LockFreeSkipList::~LockFreeSkipList()
 {
 	Node *tmp, *p;
 
-	p = this->head->forward[0];
-	while (p != NULL)
+	p = this->head->next[0].getRef();
+	while (p != nullptr)
 	{
 		tmp = p;
-		p = p->forward[0];
+		p = p->next[0].getRef();
 		delete tmp;
 	}
 
 	delete this->head;
 }
 
-bool LockFreeSkipList::find(uint64_t key, Node* preds, Node* succs)
+bool LockFreeSkipList::find(uint64_t key, Node** preds, Node** succs)
 {
 	int bottomLevel = 0;
-	atomic_bool *mark ;
-	bool snip1 = false;
-	bool snip2 = false;
-	bool fal = false;
-	Node* pred = NULL; Node* curr = NULL; Node* succ = NULL;
+	bool marked = false;
+	bool snip = false;
+	Node* pred = nullptr;
+	Node* curr = nullptr;
+	Node* succ = nullptr;
 	retry:
 	while(true) 
 	{
@@ -50,49 +50,38 @@ bool LockFreeSkipList::find(uint64_t key, Node* preds, Node* succs)
 		pred = this->head;
 		for (int level = MAX_LEVEL-1; level >= bottomLevel; level--)
 		{
-			curr = pred->forward[level];
+			curr = pred->next[level].getRef();
 			while(true)
 			{
 				//If there is not a successor then stop
-				if (curr == NULL)
+				if (curr == nullptr)
 					break;
 				//TODO this should also be an atomic operation
-				succ = curr->forward[level];
-				mark = &curr->mark[level];
+				marked = curr->next[level].getMarked();
+				succ = curr->next[level].getRef();
 				// check if the node is marked
-				while(*mark)
+				while(marked)
 				{
-					// TODO this should be a single operation of compare and swap
-					//snip1 = pred->forward[level].compare_exchange_strong(curr, succ);
-					if (pred->forward[level] == curr)
-					{
-						pred->forward[level] = succ;
-						snip1 = true;
-					} 
-					else
-					{
-						snip1 = false;
-					}
-					snip2 = pred->mark[level].compare_exchange_strong(fal, fal);
-					if (!snip1 && !snip2) 
+					snip = pred->next[level].compareAndSet(curr, succ, false, false);
+					if (!snip) 
 					{
 						goto retry;
 					}
 
-					curr = pred->forward[level];
-					if (curr != NULL)
+					curr = pred->next[level].getRef();
+					marked = pred->next[level].getMarked();
+					if (curr != nullptr)
 					{
-						succ = curr->forward[level];
-						mark = &curr->mark[level];
+						succ = curr->next[level].getRef();
 					}
 					else 
 					{
-						succ = NULL;
+						succ = nullptr;
 						break;
 					}
 				}
 				//if it is not marked
-				if (curr != NULL && curr->key < key)
+				if (curr != nullptr && curr->key < key)
 				{
 					pred = curr;
 					curr = succ;
@@ -102,8 +91,8 @@ bool LockFreeSkipList::find(uint64_t key, Node* preds, Node* succs)
 					break;
 				}
 			}
-			preds->forward[level] = pred;
-			succs->forward[level] = curr;
+			preds[level] = pred; //TODO replace with pointer array
+			succs[level] = curr;
 		}
 		if (curr != NULL)
 			return (curr->key == key);
@@ -117,8 +106,8 @@ bool LockFreeSkipList::insert(uint64_t key)
 {
 	int topLevel = rand()%MAX_LEVEL - 1;
 	int bottomLevel = 0;
-	Node * preds = new Node[MAX_LEVEL];
-	Node * succs = new Node[MAX_LEVEL];
+	Node** preds = new Node*[MAX_LEVEL+1];
+	Node** succs = new Node*[MAX_LEVEL+1];
 	
 	while(true)
 	{
@@ -137,40 +126,29 @@ bool LockFreeSkipList::insert(uint64_t key)
 			// The new node gets the reference from the successor
 			for(int level = bottomLevel; level <=topLevel; level++)
 			{
-				Node *succ = succs->forward[level];
+				Node* succ = succs[level];
 				//TODO this should be an atomic operation
-				nnode->forward[level] = succ;
+				nnode->next[level].setRef(succ, false);
 			}
 
-			Node *pred = preds->forward[bottomLevel];
-			Node *succ = succs->forward[bottomLevel];
+			Node* pred = preds[bottomLevel];
+			Node* succ = succs[bottomLevel];
 
-			//TODO this should be an atomic operation
-			nnode->forward[bottomLevel] = succ;
+			nnode->next[bottomLevel].setRef(succ, false);
 
-			//TODO this should be a single line of compare and swap
-			if ((pred->forward[bottomLevel] == succ) && pred->mark[bottomLevel] == false)
-			{
-					pred->forward[bottomLevel] = nnode;
-					pred->mark[bottomLevel] = false;
-			} 
-			else
+			if (!(pred->next[bottomLevel].compareAndSet(succ, nnode, false, false)))
 			{
 				continue;
 			}	
 			// Update predecessors
-			for(int level = bottomLevel+1; level <=topLevel; level++)
+			for(int level = bottomLevel+1; level <= topLevel; level++)
 			{
-
 				while(true)
 				{
-					pred = preds->forward[level];
-					succ = succs->forward[level];
-					//TODO this should be done in a single operation
-					if (pred->forward[level] == succ && pred->mark[level] == false)
+					pred = preds[level];
+					succ = succs[level];
+					if (pred->next[level].compareAndSet(succ, nnode, false, false))
 					{
-						pred->forward[level] = nnode;
-						pred->mark[level] = false;
 						break;
 					}
 					find(key, preds, succs);
@@ -185,9 +163,10 @@ bool LockFreeSkipList::insert(uint64_t key)
 bool LockFreeSkipList::remove(uint64_t key)
 {
 	int bottomLevel = 0;
-	Node* preds = new Node[MAX_LEVEL];
-	Node* succs = new Node[MAX_LEVEL];
+	Node** preds = new Node*[MAX_LEVEL+1];
+	Node** succs = new Node*[MAX_LEVEL+1];
 	Node* succ;
+	bool marked = false;
 	
 	while(true)
 	{
@@ -198,57 +177,37 @@ bool LockFreeSkipList::remove(uint64_t key)
 		}
 		else
 		{
-			Node* node2rm = succs->forward[bottomLevel];
+			Node* node2rm = succs[bottomLevel];
 			for(int level = node2rm->level; level >= bottomLevel+1; level--)
 			{
-				atomic_bool* mark;
-				//TODO this should be an atomic operation
-				succ = node2rm->forward[level];
-				mark = &node2rm->mark[level];
+				marked = node2rm->next[level].getMarked();
+				succ = node2rm->next[level].getRef();
 				
-				while(!*mark)
+				while(!marked)
 				{
-					
-					//TODO this should be an atomic operation
-					if (node2rm->forward[level] == succ)
-					{
-						node2rm->mark[level] = true;
-					}
-					//TODO this should be an atomic operation
-					succ = node2rm->forward[level];
+					node2rm->next[level].setMark(succ); //TODO this should simply return success
+					marked = node2rm->next[level].getMarked();
+					succ = node2rm->next[level].getRef();
 				}
 				
 			}
 			//TODO this should be an atomic operation
-			succ = node2rm->forward[bottomLevel];
-			atomic_bool* marked = &node2rm->mark[bottomLevel];
-			bool fals = false, tru = true;
+			marked = node2rm->next[bottomLevel].getMarked();
+			succ = node2rm->next[bottomLevel].getRef();
 			while(true)
 			{
-				bool iMark = false, iMark1 = false, iMark2 = false;
-				//TODO this should be an atomic operation
-				iMark2 = node2rm->mark[bottomLevel].compare_exchange_strong(fals, tru);
-				if (iMark2)
+				bool iMarkedIt = node2rm->next[bottomLevel].compareAndSet(succ, succ, false, true);
+				//bool iMarkedIt = node2rm->next[bottomLevel].setMark(succ);
+
+				marked = succs[bottomLevel]->next[bottomLevel].getMarked();
+				succ = succs[bottomLevel]->next[bottomLevel].getRef();
+				if (iMarkedIt)
 				{
-					if (node2rm->forward[bottomLevel] == succ)
-					{
-						node2rm->forward[bottomLevel] = succ;
-						iMark1 = true;
-					}
-				}
-				
-				if (iMark1 && iMark2)
-				{
-					iMark = true;
-				}
-				succ = succs[bottomLevel].forward[bottomLevel];
-				marked = &succs[bottomLevel].mark[bottomLevel];
-				if (iMark)
-				{
-					find(key, preds, succs);
+					std::cout << "is marked: " << marked << std::endl;
+					find(key, preds, succs); //is this for cleanup?? hangs without it
 					return true;
 				}
-				else if (&marked)
+				else if (marked)
 				{
 					return false;
 				}
@@ -260,23 +219,25 @@ bool LockFreeSkipList::remove(uint64_t key)
 bool LockFreeSkipList::contains(uint64_t key)
 {
 	int bottomLevel = 0;
-	bool mark ;
-	Node* pred = this->head; Node* curr = NULL; Node* succ = NULL;
+	bool marked;
+	Node* pred = this->head;
+	Node* curr = nullptr;
+	Node* succ = nullptr;
 	for (int level = MAX_LEVEL-1; level >= bottomLevel; level--)
 	{
-		curr = pred->forward[level];
+		curr = pred->next[level].getRef();
 		while(true)
 		{
 			//If there is not a successor then stop
-			if (curr == NULL)
+			if (curr == nullptr)
 				break;
-			succ = curr->forward[level];
-			mark = curr->mark[level].load();
-			while(mark)
+			succ = curr->next[level].getRef();
+			marked = curr->next[level].getMarked();
+			while(marked)
 			{
-				curr = pred->forward[level];
-				succ = curr->forward[level];
-				mark = curr->mark[level].load();
+				curr = pred->next[level].getRef();
+				succ = curr->next[level].getRef();
+				marked = curr->next[level].getMarked();
 			}
 			if (curr->key < key)
 			{
@@ -288,8 +249,22 @@ bool LockFreeSkipList::contains(uint64_t key)
 			}
 		}
 	}
-	if (curr != NULL)
+	if (curr != nullptr)
 		return (curr->key == key);
 	else 
 		return false;
+}
+
+void LockFreeSkipList::print()
+{
+	Node* p;
+	std::cout << "---------------BEGIN-----------------------" << std::endl;
+
+	p = this->head->next[0].getRef();
+	while (p != nullptr)
+	{
+		std::cout << "value: " << p->key << "\t\t" << p->next[0].getMarked() << std::endl;
+		p = p->next[0].getRef();
+	}
+	std::cout << "---------------END-----------------------" << std::endl;
 }

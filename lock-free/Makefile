@@ -1,8 +1,8 @@
 # Makefile for GNU make
 
-#LDLIBS = -pthread
+LDLIBS = -pthread -lboost_program_options
 CC = g++
-CFLAGS = -g -std=c++11 -O2 -Wall 
+CFLAGS = -g -std=c++11 -O2 -Wall -pthread
 
 OBJECTS = main.o LockFreeSkipList.o
 
@@ -14,5 +14,3 @@ main: $(OBJECTS)
 
 clean:
 	rm -f *.o main *~
-
-all:    $(TARGET)
