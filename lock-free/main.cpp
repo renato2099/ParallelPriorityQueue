@@ -12,23 +12,23 @@ void thread_routine(int id, LockFreeSkipList* list)
 	{
 		int value = i + (id*MAX_LEVEL);
 		if (list->insert(value)) cout<<"expected " << value <<endl;
-		if (list->contains(value)) cout << "found "<< value <<endl;
+		//if (list->contains(value)) cout << "found "<< value <<endl;
 	}
 	for (int i = 0; i < MAX_LEVEL; i++)
 	{
 		int value = i + (id*MAX_LEVEL);
-		if (list->contains(value)) cout << "found "<< value <<endl;
+		//if (list->contains(value)) cout << "found "<< value <<endl;
 		if (list->remove(value)) cout<<"removed "  << value <<endl;
-		if (!list->contains(value)) cout<<" not found -> expected"<<endl;
+		//if (!list->contains(value)) cout<<" not found -> expected"<<endl;
 	}
 }
 
 int main(){
-   thread tid[10]; 
+   thread tid[1000]; 
    LockFreeSkipList* sk = new LockFreeSkipList();
 	cout<<"--1"<<endl;
 	//create
-	/*for (int j = 0; j < 10; j++)
+	for (int j = 0; j < 10; j++)
 	{
 		tid[j] = thread(thread_routine, j, sk);	
 	}
@@ -36,14 +36,20 @@ int main(){
 	for (int j = 0; j < 10; j++)
 	{
 		tid[j].join();	
-	}*/
-	for (int i = 0; i < 10; i++)
+	}
+	/*for (int i = 0; i < 10; i++)
 	{
-		sk->insert(i);
+		sk->insert(i*2+1);
 	}
 	sk->print();
 	sk->remove(5);
+	sk->remove(7);
 	sk->print();
+	for (int i = 0; i < 10; i++)
+	{
+		sk->insert(i*2);
+	}
+	sk->print();*/
 	cout<<"--2"<<endl;
 
 	delete sk;

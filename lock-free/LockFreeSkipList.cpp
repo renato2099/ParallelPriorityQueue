@@ -203,7 +203,7 @@ bool LockFreeSkipList::remove(uint64_t key)
 				succ = succs[bottomLevel]->next[bottomLevel].getRef();
 				if (iMarkedIt)
 				{
-					std::cout << "is marked: " << marked << std::endl;
+					//std::cout << "is marked: " << marked << std::endl;
 					find(key, preds, succs); //is this for cleanup?? hangs without it
 					return true;
 				}
@@ -225,29 +225,39 @@ bool LockFreeSkipList::contains(uint64_t key)
 	Node* succ = nullptr;
 	for (int level = MAX_LEVEL-1; level >= bottomLevel; level--)
 	{
+		//std::cout << "level: " << level << std::endl;
 		curr = pred->next[level].getRef();
 		while(true)
 		{
+			//std::cout << "outer while" << std::endl;
 			//If there is not a successor then stop
 			if (curr == nullptr)
 				break;
 			succ = curr->next[level].getRef();
 			marked = curr->next[level].getMarked();
-			while(marked)
+			while(marked) //if marked => skip
 			{
+				//std::cout << "mark while" << std::endl;
 				curr = pred->next[level].getRef();
+				if (curr == nullptr)
+				{
+					//std::cout << "shit" << std::endl;
+					break;
+				}
 				succ = curr->next[level].getRef();
 				marked = curr->next[level].getMarked();
+				//std::cout << "end marked" << std::endl;
 			}
-			if (curr->key < key)
+			if (curr != nullptr && curr->key < key)
 			{
 				pred = curr;
 				curr = succ;
 			}
 			else {
+				//std::cout << "2nd break; " << std::endl;
 				break;
 			}
-		}
+		} //while true
 	}
 	if (curr != nullptr)
 		return (curr->key == key);
