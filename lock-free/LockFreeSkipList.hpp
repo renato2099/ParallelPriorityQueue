@@ -42,9 +42,9 @@ class LockFreeSkipList
 	bool find(uint64_t key, Node** preds, Node** succs);
 	bool contains(uint64_t key);
 	bool remove(uint64_t key);
-	/*
-	void *pop_front();
-	void **pop_front(int k);*/
+	
+	bool pop_front(uint64_t& key);
+	//void **pop_front(int k);
 	void print();
 	//void printLevel(int l);
 };

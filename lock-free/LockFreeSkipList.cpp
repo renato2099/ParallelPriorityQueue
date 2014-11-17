@@ -216,6 +216,59 @@ bool LockFreeSkipList::remove(uint64_t key)
 	}
 }
 
+bool LockFreeSkipList::pop_front(uint64_t& key)
+{
+	int bottomLevel = 0;
+	bool marked;
+	Node* pred = this->head;
+	Node* curr = nullptr;
+	Node* succ = nullptr;
+
+	while (true)
+	{
+		curr = pred->next[bottomLevel].getRef();
+		if (curr == nullptr)
+		{
+			return false;
+		}
+		// try to delete/mark curr
+		marked = curr->next[bottomLevel].getMarked();
+		succ = curr->next[bottomLevel].getRef();
+		// if already deleted we continue
+		while (!marked)
+		{
+			bool iMarkedIt = curr->next[bottomLevel].compareAndSet(succ, succ, false, true);
+
+			marked = curr->next[bottomLevel].getMarked();
+			succ = curr->next[bottomLevel].getRef();
+			if (iMarkedIt)
+			{
+				//Now mark upper levels
+				for(int level = curr->level; level >= bottomLevel+1; level--)
+				{
+					marked = curr->next[level].getMarked();
+					succ = curr->next[level].getRef();
+				
+					while(!marked)
+					{
+						curr->next[level].setMark(succ); //TODO this should simply return success
+						marked = curr->next[level].getMarked();
+						succ = curr->next[level].getRef();
+					}
+				
+				}
+				// return data
+				key = curr->key;
+				return true;
+			}
+			//std::cout << "marked loop" << std::endl;
+		}
+		// advance pointers
+		pred = curr;
+		//std::cout << "outer loop" << std::endl;
+	}
+}
+
 bool LockFreeSkipList::contains(uint64_t key)
 {
 	int bottomLevel = 0;
