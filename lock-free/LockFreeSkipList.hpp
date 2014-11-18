@@ -44,7 +44,7 @@ class LockFreeSkipList
 	bool remove(uint64_t key);
 	
 	bool pop_front(uint64_t& key);
-	//void **pop_front(int k);
+	size_t  pop_front(uint64_t keys[], int k);
 	void print();
 	//void printLevel(int l);
 };

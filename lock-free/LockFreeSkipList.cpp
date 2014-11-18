@@ -265,6 +265,58 @@ bool LockFreeSkipList::pop_front(uint64_t& key)
 	return false;
 }
 
+size_t LockFreeSkipList::pop_front(uint64_t keys[], int k)
+{
+	int bottomLevel = 0;
+	bool marked;
+	Node* curr = nullptr;
+	Node* succ = nullptr;
+	int count = 0;
+
+	curr = head->next[bottomLevel].getRef();
+	while (curr != nullptr)
+	{
+		// try to delete/mark curr
+		marked = curr->next[bottomLevel].getMarked();
+		succ = curr->next[bottomLevel].getRef();
+		// if already deleted we continue
+		while (!marked)
+		{
+			bool iMarkedIt = curr->next[bottomLevel].compareAndSet(succ, succ, false, true);
+
+			marked = curr->next[bottomLevel].getMarked();
+			succ = curr->next[bottomLevel].getRef();
+			if (iMarkedIt)
+			{
+				//Now mark upper levels
+				for(int level = curr->level; level >= bottomLevel+1; level--)
+				{
+					marked = curr->next[level].getMarked();
+					succ = curr->next[level].getRef();
+				
+					while(!marked)
+					{
+						curr->next[level].setMark(succ); //TODO this should simply return success
+						marked = curr->next[level].getMarked();
+						succ = curr->next[level].getRef();
+					}
+				
+				}
+				// return data
+				keys[count] = curr->key;
+				count++;
+				if (count == k)
+					 return k;
+			}
+		} // !marked
+		// if it is already marked we try to repoint header
+		head->next[bottomLevel].compareAndSet(curr, succ, false, false); //first false belongs to head
+		curr = head->next[bottomLevel].getRef();
+	} // currptr != null
+	// reached end of skip list
+	return count;
+}
+
 bool LockFreeSkipList::contains(uint64_t key)
 {
 	int bottomLevel = 0;
