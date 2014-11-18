@@ -220,17 +220,12 @@ bool LockFreeSkipList::pop_front(uint64_t& key)
 {
 	int bottomLevel = 0;
 	bool marked;
-	Node* pred = this->head;
 	Node* curr = nullptr;
 	Node* succ = nullptr;
 
-	while (true)
+	curr = head->next[bottomLevel].getRef();
+	while (curr != nullptr)
 	{
-		curr = pred->next[bottomLevel].getRef();
-		if (curr == nullptr)
-		{
-			return false;
-		}
 		// try to delete/mark curr
 		marked = curr->next[bottomLevel].getMarked();
 		succ = curr->next[bottomLevel].getRef();
@@ -261,12 +256,13 @@ bool LockFreeSkipList::pop_front(uint64_t& key)
 				key = curr->key;
 				return true;
 			}
-			//std::cout << "marked loop" << std::endl;
-		}
-		// advance pointers
-		pred = curr;
-		//std::cout << "outer loop" << std::endl;
-	}
+		} // !marked
+		// if it is already marked we try to repoint header
+		head->next[bottomLevel].compareAndSet(curr, succ, false, false); //first false belongs to head
+		curr = head->next[bottomLevel].getRef();
+	} // currptr != null
+	// reached end of skip list
+	return false;
 }
 
 bool LockFreeSkipList::contains(uint64_t key)

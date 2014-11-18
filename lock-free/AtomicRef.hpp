@@ -37,10 +37,11 @@ public:
 	}*/
 	bool compareAndSet(const AtomicRef& pExpected, const AtomicRef& pNew, bool pExpectedMark, bool pNewMark)
 	{
-		NodeT* lExpected = reinterpret_cast<NodeT*>(reinterpret_cast<intptr_t>(
-																	std::atomic_load(&pExpected.mPointer)) | (intptr_t) (pExpectedMark));
-		NodeT* lNew = reinterpret_cast<NodeT*>(reinterpret_cast<intptr_t>(
-																	std::atomic_load(&pNew.mPointer)) | (intptr_t) (pNewMark));
+		NodeT* lExpected = reinterpret_cast<NodeT*>((reinterpret_cast<intptr_t>(
+																	std::atomic_load(&pExpected.mPointer)) & (intptr_t) ptrMask) | (intptr_t) (pExpectedMark));
+		// here the ptrMask might be obsolete
+		NodeT* lNew = reinterpret_cast<NodeT*>((reinterpret_cast<intptr_t>(
+																	std::atomic_load(&pNew.mPointer)) & (intptr_t) ptrMask) | (intptr_t) (pNewMark));
 		return mPointer.compare_exchange_weak(lExpected, lNew);//maybe strong
 
 	}
