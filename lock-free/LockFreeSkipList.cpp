@@ -272,13 +272,14 @@ bool LockFreeSkipList::contains(uint64_t key)
 	Node* pred = this->head;
 	Node* curr = nullptr;
 	Node* succ = nullptr;
+	
+	retry:
+	pred = this->head;
 	for (int level = MAX_LEVEL-1; level >= bottomLevel; level--)
 	{
-		//std::cout << "level: " << level << std::endl;
 		curr = pred->next[level].getRef();
 		while(true)
 		{
-			//std::cout << "outer while" << std::endl;
 			//If there is not a successor then stop
 			if (curr == nullptr)
 				break;
@@ -286,24 +287,27 @@ bool LockFreeSkipList::contains(uint64_t key)
 			marked = curr->next[level].getMarked();
 			while(marked) //if marked => skip
 			{
-				//std::cout << "mark while" << std::endl;
+				bool snip = pred->next[level].compareAndSet(curr, succ, false, false);
+				if (!snip && !pred->next[level].getMarked())// => goto retry
+				{
+					goto retry;
+				}
+				pred = curr;
 				curr = pred->next[level].getRef();
 				if (curr == nullptr)
 				{
-					//std::cout << "shit" << std::endl;
 					break;
 				}
 				succ = curr->next[level].getRef();
 				marked = curr->next[level].getMarked();
-				//std::cout << "end marked" << std::endl;
 			}
 			if (curr != nullptr && curr->key < key)
 			{
 				pred = curr;
 				curr = succ;
 			}
-			else {
-				//std::cout << "2nd break; " << std::endl;
+			else
+			{
 				break;
 			}
 		} //while true
