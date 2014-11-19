@@ -1,11 +1,11 @@
-#include <iostream>
-#include "PPQ.hpp"
 #include <stdlib.h>
-#include "boost/program_options.hpp"
-
+#include <iostream>
 #include <thread>
 #include <mutex>
 
+#include "boost/program_options.hpp"
+
+#include "PPQ.hpp"
 #include "tests.hpp"
 
 using namespace std;
@@ -50,34 +50,15 @@ void thread_routine(int id, PPQ<int> *ppq)
 			std::cout << "pop failed" << std::endl;*/
 	}
 }
-
-/*
-void point_routine(int id, PPQ<Point, ComparePoints>* ppq)
+int readCmdLine(int argc, char** argv, bool *benchEn, int *numThreads)
 {
-	for (int i = 0; i < 10; i++)
-	{
-		ppq->insert(Point(i, i*2));
-	}
-
-	for (int i = 0; i < 9; i++)
-	{
-		Point p;
-		p = ppq->find(Point(1, 0));
-		p = ppq->pop_front();
-		//std::cout << p.x << " " << p.y << std::endl;
-	}
-}*/
-
-int main(int argc, char** argv)
-{
-	bool benchEn = false;
-	int numThreads = 1;
 	// program options
 	po::options_description desc;
+	int nth;
 	desc.add_options()
 		("help,h", "produce help message")
-		("benchmark,b", po::bool_switch(&benchEn)->default_value(false), "run benchmarks")
-		("threads,t", po::value<int>(&numThreads)->default_value(1), "number of threads")
+		("benchmark,b", po::bool_switch(benchEn)->default_value(false), "run benchmarks")
+		("threads,t", po::value<int>(&nth)->default_value(1), "number of threads")
 		;
 	po::variables_map vm;
 	try
@@ -88,7 +69,7 @@ int main(int argc, char** argv)
 		if (vm.count("help"))
 		{
 			std::cout << desc << std::endl;
-			return 0;
+			return 1;
 		}
 		po::notify(vm);
 	}
@@ -98,50 +79,56 @@ int main(int argc, char** argv)
 		std::cerr << desc << std::endl;
 		return 1;
 	}
-
-	if (benchEn)
+	return 0;
+}
+int main(int argc, char** argv)
+{
+	bool benchEn = false;
+	int numThreads = 1;
+	if (!readCmdLine(argc, argv, &benchEn, &numThreads))
 	{
-		cout << "Benchmarks are running." << endl;
-		basic_benchmark(numThreads);
-	}
-	
-	
-	int i;
-	PPQ<int> *ppq;
-	PPQ<Point, ComparePoints> *points;
-	thread tid[THREADS];
+		if (benchEn)
+		{
+			cout << "Benchmarks are running." << endl;
+			basic_benchmark(numThreads);
+		}
+		
+		int i;
+		PPQ<int> *ppq;
+		PPQ<Point, ComparePoints> *points;
+		thread tid[THREADS];
 
-	ppq = new PPQ<int>();
-	points = new PPQ<Point, ComparePoints>();
+		ppq = new PPQ<int>();
+		points = new PPQ<Point, ComparePoints>();
 
 
-	//work on integers
-	for (i = 0; i < THREADS; i++)
-	{
-		tid[i] = thread(thread_routine, i, ppq);
-	}
+		//work on integers
+		for (i = 0; i < THREADS; i++)
+		{
+			tid[i] = thread(thread_routine, i, ppq);
+		}
 
-	for (i = 0; i < THREADS; i++)
-	{
-		tid[i].join();
-	}
+		for (i = 0; i < THREADS; i++)
+		{
+			tid[i].join();
+		}
 
-	//work on points
-	for (i = 0; i < THREADS; i++)
-	{
-		//tid[i] = thread(point_routine, i, points);
-	}
+		//work on points
+		for (i = 0; i < THREADS; i++)
+		{
+			//tid[i] = thread(point_routine, i, points);
+		}
 
-	for (i = 0; i < THREADS; i++)
-	{
-		//..tid[i].join();
-	}
+		for (i = 0; i < THREADS; i++)
+		{
+			//..tid[i].join();
+		}
 
-	ppq->print();
-	//points->print();
+		ppq->print();
+		//points->print();
 
-	delete ppq;
-	delete points;
-
+		delete ppq;
+		delete points;
+	}/**///IF-CMD-LINE
 	return 0;
 }
