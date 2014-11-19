@@ -4,24 +4,28 @@
 #include <random>
 #include "PPQ.hpp"
 
-
-
+//TODO this should be parametrized or read from a properties file
+#define INSERTS 10000
+#define FIXED 0.1
 
 void basic_bench_routine(PPQ<int>* ppq)
 {
 	int count = 0;
 	int value = 0;
 	int sum = 0;
+	int fix_i = INSERTS * FIXED, ran_i = INSERTS - fix_i;
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::bernoulli_distribution coin_flip(0.5);
-	while (count < 1000)
+
+	while (count < fix_i)
 	{
 		ppq->insert(count);
 		count++;
 	}
+
 	count = 0;
-	while (count < 9000)
+	while (count < ran_i)
 	{
 		if (coin_flip(gen))	//insert
 		{

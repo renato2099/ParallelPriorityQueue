@@ -50,85 +50,49 @@ void thread_routine(int id, PPQ<int> *ppq)
 			std::cout << "pop failed" << std::endl;*/
 	}
 }
-int readCmdLine(int argc, char** argv, bool *benchEn, int *numThreads)
+
+int readCmdLine(int argc, char** argv, bool &benchEn, int &numThreads)
 {
 	// program options
 	po::options_description desc;
-	int nth;
 	desc.add_options()
 		("help,h", "produce help message")
-		("benchmark,b", po::bool_switch(benchEn)->default_value(false), "run benchmarks")
-		("threads,t", po::value<int>(&nth)->default_value(1), "number of threads")
+		("benchmark,b", po::bool_switch(&benchEn)->default_value(false), "run benchmarks")
+		("threads,t", po::value<int>(&numThreads)->default_value(1), "number of threads")
 		;
 	po::variables_map vm;
 	try
 	{
 		po::store(po::parse_command_line(argc, argv, desc), vm); // can throw
-		
 		// help option
 		if (vm.count("help"))
 		{
-			std::cout << desc << std::endl;
+			cout << desc << endl;
 			return 1;
 		}
 		po::notify(vm);
 	}
 	catch(po::error& e)
 	{
-		std::cerr << "ERROR:" << e.what() << std::endl << std::endl;
-		std::cerr << desc << std::endl;
+		cerr << "ERROR:" << e.what() << endl << endl;
+		cerr << desc << endl;
 		return 1;
 	}
 	return 0;
 }
+
 int main(int argc, char** argv)
 {
 	bool benchEn = false;
 	int numThreads = 1;
-	if (!readCmdLine(argc, argv, &benchEn, &numThreads))
+	if (!readCmdLine(argc, argv, benchEn, numThreads))
 	{
-		if (benchEn)
+		if (!benchEn)
 		{
-			cout << "Benchmarks are running." << endl;
-			basic_benchmark(numThreads);
+			numThreads = THREADS;	
 		}
-		
-		int i;
-		PPQ<int> *ppq;
-		PPQ<Point, ComparePoints> *points;
-		thread tid[THREADS];
-
-		ppq = new PPQ<int>();
-		points = new PPQ<Point, ComparePoints>();
-
-
-		//work on integers
-		for (i = 0; i < THREADS; i++)
-		{
-			tid[i] = thread(thread_routine, i, ppq);
-		}
-
-		for (i = 0; i < THREADS; i++)
-		{
-			tid[i].join();
-		}
-
-		//work on points
-		for (i = 0; i < THREADS; i++)
-		{
-			//tid[i] = thread(point_routine, i, points);
-		}
-
-		for (i = 0; i < THREADS; i++)
-		{
-			//..tid[i].join();
-		}
-
-		ppq->print();
-		//points->print();
-
-		delete ppq;
-		delete points;
-	}/**///IF-CMD-LINE
+		cout << "Running with " << numThreads << endl;	
+		basic_benchmark(numThreads);
+	}//IF-CMD-LINE
 	return 0;
 }
