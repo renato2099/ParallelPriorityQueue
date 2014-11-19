@@ -6,7 +6,7 @@
 #include <thread>
 #include <mutex>
 
-//#include "tests.hpp"
+#include "tests.hpp"
 
 using namespace std;
 namespace po = boost::program_options;
@@ -41,9 +41,13 @@ void thread_routine(int id, PPQ<int> *ppq)
 
 	for (i = 1; i < 10; i++)
 	{
+		int value;
 		//ppq->remove(10 * (id * 10 + i + 1));
-		//int value = ppq->pop_front();
-		//std::cout << value << std::endl;
+		ppq->pop_front(value);
+		/*if (succ)
+			std::cout << value << std::endl;
+		else
+			std::cout << "pop failed" << std::endl;*/
 	}
 }
 
@@ -98,9 +102,7 @@ int main(int argc, char** argv)
 	if (benchEn)
 	{
 		cout << "Benchmarks are running." << endl;
-		if (numThreads > 32)
-			numThreads = 32;
-		//basic_benchmark(numThreads);
+		basic_benchmark(numThreads);
 	}
 	
 	

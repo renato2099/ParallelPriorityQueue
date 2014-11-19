@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdint.h>
 #include <atomic>
+#include "../inc/AtomicRef.hpp"
 
 #ifndef SKIPLIST_HPP
 #define SKIPLIST_HPP
@@ -13,30 +14,11 @@ using namespace std;
 
 // might do it like: http://stackoverflow.com/questions/19609417/atomic-operations-for-lock-free-doubly-linked-list
 
-template <class T>  class Node
-{
-private:
-	static const int dMask = 1;
-	static const int ptrMask = ~dMask;
-public:
-	
-	// class functions
-	// class attributes
+template <typename T>  struct Node
+{	
 	T		data;
-	int	level;
-	std::atomic<Node*> next[MAX_LEVEL];
-	//Node*	index[MAX_LEVEL-1];
-	bool setDeleteFlag(Node* exp)
-	{
-		Node* repl = (Node*) (reinterpret_cast<intptr_t>(exp) | (intptr_t) dMask);
-		Node* old =  (Node<T>*) (reinterpret_cast<intptr_t>(exp) & (intptr_t) ptrMask);
-		return next[0].compare_exchange_weak(old, repl); //old, exp, repl
-	}
-	bool isDeleted() const
-	{
-		//return  std::atomic_load(&(next[0])) & dMask;
-		return (reinterpret_cast<intptr_t>(std::atomic_load(&next[0])) & (intptr_t) dMask);
-	}
+	int		level;
+	AtomicRef<Node>	next[MAX_LEVEL];
 };
 
 template <class T, class Comparator>
@@ -44,7 +26,7 @@ class SkipList
 {
 	private:
 	int							mLevel;
-	Node<T>*						mHead;
+	Node<T>*						head;
 	//friend bool comparator_ <T,Comparator> (const T& t1, const T& t2);
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
 	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); }; //TODO get rid of this
@@ -53,17 +35,17 @@ class SkipList
 	public:
 	SkipList();
 	~SkipList();
-
-	void goBottom(T& data, Node<T>* pred, Node<T>* succ);
-
-	void insert(T data);
+	
+	bool insert(const T& data);
 	/*void insert(T *data[], int k);
 	T    find(T data);
 	void remove(T data);*/
-	T    pop_front();
-	//T*	  pop_front(int k);
+	bool    pop_front(T& data);
+	size_t	  pop_front(T data[], int k);
 	void print();
-	void printLevel(int l);
+	//void printLevel(int l);
+private:
+	bool findNode(const T& data, Node<T>** preds, Node<T>** succs);
 };
 
 /*
@@ -76,12 +58,13 @@ SkipList<T,Comparator>::SkipList()
 {
    srand(SEED);
 	mLevel = 0; // rename level and head
-	//TODO initialize mHead;
-	mHead = new Node<T>();
-	for (int i = 0; i < MAX_LEVEL-1; i++)
+	//TODO initialize head;
+	head = new Node<T>();
+	head->level = MAX_LEVEL;	
+	/*for (int i = 0; i < MAX_LEVEL-1; i++)
 	{
-		mHead->next[i] = nullptr;//maybe to in Node class
-	}
+		head->next[i] = nullptr;//maybe to in Node class
+	}*/
 };
 
 template<class T, class Comparator>
@@ -90,130 +73,276 @@ SkipList<T,Comparator>::~SkipList()
 	Node<T>* tmp;
 	Node<T>* curr;
 
-	curr = mHead->next[0]; //mHead.load();
+	curr = head->next[0].getRef(); //head.load();
 	while (curr != nullptr)
 	{
 		tmp = curr;
-		//curr = tmp->next;
-		curr = tmp->next[0];
+		curr = curr->next[0].getRef();
 		delete tmp;
 	}
+	delete head;
 };
 
 //TODO have to clean up
 template<class T, class Comparator>
-void SkipList<T, Comparator>::goBottom(T& data, Node<T>* pred, Node<T>* succ)
+bool SkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>** succs)
 {
-	Node<T>* curr;
-	//curr = mHead.load();
-	//traverse next
-	if (mLevel > 0)
+	int bottomLevel = 0;
+	bool marked = false;
+	bool snip = false;
+	Node<T>* pred = nullptr;
+	Node<T>* curr = nullptr;
+	Node<T>* succ = nullptr;
+	retry:
+	while(true) 
 	{
-		curr = mHead->next[mLevel-1];
-		for (int level = mLevel; level >= 0; level--)
+
+		pred = this->head;
+		for (int level = MAX_LEVEL-1; level >= bottomLevel; level--)
 		{
-			succ = curr->next[0];
-			while(succ != nullptr && comp(succ->data, data))
+			curr = pred->next[level].getRef();
+			while(true)
 			{
-				curr = curr->next[level];
+				//If there is not a successor then stop
+				if (curr == nullptr)
+					break;
+				//TODO this should also be an atomic operation
+				marked = curr->next[level].getMarked();
+				succ = curr->next[level].getRef();
+				// check if the node is marked
+				while(marked)
+				{
+					snip = pred->next[level].compareAndSet(curr, succ, false, false);
+					if (!snip) 
+					{
+						goto retry;
+					}
+
+					curr = pred->next[level].getRef();
+					marked = pred->next[level].getMarked();
+					if (curr != nullptr)
+					{
+						succ = curr->next[level].getRef();
+					}
+					else 
+					{
+						succ = nullptr;
+						break;
+					}
+				}
+				//if it is not marked
+				if (curr != nullptr && comp(curr->data, data))
+				{
+					pred = curr;
+					curr = succ;
+				}
+				else 
+				{
+					break;
+				}
 			}
+			preds[level] = pred; //TODO replace with pointer array
+			succs[level] = curr;
 		}
+		if (curr != NULL)
+			return (equal(curr->data, data));
+		else 
+			return false;
 	}
-	pred = curr;
+	return false;
 }
 
 
 template<class T, class Comparator>
-void SkipList<T,Comparator>::insert(T data)
+bool SkipList<T,Comparator>::insert(const T& data)
 {
-	Node<T>* pred;
-	Node<T>* succ;
-	Node<T>* nnode;
-	nnode = new Node<T>(); //TODO plug data in here
-	nnode->data = data;
-	nnode->level = 0; //TODO change this
-	goBottom(data, pred, succ);
-	//insert inbetween pred and succ while making sure that pred->next == succ
-	// add reference to new successor
-	nnode->next[0] = succ;
-	//also add references for upper levels, in top-down manner
-	for (int i = nnode->level; i > 0; i--)
+	int topLevel = rand()%MAX_LEVEL - 1; //TODO fix this
+	int bottomLevel = 0;
+	Node<T>** preds = new Node<T>*[MAX_LEVEL+1];
+	Node<T>** succs = new Node<T>*[MAX_LEVEL+1];
+	
+	while(true)
 	{
-		//nnode->next[i] = 	
-	}
+		bool found = findNode(data, preds, succs);
+		if (found)
+		{
+			return false;
+		}
+		else
+		{
 
-	//CAS us in  and make sure that pred hasn't change
-	//swap pred->next with nnode
-	//expected "old" value is succ
-	bool cas_success = pred->next[0].compare_exchange_weak(succ, nnode); //ex, exp, new
-	std::cout << "cas: " << cas_success << std::endl;
+			Node<T>* nnode = new Node<T>();
+			nnode->data = data;
+			nnode->level = topLevel;
+			
+			// The new node gets the reference from the successor
+			for(int level = bottomLevel; level <=topLevel; level++)
+			{
+				Node<T>* succ = succs[level];
+				//TODO this should be an atomic operation
+				nnode->next[level].setRef(succ, false);
+			}
 
-	//change pointers on upper level, also with CAS
-	for (int i = nnode->level; i > 0; i--)
-	{
-		//TODO
+			Node<T>* pred = preds[bottomLevel];
+			Node<T>* succ = succs[bottomLevel];
+
+			nnode->next[bottomLevel].setRef(succ, false);
+
+			if (!(pred->next[bottomLevel].compareAndSet(succ, nnode, false, false)))
+			{
+				continue;
+			}	
+			// Update predecessors
+			for(int level = bottomLevel+1; level <= topLevel; level++)
+			{
+				while(true)
+				{
+					pred = preds[level];
+					succ = succs[level];
+					if (pred->next[level].compareAndSet(succ, nnode, false, false))
+					{
+						break;
+					}
+					findNode(data, preds, succs);
+				}
+			}
+			return true;
+		}
+		break;
 	}
+	return false;
 
 };
 
 template<class T, class Comparator>
-T SkipList<T,Comparator>::pop_front()
+bool SkipList<T,Comparator>::pop_front(T& data)
 {
-	//check if not null and not Deleted
-	//Link<Node<T>> curr = mHead;
-	Node<T>* curr = mHead;
+	int bottomLevel = 0;
+	bool marked;
+	Node<T>* curr = nullptr;
+	Node<T>* succ = nullptr;
+
+	curr = head->next[bottomLevel].getRef();
 	while (curr != nullptr)
 	{
-		/*while ((curr != nullptr) && isDeleted(curr))
+		// try to delete/mark curr
+		marked = curr->next[bottomLevel].getMarked();
+		succ = curr->next[bottomLevel].getRef();
+		// if already deleted we continue
+		while (!marked)
 		{
-			curr = curr->next;	
-		}*/
-		if (curr->isDeleted())
-		{
-			curr = curr->next[0];
-			continue;
-		}
+			bool iMarkedIt = curr->next[bottomLevel].compareAndSet(succ, succ, false, true);
 
-		//try to set DeleteFlag
-		if (curr->setDeleteFlag(curr))
-		{
-			//success
-			return curr->data;
-		}
-		else
-		{
-			//continure search
-			curr = curr->next[0];
-		}
-	}
-	// if we reach here, there is no Node to pop
-	// return false;
+			marked = curr->next[bottomLevel].getMarked();
+			succ = curr->next[bottomLevel].getRef();
+			if (iMarkedIt)
+			{
+				//Now mark upper levels
+				for(int level = curr->level; level >= bottomLevel+1; level--)
+				{
+					marked = curr->next[level].getMarked();
+					succ = curr->next[level].getRef();
+				
+					while(!marked)
+					{
+						curr->next[level].setMark(succ); //TODO this should simply return success
+						marked = curr->next[level].getMarked();
+						succ = curr->next[level].getRef();
+					}
+				
+				}
+				// return data
+				data = curr->data;
+				return true;
+			}
+		} // !marked
+		// if it is already marked we try to repoint header
+		head->next[bottomLevel].compareAndSet(curr, succ, false, false); //first false belongs to head
+		curr = head->next[bottomLevel].getRef();
+	} // currptr != null
+	// reached end of skip list
+	return false;
 };
+
+template<class T, class Comparator>
+size_t SkipList<T,Comparator>::pop_front(T data[], int k)
+{
+	int bottomLevel = 0;
+	bool marked;
+	Node<T>* curr = nullptr;
+	Node<T>* succ = nullptr;
+	int count = 0;
+
+	curr = head->next[bottomLevel].getRef();
+	while (curr != nullptr)
+	{
+		// try to delete/mark curr
+		marked = curr->next[bottomLevel].getMarked();
+		succ = curr->next[bottomLevel].getRef();
+		// if already deleted we continue
+		while (!marked)
+		{
+			bool iMarkedIt = curr->next[bottomLevel].compareAndSet(succ, succ, false, true);
+
+			marked = curr->next[bottomLevel].getMarked();
+			succ = curr->next[bottomLevel].getRef();
+			if (iMarkedIt)
+			{
+				//Now mark upper levels
+				for(int level = curr->level; level >= bottomLevel+1; level--)
+				{
+					marked = curr->next[level].getMarked();
+					succ = curr->next[level].getRef();
+				
+					while(!marked)
+					{
+						curr->next[level].setMark(succ); //TODO this should simply return success
+						marked = curr->next[level].getMarked();
+						succ = curr->next[level].getRef();
+					}
+				
+				}
+				// return data
+				data[count] = curr->data;
+				count++;
+				if (count == k)
+					 return k;
+			}
+		} // !marked
+		// if it is already marked we try to repoint header
+		head->next[bottomLevel].compareAndSet(curr, succ, false, false); //first false belongs to head
+		curr = head->next[bottomLevel].getRef();
+	} // currptr != null
+	// reached end of skip list
+	return count;
+}
 
 template<class T, class Comparator>
 void SkipList<T,Comparator>::print()
 {
 	Node<T>* p;
-	// the skip list is traversed at the lowest level
-	p = mHead->next[0];
-	while (p != NULL)
+	std::cout << "---------------BEGIN-----------------------" << std::endl;
+
+	p = this->head->next[0].getRef();
+	while (p != nullptr)
 	{
-		cout << "--" << p->data << ", (" << p->level << ")--" << endl;
-		p = p->next[0];
+		std::cout << "value: " << p->data << "\t\t" << p->next[0].getMarked() << std::endl;
+		p = p->next[0].getRef();
 	}
+	std::cout << "---------------END-----------------------" << std::endl;
 };
 
-template<class T, class Comparator>
+/*template<class T, class Comparator>
 void SkipList<T,Comparator>::printLevel(int l)
 {
 	Node<T> *p;
 	// the skip list is traversed by level
-	p = mHead->next[l];
+	p = head->next[l];
 	while(p != nullptr)
 	{
 		cout << p->data << endl;
 		p = p->next[l];
 	}
-};
+};*/
 
 #endif
