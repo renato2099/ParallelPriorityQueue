@@ -24,7 +24,7 @@ public:
 	int level;
 
 	/* pointers to the next nodes */
-	struct Node *forward[MAX_LEVEL];
+	Node *forward[MAX_LEVEL];
 };
 
 template <class T, class Comparator> class SkipList;

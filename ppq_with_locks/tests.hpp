@@ -43,9 +43,10 @@ void basic_benchmark(int numThreads)
 	typedef std::chrono::milliseconds milliseconds;
 
 	std::cout << "Running basic benchmark..." << std::endl;
+	//TODO this type should be parametrized
 	PPQ<int>* ppq;
 	ppq = new PPQ<int>();
-	thread tids[32];
+	thread* tids = new thread[numThreads];
 
 	clock::time_point t0 = clock::now();
 	for (int i = 0; i < numThreads; i++)

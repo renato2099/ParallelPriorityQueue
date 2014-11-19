@@ -1,11 +1,11 @@
-#include <iostream>
-#include "PPQ.hpp"
 #include <stdlib.h>
-#include "boost/program_options.hpp"
-
+#include <iostream>
 #include <thread>
 #include <mutex>
 
+#include "boost/program_options.hpp"
+
+#include "PPQ.hpp"
 #include "tests.hpp"
 
 using namespace std;
@@ -62,10 +62,8 @@ void point_routine(int id, PPQ<Point, ComparePoints>* ppq)
 	}
 }
 
-int main(int argc, char** argv)
+int readCmdLine(int argc, char** argv, bool &benchEn, int &numThreads)
 {
-	bool benchEn = false;
-	int numThreads = 1;
 	// program options
 	po::options_description desc;
 	desc.add_options()
@@ -77,67 +75,38 @@ int main(int argc, char** argv)
 	try
 	{
 		po::store(po::parse_command_line(argc, argv, desc), vm); // can throw
-		
 		// help option
 		if (vm.count("help"))
 		{
-			std::cout << desc << std::endl;
-			return 0;
+			cout << desc << endl;
+			return 1;
 		}
 		po::notify(vm);
 	}
 	catch(po::error& e)
 	{
-		std::cerr << "ERROR:" << e.what() << std::endl << std::endl;
-		std::cerr << desc << std::endl;
+		cerr << "ERROR:" << e.what() << endl << endl;
+		cerr << desc << endl;
 		return 1;
 	}
-
-	if (benchEn)
-	{
-		cout << "Benchmarks are running." << endl;
-		if (numThreads > 32)
-			numThreads = 32;
-		basic_benchmark(numThreads);
-	}
-	
-	
-	int i;
-	PPQ<int> *ppq;
-	PPQ<Point, ComparePoints> *points;
-	thread tid[THREADS];
-
-	ppq = new PPQ<int>();
-	points = new PPQ<Point, ComparePoints>();
-
-
-	//work on integers
-	for (i = 0; i < THREADS; i++)
-	{
-		tid[i] = thread(thread_routine, i, ppq);
-	}
-
-	for (i = 0; i < THREADS; i++)
-	{
-		tid[i].join();
-	}
-
-	//work on points
-	for (i = 0; i < THREADS; i++)
-	{
-		tid[i] = thread(point_routine, i, points);
-	}
-
-	for (i = 0; i < THREADS; i++)
-	{
-		tid[i].join();
-	}
-
-	ppq->print();
-	//points->print();
-
-	delete ppq;
-	delete points;
-
 	return 0;
+}
+
+int main(int argc, char** argv)
+{
+	bool benchEn = false;
+	int numThreads = 1;
+	if (!readCmdLine(argc, argv, benchEn, numThreads))
+	{
+		if (!benchEn)
+		{
+			numThreads = THREADS;	
+		}
+		cout << "Running with " << numThreads << endl;	
+		basic_benchmark(numThreads);
+	}//IF-CMD-LINE
+	return 0;
+	
+	//PPQ<Point, ComparePoints> *points;
+	//points = new PPQ<Point, ComparePoints>();
 }
