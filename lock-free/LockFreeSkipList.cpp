@@ -168,7 +168,7 @@ bool LockFreeSkipList::remove(uint64_t key)
 	Node* succ;
 	bool marked = false;
 	
-	while(true)
+	while(true) //This loop makes no sense
 	{
 		bool found = find(key, preds, succs);
 		if(!found)
@@ -178,23 +178,11 @@ bool LockFreeSkipList::remove(uint64_t key)
 		else
 		{
 			Node* node2rm = succs[bottomLevel];
-			for(int level = node2rm->level; level >= bottomLevel+1; level--)
-			{
-				marked = node2rm->next[level].getMarked();
-				succ = node2rm->next[level].getRef();
-				
-				while(!marked)
-				{
-					node2rm->next[level].setMark(succ); //TODO this should simply return success
-					marked = node2rm->next[level].getMarked();
-					succ = node2rm->next[level].getRef();
-				}
-				
-			}
+			
 			//TODO this should be an atomic operation
 			marked = node2rm->next[bottomLevel].getMarked();
 			succ = node2rm->next[bottomLevel].getRef();
-			while(true)
+			while(true) //!marked
 			{
 				bool iMarkedIt = node2rm->next[bottomLevel].compareAndSet(succ, succ, false, true);
 				//bool iMarkedIt = node2rm->next[bottomLevel].setMark(succ);
@@ -203,8 +191,22 @@ bool LockFreeSkipList::remove(uint64_t key)
 				succ = succs[bottomLevel]->next[bottomLevel].getRef();
 				if (iMarkedIt)
 				{
+					// Now mark upper levels
+					for(int level = node2rm->level; level >= bottomLevel+1; level--)
+					{
+					marked = node2rm->next[level].getMarked();
+					succ = node2rm->next[level].getRef();
+				
+						while(!marked)
+						{
+							node2rm->next[level].setMark(succ); //TODO this should simply return success
+							marked = node2rm->next[level].getMarked();
+							succ = node2rm->next[level].getRef();
+						}
+				
+					}
 					//std::cout << "is marked: " << marked << std::endl;
-					find(key, preds, succs); //is this for cleanup?? hangs without it
+					//find(key, preds, succs); //is this for cleanup?? hangs without it
 					return true;
 				}
 				else if (marked)

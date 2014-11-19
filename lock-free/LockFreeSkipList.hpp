@@ -1,7 +1,7 @@
 #include <iostream>
 #include <stdint.h>
 #include <atomic>
-#include "AtomicRef.hpp"
+#include "../inc/AtomicRef.hpp"
 
 #ifndef LOCKFREESKIPLIST_HPP
 #define LOCKFREESKIPLIST_HPP
