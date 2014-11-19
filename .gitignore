@@ -1,0 +1,6 @@
+#tmp make files
+*.o
+
+#editor files
+*~
+*.swp
