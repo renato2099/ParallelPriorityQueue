@@ -20,13 +20,13 @@ struct MinHeapNode
 class InnerNode
 {
 public:
-    InnerNode(MinHeapNode in) : node(in) {}
-    InnerNode(MinHeapNode* in) : node(*in) {}
-    MinHeapNode getNode() {return node;}
-    MinHeapNode* getRef() {return &node;}
-    bool operator<(const InnerNode &other) const { return node.freq > other.node.freq; }
-    MinHeapNode node;
-    private:
+	InnerNode(MinHeapNode in) : node(in) {}
+	InnerNode(MinHeapNode* in) : node(*in) {}
+	MinHeapNode getNode() {return node;}
+	MinHeapNode* getRef() {return &node;}
+	bool operator<(const InnerNode &other) const { return node.freq > other.node.freq; }
+	MinHeapNode node;
+	private:
 };
 
 template<typename Type, typename Compare = std::less<Type> >

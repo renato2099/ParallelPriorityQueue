@@ -111,23 +111,23 @@ void printStdCodes(priority_queue_mhn_type *pq, int arr[], int top)
 
 // The main function that builds a Huffman Tree and print codes by traversing
 // the built Huffman Tree
-void HuffmanCodes(const char *data, int freq[], int size)
+void HuffmanCodes(const char *data, int freq[], int size, bool print)
 {
    //  Construct Huffman Tree
    struct MinHeapNode* root = buildHuffmanTree(data, freq, size);
  
    // Print Huffman codes using the Huffman tree built above
    int arr[MAX_TREE_HT], top = 0;
-   printCodes(root, arr, top);
+   if (print) printCodes(root, arr, top);
 }
 
-void HuffmanCodesStd(const char *data, int freq[], int size)
+void HuffmanCodesStd(const char *data, int freq[], int size, bool print)
 {
     //  Construct Huffman Tree
     priority_queue_mhn_type *pqueue = buildHuffmanStdTree(data, freq, size);
     // Print Huffman codes using the Huffman tree built above
     int arr[MAX_TREE_HT], top = 0;
-    printStdCodes(pqueue, arr, top);
+   if (print) printStdCodes(pqueue, arr, top);
 }
 
 #endif
