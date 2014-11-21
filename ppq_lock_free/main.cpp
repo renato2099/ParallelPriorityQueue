@@ -11,7 +11,8 @@
 using namespace std;
 namespace po = boost::program_options;
 
-#define THREADS 10
+#define THREADS 2
+#define N 1000000
 
 struct Point
 {
@@ -33,17 +34,18 @@ void thread_routine(int id, PPQ<int> *ppq)
 {
 	int i;//, data[10];
 
-	for (i = 0; i < 10; i++)
+	for (i = 0; i < N; i++)
 	{
-		ppq->insert(10 * (id * 10 + i + 1));
+		ppq->insert((id * N + i));
 
 	}
 
-	for (i = 1; i < 10; i++)
+	for (i = 1; i < N * THREADS; i++)
 	{
 		int value;
-		//ppq->remove(10 * (id * 10 + i + 1));
-		ppq->pop_front(value);
+		ppq->remove(10 * (id * 10 + i + 1));
+		//ppq->remove(i);
+		//ppq->pop_front(value);
 		/*if (succ)
 			std::cout << value << std::endl;
 		else
@@ -83,6 +85,8 @@ int readCmdLine(int argc, char** argv, bool &benchEn, int &numThreads)
 
 int main(int argc, char** argv)
 {
+	thread tid[1000]; 
+   	PPQ<int>* sk = new PPQ<int>();
 	bool benchEn = false;
 	int numThreads = 1;
 	if (!readCmdLine(argc, argv, benchEn, numThreads))
@@ -92,7 +96,18 @@ int main(int argc, char** argv)
 			numThreads = THREADS;	
 		}
 		cout << "Running with " << numThreads << endl;	
-		basic_benchmark(numThreads);
+		//basic_benchmark(numThreads);
 	}//IF-CMD-LINE
+	//create
+	for (int j = 0; j < THREADS; j++)
+	{
+		tid[j] = thread(thread_routine, j, sk);	
+	}
+	//join
+	for (int j = 0; j < THREADS; j++)
+	{
+		tid[j].join();	
+	}
+	delete sk;
 	return 0;
 }

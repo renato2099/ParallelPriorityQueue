@@ -16,7 +16,7 @@ template <class T, class Comparator = std::less<T> > class PPQ
 	bool insert(const T& data) { return slist->insert(data); };
 	//void insert(T* data[], int k) { slist->insert(data, k); };
 	//T    find(T data) { return slist->find(data); };
-	//void remove(T data) { slist->remove(data); };
+	bool remove(const T& data) { return slist->remove(data); };
 	bool    pop_front(T& data) { return slist->pop_front(data); };
 	size_t   pop_front(T data[], int k) { return slist->pop_front(data, k); };
 	void print() { slist->print(); };

@@ -38,8 +38,8 @@ class SkipList
 	
 	bool insert(const T& data);
 	/*void insert(T *data[], int k);
-	T    find(T data);
-	void remove(T data);*/
+	T    find(T data);*/
+	bool remove(const T& data);
 	bool    pop_front(T& data);
 	size_t	  pop_front(T data[], int k);
 	void print();
@@ -221,6 +221,66 @@ bool SkipList<T,Comparator>::insert(const T& data)
 	return false;
 
 };
+
+template<class T, class Comparator>
+bool SkipList<T,Comparator>::remove(const T& data)
+{
+	int bottomLevel = 0;
+	Node<T>** preds = new Node<T>*[MAX_LEVEL+1];
+	Node<T>** succs = new Node<T>*[MAX_LEVEL+1];
+	Node<T>* succ;
+	bool marked = false;
+	
+	while(true) //This loop makes no sense
+	{
+		bool found = findNode(data, preds, succs);
+		if(!found)
+		{
+			return false;
+		}
+		else
+		{
+			Node<T>* node2rm = succs[bottomLevel];
+			
+			//TODO this should be an atomic operation
+			marked = node2rm->next[bottomLevel].getMarked();
+			succ = node2rm->next[bottomLevel].getRef();
+			while(true) //!marked
+			{
+				bool iMarkedIt = node2rm->next[bottomLevel].compareAndSet(succ, succ, false, true);
+				//bool iMarkedIt = node2rm->next[bottomLevel].setMark(succ);
+
+				marked = succs[bottomLevel]->next[bottomLevel].getMarked();
+				succ = succs[bottomLevel]->next[bottomLevel].getRef();
+				if (iMarkedIt)
+				{
+					// Now mark upper levels
+					for(int level = node2rm->level; level >= bottomLevel+1; level--)
+					{
+					marked = node2rm->next[level].getMarked();
+					succ = node2rm->next[level].getRef();
+				
+						while(!marked)
+						{
+							node2rm->next[level].setMark(succ); //TODO this should simply return success
+							marked = node2rm->next[level].getMarked();
+							succ = node2rm->next[level].getRef();
+						}
+				
+					}
+					//std::cout << "is marked: " << marked << std::endl;
+					findNode(data, preds, succs); //is this for cleanup?? hangs without it
+					return true;
+				}
+				else if (marked)
+				{
+					return false;
+				}
+			}
+		}
+	}
+}
+
 
 template<class T, class Comparator>
 bool SkipList<T,Comparator>::pop_front(T& data)
