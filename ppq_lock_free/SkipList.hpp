@@ -7,7 +7,7 @@
 #define SKIPLIST_HPP
 
 #define SEED		10
-#define MAX_LEVEL	10
+#define MAX_LEVEL	21
 #define PROB		0.5
 
 using namespace std;
@@ -25,7 +25,7 @@ template <class T, class Comparator>
 class SkipList
 {
 	private:
-	int							mLevel;
+	std::atomic<int>					mLevel;
 	Node<T>*						head;
 	//friend bool comparator_ <T,Comparator> (const T& t1, const T& t2);
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
@@ -156,7 +156,16 @@ bool SkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>**
 template<class T, class Comparator>
 bool SkipList<T,Comparator>::insert(const T& data)
 {
-	int topLevel = rand()%MAX_LEVEL - 1; //TODO fix this
+	int topLevel = 0;
+	while (topLevel < (MAX_LEVEL - 1) && topLevel <= mLevel && ((float) rand() / RAND_MAX) < PROB)
+	{
+		topLevel++;
+	}
+
+	if (topLevel > mLevel)
+	{
+		mLevel = topLevel;
+	}	
 	int bottomLevel = 0;
 	Node<T>** preds = new Node<T>*[MAX_LEVEL+1];
 	Node<T>** succs = new Node<T>*[MAX_LEVEL+1];
@@ -179,7 +188,6 @@ bool SkipList<T,Comparator>::insert(const T& data)
 			for(int level = bottomLevel; level <=topLevel; level++)
 			{
 				Node<T>* succ = succs[level];
-				//TODO this should be an atomic operation
 				nnode->next[level].setRef(succ, false);
 			}
 
