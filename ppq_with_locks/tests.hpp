@@ -2,12 +2,9 @@
 #include <chrono>
 #include <iostream>
 #include <random>
-#include "PPQ.hpp"
+#include "LOCK_PPQ.hpp"
 
-
-
-
-void basic_bench_routine(PPQ<int>* ppq)
+void basic_bench_routine(LOCK_PPQ<int>* ppq)
 {
 	int count = 0;
 	int value = 0;
@@ -44,8 +41,8 @@ void basic_benchmark(int numThreads)
 
 	std::cout << "Running basic benchmark..." << std::endl;
 	//TODO this type should be parametrized
-	PPQ<int>* ppq;
-	ppq = new PPQ<int>();
+	LOCK_PPQ<int>* ppq;
+	ppq = new LOCK_PPQ<int>();
 	thread* tids = new thread[numThreads];
 
 	clock::time_point t0 = clock::now();

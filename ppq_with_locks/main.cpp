@@ -5,7 +5,7 @@
 
 #include "boost/program_options.hpp"
 
-#include "PPQ.hpp"
+#include "LOCK_PPQ.hpp"
 #include "tests.hpp"
 
 using namespace std;
@@ -29,7 +29,7 @@ struct ComparePoints
 	}
 };
 
-void thread_routine(int id, PPQ<int> *ppq)
+void thread_routine(int id, LOCK_PPQ<int> *ppq)
 {
 	int i;//, data[10];
 
@@ -46,7 +46,7 @@ void thread_routine(int id, PPQ<int> *ppq)
 }
 
 
-void point_routine(int id, PPQ<Point, ComparePoints>* ppq)
+void point_routine(int id, LOCK_PPQ<Point, ComparePoints>* ppq)
 {
 	for (int i = 0; i < 10; i++)
 	{
