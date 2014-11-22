@@ -6,9 +6,9 @@
 #ifndef LOCKFREESKIPLIST_HPP
 #define LOCKFREESKIPLIST_HPP
 
-#define SEED		10
-#define LF_MAX_LEVEL	20
-#define PROB		0.5
+#define SEED			10
+#define LF_MAX_LEVEL 	20
+#define PROB			0.5
 
 using namespace std;
 
@@ -25,8 +25,9 @@ template <class T, class Comparator>
 class LockFreeSkipList
 {
 	private:
-	std::atomic<int>				mLevel;
-	LockFreeNode<T>*				head;
+	atomic<int>				mLevel;
+	atomic<int>				lsize;
+	LockFreeNode<T>*		head;
 	//friend bool comparator_ <T,Comparator> (const T& t1, const T& t2);
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
 	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); }; //TODO get rid of this
@@ -40,9 +41,10 @@ class LockFreeSkipList
 	/*void insert(T *data[], int k);
 	T    find(T data);*/
 	bool remove(const T& data);
-	bool    pop_front(T& data);
-	size_t	  pop_front(T data[], int k);
+	bool pop_front(T& data);
+	size_t pop_front(T data[], int k);
 	void print();
+	int length();
 	//void printLevel(int l);
 private:
 	bool findNode(const T& data, LockFreeNode<T>** preds, LockFreeNode<T>** succs);
@@ -60,7 +62,8 @@ LockFreeSkipList<T,Comparator>::LockFreeSkipList()
 	mLevel = 0; // rename level and head
 	//TODO initialize head;
 	head = new LockFreeNode<T>();
-	head->level = LF_MAX_LEVEL;	
+	head->level = LF_MAX_LEVEL;
+	this->lsize = 0;
 	/*for (int i = 0; i < MAX_LEVEL-1; i++)
 	{
 		head->next[i] = nullptr;//maybe to in Node class
@@ -82,6 +85,12 @@ LockFreeSkipList<T,Comparator>::~LockFreeSkipList()
 	}
 	delete head;
 };
+
+template<class T, class Comparator>
+int LockFreeSkipList<T,Comparator>::length()
+{
+	return this->lsize;
+}
 
 //TODO have to clean up
 template<class T, class Comparator>
@@ -214,6 +223,7 @@ bool LockFreeSkipList<T,Comparator>::insert(const T& data)
 					findNode(data, preds, succs);
 				}
 			}
+			this->lsize += 1;
 			return true;
 		}
 		break;
@@ -270,6 +280,7 @@ bool LockFreeSkipList<T,Comparator>::remove(const T& data)
 					}
 					//std::cout << "is marked: " << marked << std::endl;
 					findNode(data, preds, succs); //is this for cleanup?? hangs without it
+					this->lsize -= 1;
 					return true;
 				}
 				else if (marked)
@@ -321,6 +332,7 @@ bool LockFreeSkipList<T,Comparator>::pop_front(T& data)
 				}
 				// return data
 				data = curr->data;
+				this->lsize -= 1;
 				return true;
 			}
 		} // !marked
@@ -372,6 +384,7 @@ size_t LockFreeSkipList<T,Comparator>::pop_front(T data[], int k)
 				}
 				// return data
 				data[count] = curr->data;
+				this->lsize -= 1;
 				count++;
 				if (count == k)
 					 return k;

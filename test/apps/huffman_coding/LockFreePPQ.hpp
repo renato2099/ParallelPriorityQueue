@@ -21,6 +21,7 @@ class LockFreePPQ
 	bool    pop_front(T& data) { return slist->pop_front(data); };
 	size_t   pop_front(T data[], int k) { return slist->pop_front(data, k); };
 	void print() { slist->print(); };
+	int length() { return slist->length(); }
 	//void printLevel(int l) { slist->printLevel(l); };
 };
 
