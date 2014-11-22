@@ -189,4 +189,11 @@ void HuffmanCodesLockPpq(const char *data, int freq[], int size, bool print)
     if (print) printLockPpqCodes(pqueue, arr, top);
 }
 
+void HuffmanCodesLockFreePpq(const char *data, int freq[], int size, bool print)
+{
+    //lock_priority_queue_type *pqueue = buildHuffmanLockPpqTree(data, freq, size);
+    // Print Huffman codes using the Huffman tree built above
+    //int arr[MAX_TREE_HT], top = 0;
+    //if (print) printLockPpqCodes(pqueue, arr, top);
+}
 #endif

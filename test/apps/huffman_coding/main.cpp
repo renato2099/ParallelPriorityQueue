@@ -119,7 +119,12 @@ int main(int argc, char** argv)
                 t1 = clock::now();
                 cout<<"LOCK_PPQ ";
                 break;
-            case 4: break;
+            case 4: 
+                t0 = clock::now();
+                HuffmanCodesLockFreePpq(ptr, freq, size, verbose);
+                t1 = clock::now();
+                cout<<"LOCK_FREE_PPQ ";
+                break;
             default:
                 cout<<"Option not recognized.";
         }
