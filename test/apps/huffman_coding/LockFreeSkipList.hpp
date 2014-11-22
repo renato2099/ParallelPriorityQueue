@@ -1,24 +1,24 @@
 #include <iostream>
 #include <stdint.h>
 #include <atomic>
-#include "../../inc/AtomicRef.hpp"
+#include "../../../inc/AtomicRef.hpp"
 
 #ifndef LOCKFREESKIPLIST_HPP
 #define LOCKFREESKIPLIST_HPP
 
 #define SEED		10
-#define MAX_LEVEL	21
+#define LF_MAX_LEVEL	20
 #define PROB		0.5
 
 using namespace std;
 
 // might do it like: http://stackoverflow.com/questions/19609417/atomic-operations-for-lock-free-doubly-linked-list
 
-template <typename T>  struct Node
+template <typename T>  struct LockFreeNode
 {	
 	T		data;
 	int		level;
-	AtomicRef<Node>	next[MAX_LEVEL];
+	AtomicRef<LockFreeNode>	next[LF_MAX_LEVEL];
 };
 
 template <class T, class Comparator>
@@ -26,15 +26,15 @@ class LockFreeSkipList
 {
 	private:
 	std::atomic<int>				mLevel;
-	Node<T>*						head;
+	LockFreeNode<T>*				head;
 	//friend bool comparator_ <T,Comparator> (const T& t1, const T& t2);
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
 	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); }; //TODO get rid of this
 
 
 	public:
-	SkipList();
-	~SkipList();
+	LockFreeSkipList();
+	~LockFreeSkipList();
 	
 	bool insert(const T& data);
 	/*void insert(T *data[], int k);
@@ -45,7 +45,7 @@ class LockFreeSkipList
 	void print();
 	//void printLevel(int l);
 private:
-	bool findNode(const T& data, Node<T>** preds, Node<T>** succs);
+	bool findNode(const T& data, LockFreeNode<T>** preds, LockFreeNode<T>** succs);
 };
 
 /*
@@ -59,8 +59,8 @@ LockFreeSkipList<T,Comparator>::LockFreeSkipList()
    srand(SEED);
 	mLevel = 0; // rename level and head
 	//TODO initialize head;
-	head = new Node<T>();
-	head->level = MAX_LEVEL;	
+	head = new LockFreeNode<T>();
+	head->level = LF_MAX_LEVEL;	
 	/*for (int i = 0; i < MAX_LEVEL-1; i++)
 	{
 		head->next[i] = nullptr;//maybe to in Node class
@@ -70,8 +70,8 @@ LockFreeSkipList<T,Comparator>::LockFreeSkipList()
 template<class T, class Comparator>
 LockFreeSkipList<T,Comparator>::~LockFreeSkipList()
 {
-	Node<T>* tmp;
-	Node<T>* curr;
+	LockFreeNode<T>* tmp;
+	LockFreeNode<T>* curr;
 
 	curr = head->next[0].getRef(); //head.load();
 	while (curr != nullptr)
@@ -85,20 +85,20 @@ LockFreeSkipList<T,Comparator>::~LockFreeSkipList()
 
 //TODO have to clean up
 template<class T, class Comparator>
-bool LockFreeSkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>** succs)
+bool LockFreeSkipList<T, Comparator>::findNode(const T& data, LockFreeNode<T>** preds, LockFreeNode<T>** succs)
 {
 	int bottomLevel = 0;
 	bool marked = false;
 	bool snip = false;
-	Node<T>* pred = nullptr;
-	Node<T>* curr = nullptr;
-	Node<T>* succ = nullptr;
+	LockFreeNode<T>* pred = nullptr;
+	LockFreeNode<T>* curr = nullptr;
+	LockFreeNode<T>* succ = nullptr;
 	retry:
 	while(true) 
 	{
 
 		pred = this->head;
-		for (int level = MAX_LEVEL-1; level >= bottomLevel; level--)
+		for (int level = LF_MAX_LEVEL-1; level >= bottomLevel; level--)
 		{
 			curr = pred->next[level].getRef();
 			while(true)
@@ -157,7 +157,7 @@ template<class T, class Comparator>
 bool LockFreeSkipList<T,Comparator>::insert(const T& data)
 {
 	int topLevel = 0;
-	while (topLevel < (MAX_LEVEL - 1) && topLevel <= mLevel && ((float) rand() / RAND_MAX) < PROB)
+	while (topLevel < (LF_MAX_LEVEL - 1) && topLevel <= mLevel && ((float) rand() / RAND_MAX) < PROB)
 	{
 		topLevel++;
 	}
@@ -167,8 +167,8 @@ bool LockFreeSkipList<T,Comparator>::insert(const T& data)
 		mLevel = topLevel;
 	}	
 	int bottomLevel = 0;
-	Node<T>** preds = new Node<T>*[MAX_LEVEL+1];
-	Node<T>** succs = new Node<T>*[MAX_LEVEL+1];
+	LockFreeNode<T>** preds = new LockFreeNode<T>*[LF_MAX_LEVEL+1];
+	LockFreeNode<T>** succs = new LockFreeNode<T>*[LF_MAX_LEVEL+1];
 	
 	while(true)
 	{
@@ -180,19 +180,19 @@ bool LockFreeSkipList<T,Comparator>::insert(const T& data)
 		else
 		{
 
-			Node<T>* nnode = new Node<T>();
+			LockFreeNode<T>* nnode = new LockFreeNode<T>();
 			nnode->data = data;
 			nnode->level = topLevel;
 			
 			// The new node gets the reference from the successor
 			for(int level = bottomLevel; level <=topLevel; level++)
 			{
-				Node<T>* succ = succs[level];
+				LockFreeNode<T>* succ = succs[level];
 				nnode->next[level].setRef(succ, false);
 			}
 
-			Node<T>* pred = preds[bottomLevel];
-			Node<T>* succ = succs[bottomLevel];
+			LockFreeNode<T>* pred = preds[bottomLevel];
+			LockFreeNode<T>* succ = succs[bottomLevel];
 
 			nnode->next[bottomLevel].setRef(succ, false);
 
@@ -226,9 +226,9 @@ template<class T, class Comparator>
 bool LockFreeSkipList<T,Comparator>::remove(const T& data)
 {
 	int bottomLevel = 0;
-	Node<T>** preds = new Node<T>*[MAX_LEVEL+1];
-	Node<T>** succs = new Node<T>*[MAX_LEVEL+1];
-	Node<T>* succ;
+	LockFreeNode<T>** preds = new LockFreeNode<T>*[LF_MAX_LEVEL+1];
+	LockFreeNode<T>** succs = new LockFreeNode<T>*[LF_MAX_LEVEL+1];
+	LockFreeNode<T>* succ;
 	bool marked = false;
 	
 	while(true) //This loop makes no sense
@@ -240,7 +240,7 @@ bool LockFreeSkipList<T,Comparator>::remove(const T& data)
 		}
 		else
 		{
-			Node<T>* node2rm = succs[bottomLevel];
+			LockFreeNode<T>* node2rm = succs[bottomLevel];
 			
 			//TODO this should be an atomic operation
 			marked = node2rm->next[bottomLevel].getMarked();
@@ -287,8 +287,8 @@ bool LockFreeSkipList<T,Comparator>::pop_front(T& data)
 {
 	int bottomLevel = 0;
 	bool marked;
-	Node<T>* curr = nullptr;
-	Node<T>* succ = nullptr;
+	LockFreeNode<T>* curr = nullptr;
+	LockFreeNode<T>* succ = nullptr;
 
 	curr = head->next[bottomLevel].getRef();
 	while (curr != nullptr)
@@ -337,8 +337,8 @@ size_t LockFreeSkipList<T,Comparator>::pop_front(T data[], int k)
 {
 	int bottomLevel = 0;
 	bool marked;
-	Node<T>* curr = nullptr;
-	Node<T>* succ = nullptr;
+	LockFreeNode<T>* curr = nullptr;
+	LockFreeNode<T>* succ = nullptr;
 	int count = 0;
 
 	curr = head->next[bottomLevel].getRef();
@@ -388,7 +388,7 @@ size_t LockFreeSkipList<T,Comparator>::pop_front(T data[], int k)
 template<class T, class Comparator>
 void LockFreeSkipList<T,Comparator>::print()
 {
-	Node<T>* p;
+	LockFreeNode<T>* p;
 	std::cout << "---------------BEGIN-----------------------" << std::endl;
 
 	p = this->head->next[0].getRef();

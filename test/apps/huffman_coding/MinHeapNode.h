@@ -4,7 +4,8 @@
 #include <vector>
 #include <queue>
 
-#include "LOCK_PPQ.hpp"
+#include "LockPPQ.hpp"
+#include "LockFreePPQ.hpp"
 
 #ifndef MINHEAPNODE_H
 #define MINHEAPNODE_H
@@ -38,6 +39,7 @@ struct nless : public std::binary_function<Type *, Type *, bool> {
 };
 
 typedef priority_queue<InnerNode*, vector<InnerNode*>, nless<InnerNode> >priority_queue_mhn_type;
-typedef LOCK_PPQ<InnerNode*, nless<InnerNode> > lock_priority_queue_type;
+typedef LockPPQ<InnerNode*, nless<InnerNode> > lock_priority_queue_type;
+typedef LockFreePPQ<InnerNode*, nless<InnerNode> > lock_free_priority_queue_type;
 
 #endif

@@ -2,17 +2,17 @@
 #include <stdint.h>
 #include "LockSkipList.hpp"
 
-#ifndef LOCK_PPQ_HPP
-#define LOCK_PPQ_HPP
+#ifndef LOCKPPQ_HPP
+#define LOCKPPQ_HPP
 
-template <class T, class Comparator = std::less<T> > class LOCK_PPQ
+template <class T, class Comparator = std::less<T> > class LockPPQ
 {
 	private:
 	LockSkipList<T,Comparator> *slist;
 	
 	public:
-	LOCK_PPQ() { slist = new LockSkipList<T, Comparator>(); };
-	~LOCK_PPQ() { delete slist; };
+	LockPPQ() { slist = new LockSkipList<T, Comparator>(); };
+	~LockPPQ() { delete slist; };
 	void insert(T data) { slist->insert(data); };
 	void insert(T* data[], int k) { slist->insert(data, k); };
 	T    find(T data) { return slist->find(data); };
