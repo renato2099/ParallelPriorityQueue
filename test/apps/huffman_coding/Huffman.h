@@ -5,13 +5,57 @@
 
 #define MAX_TREE_HT 100
 
+/* Uses lock-based ppq */
+lock_priority_queue_type* createAndBuildLockPpqMinHeap(const char* data, int freq[], int size)
+{
+
+    lock_priority_queue_type *pq = new lock_priority_queue_type();
+    for (int i = 0; i < size; ++i)
+    {
+        pq->insert(new InnerNode(newNode(data[i], freq[i])));
+    }   
+    return pq;
+}
+
+/* Uses std ppq */
 priority_queue_mhn_type* createAndBuildStdMinHeap(const char* data, int freq[], int size)
 {
     priority_queue_mhn_type *pq = new priority_queue_mhn_type;
     for (int i = 0; i < size; ++i)
+    {
         pq->push(new InnerNode(newNode(data[i], freq[i])));
-	
+	}
 	return pq;
+}
+
+lock_priority_queue_type* buildHuffmanLockPpqTree(const char* data, int freq[], int size)
+{
+    struct MinHeapNode *top;
+    // Step 1: Create a min heap of capacity equal to size.  Initially, there are
+    // modes equal to size.
+    lock_priority_queue_type *pq = createAndBuildLockPpqMinHeap(data, freq, size);
+    
+    // Iterate while size of heap doesn't become 1
+    while (pq->length() != 1)
+    {
+
+        // Step 2: Extract the two minimum freq items from min heap
+        InnerNode* l = pq->pop_front();
+        InnerNode* r = pq->pop_front();
+        
+        // Step 3:  Create a new internal node with frequency equal to the
+        // sum of the two nodes frequencies. Make the two extracted node as
+        // left and right children of this new node. Add this node to the min heap
+        // '$' is a special value for internal nodes, not used
+        top = newNode('$', l->getNode().freq + r->getNode().freq);
+        top->left = l->getRef();
+        top->right = r->getRef();
+    
+        pq->insert(new InnerNode(top));
+    }
+
+    // Step 4: The remaining node is the root node and the tree is complete.
+    return pq;
 }
 
 priority_queue_mhn_type* buildHuffmanStdTree(const char* data, int freq[], int size)
@@ -109,6 +153,13 @@ void printStdCodes(priority_queue_mhn_type *pq, int arr[], int top)
     pq->pop(); 
  }
 
+void printLockPpqCodes(lock_priority_queue_type *pq, int arr[], int top)
+{
+    InnerNode* root = pq->pop_front();
+    MinHeapNode  rn = root->getNode();
+    printCodes(&rn, arr, top);
+}
+
 // The main function that builds a Huffman Tree and print codes by traversing
 // the built Huffman Tree
 void HuffmanCodes(const char *data, int freq[], int size, bool print)
@@ -127,7 +178,15 @@ void HuffmanCodesStd(const char *data, int freq[], int size, bool print)
     priority_queue_mhn_type *pqueue = buildHuffmanStdTree(data, freq, size);
     // Print Huffman codes using the Huffman tree built above
     int arr[MAX_TREE_HT], top = 0;
-   if (print) printStdCodes(pqueue, arr, top);
+    if (print) printStdCodes(pqueue, arr, top);
+}
+
+void HuffmanCodesLockPpq(const char *data, int freq[], int size, bool print)
+{
+    lock_priority_queue_type *pqueue = buildHuffmanLockPpqTree(data, freq, size);
+    // Print Huffman codes using the Huffman tree built above
+    int arr[MAX_TREE_HT], top = 0;
+    if (print) printLockPpqCodes(pqueue, arr, top);
 }
 
 #endif

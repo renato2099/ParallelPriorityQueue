@@ -11,7 +11,7 @@ endif
 
 CFLAGS = -g -std=c++11 -O2 -Wall -pthread -stdlib=libc++
 
-OBJECTS = main.o #PPQ.o SkipList.o
+OBJECTS = main.o #LOCK_PPQ.o LockSkipList.o
 
 ifdef version
   ifeq "$(version)" "par"
