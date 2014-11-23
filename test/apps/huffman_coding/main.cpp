@@ -90,7 +90,6 @@ int main(int argc, char** argv)
     typedef std::chrono::high_resolution_clock clock;
     typedef std::chrono::milliseconds milliseconds;
     clock::time_point t0, t1;
-    milliseconds total_ms;
 
     if (!readCmdLine(argc, argv, corr, verbose, type))
     {
