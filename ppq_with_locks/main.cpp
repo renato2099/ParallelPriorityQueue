@@ -29,23 +29,6 @@ struct ComparePoints
 	}
 };
 
-void thread_routine(int id, LOCK_PPQ<int> *ppq)
-{
-	int i;//, data[10];
-
-	for (i = 0; i < 10; i++)
-	{
-		ppq->insert(10 * (id * 10 + i + 1));
-
-	}
-
-	for (i = 1; i < 10; i++)
-	{
-		ppq->remove(10 * (id * 10 + i + 1));
-	}
-}
-
-
 void point_routine(int id, LOCK_PPQ<Point, ComparePoints>* ppq)
 {
 	for (int i = 0; i < 10; i++)
@@ -62,14 +45,19 @@ void point_routine(int id, LOCK_PPQ<Point, ComparePoints>* ppq)
 	}
 }
 
-int readCmdLine(int argc, char** argv, bool &benchEn, int &numThreads)
+int readCmdLine(int argc, char** argv, bool &benchEn, bool &pop, bool &rm, int &numThreads, int &numInserts, float &fixInserts, bool &verbose)
 {
 	// program options
 	po::options_description desc;
 	desc.add_options()
 		("help,h", "produce help message")
 		("benchmark,b", po::bool_switch(&benchEn)->default_value(false), "run benchmarks")
+		("pop_front,p", po::bool_switch(&pop)->default_value(false), "benchmark pop_front method")
+		("remove,r", po::bool_switch(&rm)->default_value(false), "benchmark remove method")
 		("threads,t", po::value<int>(&numThreads)->default_value(1), "number of threads")
+		("# inserts,i", po::value<int>(&numInserts)->default_value(1), "number of insert operations")
+		("\% fixed inserts,f", po::value<float>(&fixInserts)->default_value(1), "percentage of fixed inserts")
+		("verbose,v", po::bool_switch(&verbose)->default_value(false), "print extra messages")
 		;
 	po::variables_map vm;
 	try
@@ -94,16 +82,23 @@ int readCmdLine(int argc, char** argv, bool &benchEn, int &numThreads)
 
 int main(int argc, char** argv)
 {
-	bool benchEn = false;
-	int numThreads = 1;
-	if (!readCmdLine(argc, argv, benchEn, numThreads))
+	bool benchEn = false, pop = false, rm = false, verbose = false;
+	int numThreads = 1, numInserts = 1;
+	float fixInserts;
+
+	if (!readCmdLine(argc, argv, benchEn, pop, rm, numThreads, numInserts, fixInserts, verbose))
 	{
-		if (!benchEn)
+		if (benchEn)
 		{
+			cout << "Running only with " << THREADS << " threads " << endl;
 			numThreads = THREADS;	
 		}
-		cout << "Running with " << numThreads << endl;	
-		basic_benchmark(numThreads);
+		if (!pop & !rm)
+		{
+			cout << "Choose a method to benchmark." << endl;
+			return 1;
+		}
+		benchmark(pop, rm, numThreads, numInserts, fixInserts, verbose);
 	}//IF-CMD-LINE
 	return 0;
 	
