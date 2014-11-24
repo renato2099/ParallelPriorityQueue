@@ -301,8 +301,8 @@ bool SkipList<T,Comparator>::pop_front(T& data)
 		{
 			bool iMarkedIt = curr->next[bottomLevel].compareAndSet(succ, succ, false, true);
 
-			marked = curr->next[bottomLevel].getMarked();
-			succ = curr->next[bottomLevel].getRef();
+			//marked = curr->next[bottomLevel].getMarked();
+			//succ = curr->next[bottomLevel].getRef();
 			if (iMarkedIt)
 			{
 				//Now mark upper levels
@@ -322,7 +322,10 @@ bool SkipList<T,Comparator>::pop_front(T& data)
 				// return data
 				data = curr->data;
 				return true;
-			}
+			} // if iMarkedIt
+			marked = curr->next[bottomLevel].getMarked();
+			succ = curr->next[bottomLevel].getRef();
+
 		} // !marked
 		// if it is already marked we try to repoint header
 		head->next[bottomLevel].compareAndSet(curr, succ, false, false); //first false belongs to head
@@ -347,13 +350,14 @@ size_t SkipList<T,Comparator>::pop_front(T data[], int k)
 		// try to delete/mark curr
 		marked = curr->next[bottomLevel].getMarked();
 		succ = curr->next[bottomLevel].getRef();
+		std::cout << curr->data << "\t\t" << marked << std::endl;
 		// if already deleted we continue
 		while (!marked)
 		{
 			bool iMarkedIt = curr->next[bottomLevel].compareAndSet(succ, succ, false, true);
 
-			marked = curr->next[bottomLevel].getMarked();
-			succ = curr->next[bottomLevel].getRef();
+			//marked = curr->next[bottomLevel].getMarked();
+			//succ = curr->next[bottomLevel].getRef();
 			if (iMarkedIt)
 			{
 				//Now mark upper levels
@@ -370,12 +374,16 @@ size_t SkipList<T,Comparator>::pop_front(T data[], int k)
 					}
 				
 				}
+
 				// return data
 				data[count] = curr->data;
 				count++;
 				if (count == k)
 					 return k;
-			}
+			} //if iMarkedIt
+			marked = curr->next[bottomLevel].getMarked();
+			succ = curr->next[bottomLevel].getRef();
+
 		} // !marked
 		// if it is already marked we try to repoint header
 		head->next[bottomLevel].compareAndSet(curr, succ, false, false); //first false belongs to head
@@ -389,12 +397,13 @@ template<class T, class Comparator>
 void SkipList<T,Comparator>::print()
 {
 	Node<T>* p;
+	std::cout << "SkipList, level: " << mLevel << std::endl;
 	std::cout << "---------------BEGIN-----------------------" << std::endl;
 
 	p = this->head->next[0].getRef();
 	while (p != nullptr)
 	{
-		std::cout << "value: " << p->data << "\t\t" << p->next[0].getMarked() << std::endl;
+		std::cout << "value: " << p->data << "\t\t" << p->level << "\t\t" << p->next[0].getMarked() << std::endl;
 		p = p->next[0].getRef();
 	}
 	std::cout << "---------------END-----------------------" << std::endl;
