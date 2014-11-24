@@ -31,7 +31,7 @@ compile(){
     make -C ../../ppq_lock_free -f Makefile main
 }
 
-while getopts ":r :c :m: :t : f :i :h" opt; do
+while getopts ":r :c :m: :t: :f: :i: :h" opt; do
    case $opt in
         c)
             COMP=1
@@ -95,7 +95,7 @@ if [ ${COMP} -eq 1 ]; then
 fi
 
 # std
-./../../ppq_std/main -p -t${THREADS} -i${INSERTS} -f${FIXED}
+#./../../ppq_std/main -p -t${THREADS} -i${INSERTS} -f${FIXED}
 
 # sequential
 #./../../ppq_lock_free/main -p -t${THREADS} -i${INSERTS} -f${FIXED}
