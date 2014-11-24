@@ -312,8 +312,7 @@ bool LockFreeSkipList<T,Comparator>::pop_front(T& data)
 		{
 			bool iMarkedIt = curr->next[bottomLevel].compareAndSet(succ, succ, false, true);
 
-			marked = curr->next[bottomLevel].getMarked();
-			succ = curr->next[bottomLevel].getRef();
+
 			if (iMarkedIt)
 			{
 				//Now mark upper levels
@@ -335,6 +334,8 @@ bool LockFreeSkipList<T,Comparator>::pop_front(T& data)
 				this->lsize -= 1;
 				return true;
 			}
+			marked = curr->next[bottomLevel].getMarked();
+			succ = curr->next[bottomLevel].getRef();
 		} // !marked
 		// if it is already marked we try to repoint header
 		head->next[bottomLevel].compareAndSet(curr, succ, false, false); //first false belongs to head
@@ -363,9 +364,6 @@ size_t LockFreeSkipList<T,Comparator>::pop_front(T data[], int k)
 		while (!marked)
 		{
 			bool iMarkedIt = curr->next[bottomLevel].compareAndSet(succ, succ, false, true);
-
-			marked = curr->next[bottomLevel].getMarked();
-			succ = curr->next[bottomLevel].getRef();
 			if (iMarkedIt)
 			{
 				//Now mark upper levels
@@ -389,6 +387,8 @@ size_t LockFreeSkipList<T,Comparator>::pop_front(T data[], int k)
 				if (count == k)
 					 return k;
 			}
+			marked = curr->next[bottomLevel].getMarked();
+			succ = curr->next[bottomLevel].getRef();
 		} // !marked
 		// if it is already marked we try to repoint header
 		head->next[bottomLevel].compareAndSet(curr, succ, false, false); //first false belongs to head
