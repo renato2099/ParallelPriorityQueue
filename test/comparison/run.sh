@@ -95,7 +95,7 @@ if [ ${COMP} -eq 1 ]; then
 fi
 
 # std
-#./../../ppq_std/main -p -t${THREADS} -i${INSERTS} -f${FIXED}
+./../../ppq_std/main -p -t${THREADS} -i${INSERTS} -f${FIXED}
 
 # sequential
 #./../../ppq_lock_free/main -p -t${THREADS} -i${INSERTS} -f${FIXED}
