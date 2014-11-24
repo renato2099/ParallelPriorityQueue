@@ -71,7 +71,7 @@ void pop_benchmark(int numThreads, int numInserts, float fixInserts, bool verbos
 
 	//std::cout << "done." << std::endl;
 	milliseconds total_ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
-	std::cout << "Lock-free Elapsed[ms]: " << total_ms.count() << std::endl;
+	std::cout << "STD Elapsed[ms]: " << total_ms.count() << std::endl;
 }
 
 void basic_rm_routine(priority_queue<int> *ppq, int id, int numInserts, float fixInserts, int numThreads)
