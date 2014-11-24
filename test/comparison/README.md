@@ -8,5 +8,7 @@ Usage <method> <threads> <inserts> <fixedPercentage>
 * Fixed percentage of inserts
 
 Examples:
+
 sh run.sh remove 100 100 0.1
+
 sh run.sh remove 100 100 0.1
