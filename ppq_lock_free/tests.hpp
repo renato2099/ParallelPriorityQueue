@@ -23,16 +23,16 @@ void basic_pop_routine(PPQ<int>* ppq, int id, int numInserts, float fixInserts)
 
 	while (count < fix_i)
 	{
-		ppq->insert(count);
+		ppq->push(count);
 		count++;
 	}
 
 	count = 0;
 	while (count < ran_i)
 	{
-		if (coin_flip(gen))	//insert
+		if (coin_flip(gen))	//push
 		{
-			ppq->insert(count);
+			ppq->push(count);
 			value++;
 		}
 		else //pop_front
@@ -52,7 +52,7 @@ void pop_benchmark(int numThreads, int numInserts, float fixInserts, bool verbos
 	typedef std::chrono::milliseconds milliseconds;
 
 	if (verbose)
-		std::cout << "Pop method benchmark: " << numThreads << "threads | " << numInserts << "inserts | " << fixInserts << "\% fixed inserts" <<std::endl;
+		std::cout << "Pop method benchmark: " << numThreads << "threads | " << numInserts << "pushs | " << fixInserts << "\% fixed pushs" <<std::endl;
 	//std::cout << 
 	//int fix_i = numInserts * fixInserts, ran_i = numInserts - fix_i;
 	//TODO this type should be parametrized
@@ -83,7 +83,7 @@ void basic_rm_routine(PPQ<int> *ppq, int id, int numInserts, float fixInserts, i
 
 	for (int i = 0; i < N; i++)
 	{
-		ppq->insert((id * N + i));
+		ppq->push((id * N + i));
 
 	}
 
@@ -105,7 +105,7 @@ void rm_benchmark(int numThreads, int numInserts, float fixInserts, bool verbose
 	typedef std::chrono::milliseconds milliseconds;
 
 	if (verbose)
-		std::cout << "Remove method benchmark: " << numThreads << "threads | " << numInserts << "inserts | " << fixInserts << "\% fixed inserts" <<std::endl;
+		std::cout << "Remove method benchmark: " << numThreads << "threads | " << numInserts << "pushs | " << fixInserts << "\% fixed pushs" <<std::endl;
 	//std::cout << 
 	//int fix_i = numInserts * fixInserts, ran_i = numInserts - fix_i;
 	//TODO this type should be parametrized

@@ -25,6 +25,7 @@ template <class T, class Comparator>
 class SkipList
 {
 	private:
+	std::atomic<size_t>				mSize;
 	std::atomic<int>					mLevel;
 	Node<T>*						head;
 	//friend bool comparator_ <T,Comparator> (const T& t1, const T& t2);
@@ -35,7 +36,8 @@ class SkipList
 	public:
 	SkipList();
 	~SkipList();
-	
+	bool empty() const;
+	size_t size() const;
 	bool insert(const T& data);
 	/*void insert(T *data[], int k);
 	T    find(T data);*/
@@ -58,9 +60,10 @@ SkipList<T,Comparator>::SkipList()
 {
    srand(SEED);
 	mLevel = 0; // rename level and head
+	mSize = 0;
 	//TODO initialize head;
 	head = new Node<T>();
-	head->level = MAX_LEVEL;	
+	head->level = MAX_LEVEL;
 	/*for (int i = 0; i < MAX_LEVEL-1; i++)
 	{
 		head->next[i] = nullptr;//maybe to in Node class
@@ -154,6 +157,19 @@ bool SkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>**
 
 
 template<class T, class Comparator>
+bool SkipList<T,Comparator>::empty() const
+{
+	return (mSize == 0);
+}
+
+template<class T, class Comparator>
+size_t SkipList<T,Comparator>::size() const
+{
+	return mSize;
+}
+
+
+template<class T, class Comparator>
 bool SkipList<T,Comparator>::insert(const T& data)
 {
 	int topLevel = 0;
@@ -214,6 +230,7 @@ bool SkipList<T,Comparator>::insert(const T& data)
 					findNode(data, preds, succs);
 				}
 			}
+			mSize++;
 			return true;
 		}
 		break;
@@ -243,8 +260,8 @@ bool SkipList<T,Comparator>::remove(const T& data)
 			Node<T>* node2rm = succs[bottomLevel];
 			
 			//TODO this should be an atomic operation
-			marked = node2rm->next[bottomLevel].getMarked();
-			succ = node2rm->next[bottomLevel].getRef();
+			//marked = node2rm->next[bottomLevel].getMarked();
+			//succ = node2rm->next[bottomLevel].getRef();
 			while(true) //!marked
 			{
 				bool iMarkedIt = node2rm->next[bottomLevel].compareAndSet(succ, succ, false, true);
@@ -268,14 +285,16 @@ bool SkipList<T,Comparator>::remove(const T& data)
 						}
 				
 					}
-					//std::cout << "is marked: " << marked << std::endl;
 					findNode(data, preds, succs); //is this for cleanup?? hangs without it
+					mSize--;
 					return true;
 				}
 				else if (marked)
 				{
 					return false;
 				}
+				marked = node2rm->next[bottomLevel].getMarked();
+				succ = node2rm->next[bottomLevel].getRef();
 			}
 		}
 	}
@@ -321,6 +340,7 @@ bool SkipList<T,Comparator>::pop_front(T& data)
 				}
 				// return data
 				data = curr->data;
+				mSize--;
 				return true;
 			} // if iMarkedIt
 			marked = curr->next[bottomLevel].getMarked();
@@ -377,6 +397,7 @@ size_t SkipList<T,Comparator>::pop_front(T data[], int k)
 
 				// return data
 				data[count] = curr->data;
+				mSize--;
 				count++;
 				if (count == k)
 					 return k;
@@ -397,7 +418,7 @@ template<class T, class Comparator>
 void SkipList<T,Comparator>::print()
 {
 	Node<T>* p;
-	std::cout << "SkipList, level: " << mLevel << std::endl;
+	std::cout << "SkipList, level: " << mLevel << " size: " << mSize << std::endl;
 	std::cout << "---------------BEGIN-----------------------" << std::endl;
 
 	p = this->head->next[0].getRef();
