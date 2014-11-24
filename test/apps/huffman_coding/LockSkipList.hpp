@@ -5,11 +5,11 @@
 #include <mutex>
 #endif
 
-#ifndef SKIPLIST_HPP
-#define SKIPLIST_HPP
+#ifndef LOCKSKIPLIST_HPP
+#define LOCKSKIPLIST_HPP
 
 #define SEED		10
-#define MAX_LEVEL	10
+#define MAX_LEVEL	20
 #define PROB		0.5
 
 using namespace std;
@@ -27,7 +27,7 @@ public:
 	Node *forward[MAX_LEVEL];
 };
 
-template <class T, class Comparator> class SkipList;
+template <class T, class Comparator> class LockSkipList;
 /*template <class T, class Comparator> bool comparator_(const T& t1, const T& t2)
 {
 	return Comparator()(t1, t2);
@@ -35,11 +35,12 @@ template <class T, class Comparator> class SkipList;
 
 
 template <class T, class Comparator>
-class SkipList
+class LockSkipList
 {
 	private:
 	int level;
 	Node<T> *head;
+	int l_size;
 	//friend bool comparator_ <T,Comparator> (const T& t1, const T& t2);
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
 	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); }; //TODO get rid of this
@@ -49,8 +50,8 @@ class SkipList
 #endif
 
 	public:
-	SkipList();
-	~SkipList();
+	LockSkipList();
+	~LockSkipList();
 
 	void insert(T data);
 	void insert(T *data[], int k);
@@ -60,6 +61,7 @@ class SkipList
 	T*	  pop_front(int k);
 	void print();
 	void printLevel(int l);
+	int length();
 };
 
 /*
@@ -67,10 +69,11 @@ class SkipList
  */
 
 template<class T, class Comparator>
-SkipList<T,Comparator>::SkipList()
+LockSkipList<T,Comparator>::LockSkipList()
 {
-   srand(SEED);
+	srand(SEED);
 	level = 0;
+	l_size = 0;
 	head = new Node<T>();
 	if (head == NULL)
 	{
@@ -83,7 +86,7 @@ SkipList<T,Comparator>::SkipList()
 };
 
 template<class T, class Comparator>
-SkipList<T,Comparator>::~SkipList()
+LockSkipList<T,Comparator>::~LockSkipList()
 {
 	Node<T> *tmp, *p;
 	p =  head->forward[0];
@@ -97,7 +100,13 @@ SkipList<T,Comparator>::~SkipList()
 };
 
 template<class T, class Comparator>
-void SkipList<T,Comparator>::insert(T data)
+int LockSkipList<T,Comparator>::length()
+{
+	return this->l_size;
+}
+
+template<class T, class Comparator>
+void LockSkipList<T,Comparator>::insert(T data)
 {
 	int min_level;
 	Node<T> *p, *q, *update[MAX_LEVEL];
@@ -139,11 +148,11 @@ void SkipList<T,Comparator>::insert(T data)
  /* inserts the new node in the skip list and updates the pointers
  	*/
 	min_level = (q->level < this->level) ? q->level : this->level;
-for (int i = 0; i <= min_level; i++)
+	for (int i = 0; i <= min_level; i++)
 	{
 		q->forward[i] = update[i]->forward[i];
 		update[i]->forward[i] = q;
-}
+	}
 
 	/* if the level of the new node exceeds the current level of the skip list
  	* then the current skip list level is updated and
@@ -156,14 +165,14 @@ for (int i = 0; i <= min_level; i++)
 		this->head->forward[q->level] = q;
 		q->forward[q->level] = NULL;
 	}
-
+	this->l_size += 1;
 #ifdef THREAD_SAFE
 	mtx.unlock();
 #endif
 };
 
 template<class T, class Comparator>
-void SkipList<T,Comparator>::insert(T *data[], int k)
+void LockSkipList<T,Comparator>::insert(T *data[], int k)
 {
 	for (int i = 0; i < k; i++)
 	{
@@ -172,7 +181,7 @@ void SkipList<T,Comparator>::insert(T *data[], int k)
 };
 
 template<class T, class Comparator>
-T SkipList<T,Comparator>::find(T data)
+T LockSkipList<T,Comparator>::find(T data)
 {
 #ifdef THREAD_SAFE
 	std::lock_guard<std::mutex> guard(mtx);
@@ -204,7 +213,7 @@ T SkipList<T,Comparator>::find(T data)
 };
 
 template<class T, class Comparator>
-void SkipList<T,Comparator>::remove(T data)
+void LockSkipList<T,Comparator>::remove(T data)
 {
 #ifdef THREAD_SAFE
 	std::lock_guard<std::mutex> guard(mtx);
@@ -243,11 +252,11 @@ void SkipList<T,Comparator>::remove(T data)
 			level--;
 		}
 	}
-
+	this->l_size -= 1;
 };
 
 template<class T, class Comparator>
-T SkipList<T,Comparator>::pop_front()
+T LockSkipList<T,Comparator>::pop_front()
 {
 	Node<T> *p;
 #ifdef THREAD_SAFE
@@ -260,13 +269,14 @@ T SkipList<T,Comparator>::pop_front()
 		{
 			head->forward[i] = p->forward[i];
 		}
+		this->l_size -= 1;
 		return p->data;
 	}
 	return T();
 };
 
 template<class T, class Comparator>
-T* SkipList<T,Comparator>::pop_front(int k)
+T* LockSkipList<T,Comparator>::pop_front(int k)
 {
 	for (int i = 0; i < k; i++)
 	{
@@ -276,7 +286,7 @@ T* SkipList<T,Comparator>::pop_front(int k)
 };
 
 template<class T, class Comparator>
-void SkipList<T,Comparator>::print()
+void LockSkipList<T,Comparator>::print()
 {
 	Node<T> *p;
 	// the skip list is traversed at the lowest level
@@ -289,7 +299,7 @@ void SkipList<T,Comparator>::print()
 };
 
 template<class T, class Comparator>
-void SkipList<T,Comparator>::printLevel(int l)
+void LockSkipList<T,Comparator>::printLevel(int l)
 {
 	Node<T> *p;
 	// the skip list is traversed by level

@@ -2,11 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "SkipList.hpp"
+#include "LockSkipList.hpp"
 
 using namespace std;
 
-SkipList::SkipList()
+LockSkipList::LockSkipList()
 {
 	srand(SEED);
 
@@ -28,7 +28,7 @@ SkipList::SkipList()
 	}
 }
 
-SkipList::~SkipList()
+LockSkipList::~LockSkipList()
 {
 	Node *tmp, *p;
 
@@ -43,7 +43,7 @@ SkipList::~SkipList()
 	free(this->head);
 }
 
-void SkipList::insert(void *data, uint64_t key)
+void LockSkipList::insert(void *data, uint64_t key)
 {
 	int min_level;
 	Node *p, *q, *update[MAX_LEVEL];
@@ -112,7 +112,7 @@ void SkipList::insert(void *data, uint64_t key)
 #endif
 }
 
-void SkipList::insert(void *data[], uint64_t key[], int k)
+void LockSkipList::insert(void *data[], uint64_t key[], int k)
 {
 	for (int i = 0; i < k; i++)
 	{
@@ -120,7 +120,7 @@ void SkipList::insert(void *data[], uint64_t key[], int k)
 	}
 }
 
-void *SkipList::find(uint64_t key)
+void *LockSkipList::find(uint64_t key)
 {
 	Node *p;
 
@@ -158,7 +158,7 @@ void *SkipList::find(uint64_t key)
 	return NULL;
 }
 
-void SkipList::remove(uint64_t key)
+void LockSkipList::remove(uint64_t key)
 {
 	Node *p, *update[MAX_LEVEL];
 
@@ -206,7 +206,7 @@ void SkipList::remove(uint64_t key)
 #endif
 }
 
-void *SkipList::pop_front()
+void *LockSkipList::pop_front()
 {
 	Node *p;
 
@@ -236,7 +236,7 @@ void *SkipList::pop_front()
 	return (NULL);
 }
 
-void **SkipList::pop_front(int k)
+void **LockSkipList::pop_front(int k)
 {
 	for (int i = 0; i < k; i++)
 	{
@@ -246,7 +246,7 @@ void **SkipList::pop_front(int k)
 	return (NULL);
 }
 
-void SkipList::print()
+void LockSkipList::print()
 {
 	Node *p;
 
@@ -260,7 +260,7 @@ void SkipList::print()
 	}
 }
 
-void SkipList::printLevel(int l)
+void LockSkipList::printLevel(int l)
 {
 	Node *p;
 

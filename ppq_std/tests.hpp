@@ -4,18 +4,18 @@
 #include <mutex>
 #include <chrono>
 #include <random>
-
-#include "LOCK_PPQ.hpp"
+#include <queue>
 
 //TODO this should be parametrized or read from a properties file
 //#define INSERTS 10000
 //#define FIXED 0.1
 
-void basic_pop_routine(LOCK_PPQ<int>* ppq, int id, int numInserts, float fixInserts)
+using namespace std; 
+
+void basic_pop_routine(priority_queue<int>* ppq, int id, int numInserts, float fixInserts)
 {
 	int count = 0;
 	int value = 0;
-	int sum = 0;
 	int fix_i = numInserts * fixInserts, ran_i = numInserts - fix_i;
 	std::random_device rd;
 	std::mt19937 gen(rd());
@@ -23,7 +23,7 @@ void basic_pop_routine(LOCK_PPQ<int>* ppq, int id, int numInserts, float fixInse
 
 	while (count < fix_i)
 	{
-		ppq->insert(count);
+		ppq->push(count);
 		count++;
 	}
 
@@ -32,14 +32,12 @@ void basic_pop_routine(LOCK_PPQ<int>* ppq, int id, int numInserts, float fixInse
 	{
 		if (coin_flip(gen))	//insert
 		{
-			ppq->insert(count);
+			ppq->push(count);
 			value++;
 		}
 		else //pop_front
 		{
-			bool succ = ppq->pop_front(value);
-			if (succ)
-				sum += value;
+			ppq->pop();
 		}
 		count++;
 	}
@@ -56,7 +54,7 @@ void pop_benchmark(int numThreads, int numInserts, float fixInserts, bool verbos
 	//std::cout << 
 	//int fix_i = numInserts * fixInserts, ran_i = numInserts - fix_i;
 	//TODO this type should be parametrized
-	LOCK_PPQ<int>* ppq = new LOCK_PPQ<int>();
+	priority_queue<int>* ppq = new priority_queue<int>();
 	thread* tids = new thread[numThreads];
 
 	clock::time_point t0 = clock::now();
@@ -73,43 +71,40 @@ void pop_benchmark(int numThreads, int numInserts, float fixInserts, bool verbos
 
 	//std::cout << "done." << std::endl;
 	milliseconds total_ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
-	std::cout << "Lock-based Elapsed[ms]: " << total_ms.count() << std::endl;
+	std::cout << "STD Elapsed[ms]: " << total_ms.count() << std::endl;
 }
 
-void basic_rm_routine(LOCK_PPQ<int> *ppq, int id, int numInserts, float fixInserts, int numThreads)
+void basic_rm_routine(priority_queue<int> *ppq, int id, int numInserts, float fixInserts, int numThreads)
 {
 	//int fix_i = numInserts * fixInserts, ran_i = numInserts - fix_i;
-	int N = numInserts;
+	//int N = numInserts;
 
-	for (int i = 0; i < N; i++)
-	{
-		ppq->insert((id * N + i));
+	//for (int i = 0; i < N; i++)
+	//{
+		//ppq->push((id * N + i));
+	//}
 
-	}
-
-	for (int i = 1; i < N * numThreads; i++)
-	{
-		ppq->remove(10 * (id * 10 + i + 1));
+	//for (int i = 1; i < N * numThreads; i++)
+	//{
+	//	ppq->remove(10 * (id * 10 + i + 1));
 		//ppq->remove(i);
 		//ppq->pop_front(value);
 		/*if (succ)
 			std::cout << value << std::endl;
 		else
 			std::cout << "pop failed" << std::endl;*/
-	}
+	//}
 }
 
 void rm_benchmark(int numThreads, int numInserts, float fixInserts, bool verbose)
 {
-	typedef std::chrono::high_resolution_clock clock;
+/*	typedef std::chrono::high_resolution_clock clock;
 	typedef std::chrono::milliseconds milliseconds;
 
 	if (verbose)
 		std::cout << "Remove method benchmark: " << numThreads << "threads | " << numInserts << "inserts | " << fixInserts << "\% fixed inserts" <<std::endl;
-	//std::cout << 
-	//int fix_i = numInserts * fixInserts, ran_i = numInserts - fix_i;
 	//TODO this type should be parametrized
-	LOCK_PPQ<int>* ppq = new LOCK_PPQ<int>();
+	PPQ<int>* ppq = new PPQ<int>();
 	thread* tids = new thread[numThreads];
 
 	clock::time_point t0 = clock::now();
@@ -126,7 +121,7 @@ void rm_benchmark(int numThreads, int numInserts, float fixInserts, bool verbose
 
 	//std::cout << "done." << std::endl;
 	milliseconds total_ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
-	std::cout << "Lock-based Elapsed[ms]: " << total_ms.count() << std::endl;
+	std::cout << "Lock-free Elapsed[ms]: " << total_ms.count() << std::endl;*/
 }
 
 void benchmark(bool pop, bool rm, int numThreads, int numInserts, float fixInserts, bool verbose)
@@ -137,6 +132,7 @@ void benchmark(bool pop, bool rm, int numThreads, int numInserts, float fixInser
 	}
 	if (rm)
 	{
-		rm_benchmark(numThreads, numInserts, fixInserts, verbose);
+		std::cout << "STD PPQ does not implement remove method." << endl;
+		//rm_benchmark(numThreads, numInserts, fixInserts, verbose);
 	}
 }

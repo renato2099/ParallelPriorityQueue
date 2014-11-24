@@ -1,19 +1,19 @@
 #include <iostream>
-#include "PPQ.hpp"
+#include "LOCK_PPQ.hpp"
 
 using namespace std;
 
-PPQ::PPQ()
+LOCK_PPQ::LOCK_PPQ()
 {
 	slist = new SkipList();
 }
 
-PPQ::~PPQ()
+LOCK_PPQ::~LOCK_PPQ()
 {
 	delete slist;
 }
 
-void PPQ::insert(void *data, uint64_t key)
+void LOCK_PPQ::insert(void *data, uint64_t key)
 {
 	slist->insert(data, key);
 }
@@ -23,32 +23,32 @@ void PPQ::insert(void *data[], uint64_t key[], int k)
 	slist->insert(data, key, k);
 }
 
-void *PPQ::find(uint64_t key)
+void *LOCK_PPQ::find(uint64_t key)
 {
 	return slist->find(key);
 }
 
-void PPQ::remove(uint64_t key)
+void LOCK_PPQ::remove(uint64_t key)
 {
 	slist->remove(key);
 }
 
-void *PPQ::pop_front()
+void *LOCK_PPQ::pop_front()
 {
 	return slist->pop_front();
 }
 
-void **PPQ::pop_front(int k)
+void **LOCK_PPQ::pop_front(int k)
 {
 	return slist->pop_front(k);
 }
 
-void PPQ::print()
+void LOCK_PPQ::print()
 {
 	slist->print();
 }
 
-void PPQ::printLevel(int l)
+void LOCK_PPQ::printLevel(int l)
 {
 	slist->printLevel(l);
 }

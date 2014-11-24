@@ -9,9 +9,9 @@ ifeq ($(UNAME_S),Darwin)
   CC = clang++
 endif
 
-CFLAGS = -g -std=c++11 -O2 -Wall -pthread -stdlib=libc++
+CFLAGS = -g -std=c++11 -O2 -Wall -pthread
 
-OBJECTS = main.o #LOCK_PPQ.o LockSkipList.o
+OBJECTS = main.o 
 
 ifdef version
   ifeq "$(version)" "par"

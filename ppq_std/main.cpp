@@ -1,17 +1,12 @@
-#include <stdlib.h>
-#include <iostream>
-#include <thread>
-#include <mutex>
-
 #include "boost/program_options.hpp"
 
-#include "LOCK_PPQ.hpp"
 #include "tests.hpp"
 
 using namespace std;
 namespace po = boost::program_options;
 
-#define THREADS 10
+#define THREADS 2
+#define N 1000000
 
 struct Point
 {
@@ -28,22 +23,6 @@ struct ComparePoints
 		return p1.x < p2.x;
 	}
 };
-
-void point_routine(int id, LOCK_PPQ<Point, ComparePoints>* ppq)
-{
-	for (int i = 0; i < 10; i++)
-	{
-		ppq->insert(Point(i, i*2));
-	}
-
-	for (int i = 0; i < 9; i++)
-	{
-		Point p;
-		p = ppq->find(Point(1, 0));
-		p = ppq->pop_front();
-		//std::cout << p.x << " " << p.y << std::endl;
-	}
-}
 
 int readCmdLine(int argc, char** argv, bool &benchEn, bool &pop, bool &rm, int &numThreads, int &numInserts, float &fixInserts, bool &verbose)
 {
@@ -101,7 +80,4 @@ int main(int argc, char** argv)
 		benchmark(pop, rm, numThreads, numInserts, fixInserts, verbose);
 	}//IF-CMD-LINE
 	return 0;
-	
-	//PPQ<Point, ComparePoints> *points;
-	//points = new PPQ<Point, ComparePoints>();
 }
