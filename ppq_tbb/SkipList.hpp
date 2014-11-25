@@ -25,8 +25,8 @@ template <class T, class Comparator>
 class SkipList
 {
 	private:
-	atomic<size_t>				mSize;
-	atomic<int>					mLevel;
+	std::atomic<size_t>				mSize;
+	std::atomic<int>					mLevel;
 	Node<T>*						head;
 	//friend bool comparator_ <T,Comparator> (const T& t1, const T& t2);
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };

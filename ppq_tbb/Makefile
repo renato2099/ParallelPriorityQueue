@@ -42,6 +42,7 @@ endif
 endif
 
 LIBS+= -lboost_program_options
+CXX0XFLAGS+=-std=c++11
 
 all:    release test
 
