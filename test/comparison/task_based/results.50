@@ -1,0 +1,10 @@
+TBB Elapsed[ms]: 3
+TBB Elapsed[ms]: 26
+TBB Elapsed[ms]: 139
+TBB Elapsed[ms]: 1145
+TBB Elapsed[ms]: 8446
+Lock-free Elapsed[ms]: 24
+Lock-free Elapsed[ms]: 46
+Lock-free Elapsed[ms]: 143
+Lock-free Elapsed[ms]: 526
+Lock-free Elapsed[ms]: 2119
