@@ -13,6 +13,7 @@ clean_up(){
     make -C ../../sequential/v2 -f Makefile clean
     make -C ../../ppq_with_locks -f Makefile clean
     make -C ../../ppq_lock_free -f Makefile clean
+    make -C ../../ppq_tbb -f Makefile clean
 }
 
 compile(){
@@ -29,6 +30,17 @@ compile(){
 
     echo "======= COMPILING LOCK-FREE PPQ ======="
     make -C ../../ppq_lock_free -f Makefile main
+
+    echo "======= COMPILING TBB PPQ ======="
+    make -C ../../ppq_tbb -f Makefile release
+}
+
+print_help(){
+    echo "\t-c, To compile or not to compile"
+    echo "\t-r, To run make clean over all codes"
+    echo "\t-t, Define number of threads"
+    echo "\t-i, Define number of insert operations"
+    echo "\t-f, Define percentage of fixed insert operations"
 }
 
 while getopts ":r :c :m: :t: :f: :i: :h" opt; do
@@ -56,11 +68,7 @@ while getopts ":r :c :m: :t: :f: :i: :h" opt; do
             exit 1
             ;;
         h)
-            echo "-c, To compile or not to compile"
-            echo "-r, To run make clean over all codes"
-            echo "-t, Define number of threads"
-            echo "-i, Define number of insert operations"
-            echo "-f, Define percentage of fixed insert operations"
+            print_help
             exit 0
             ;;
         :)
@@ -85,6 +93,11 @@ if [ -z $INSERTS ]; then
     INSERTS=${DEF_INSERTS}
 fi
 
+if [ "$#"  -eq 0  ]; then
+    print_help
+    exit 0
+fi
+
 if [ ${CL} -eq 1 ]; then
     clean_up
     exit 0
@@ -105,3 +118,6 @@ fi
 
 #lock-free
 ./../../ppq_lock_free/main -p -t${THREADS} -i${INSERTS} -f${FIXED}
+
+#tbb
+./../../ppq_tbb/main -c -p -t${THREADS} -i${INSERTS} -f${FIXED} 
