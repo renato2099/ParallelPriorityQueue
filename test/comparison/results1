@@ -1,0 +1,24 @@
+STD Elapsed[ms]: 2
+Lock-based Elapsed[ms]: 20
+Lock-free Elapsed[ms]: 32
+TBB Elapsed[ms]: 3
+
+STD Elapsed[ms]: 1
+Lock-based Elapsed[ms]: 107
+Lock-free Elapsed[ms]: 57
+TBB Elapsed[ms]: 26
+
+STD --> broken
+Lock-based Elapsed[ms]: 1411
+Lock-free Elapsed[ms]: 134
+TBB Elapsed[ms]: 128
+
+STD --> broken
+Lock-based Elapsed[ms]: 33789
+Lock-free Elapsed[ms]: 378
+TBB Elapsed[ms]: 692
+
+STD --> broken
+LOCK --> broken
+TBB Elapsed[ms]: 3801
+Lock-free Elapsed[ms]: 1476

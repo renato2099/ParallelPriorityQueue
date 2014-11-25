@@ -43,7 +43,36 @@ print_help(){
     echo "\t-f, Define percentage of fixed insert operations"
 }
 
-while getopts ":r :c :m: :t: :f: :i: :h" opt; do
+run_params(){
+    echo ${PARAMS}
+    while read line
+    do
+        THREADS=`echo $line | awk '{x=$1}END{print x}'`
+        INSERTS=`echo $line | awk '{x=$2}END{print x}'`
+        FIXED=`echo $line | awk '{x=$3}END{print x}'`
+        #std
+        CMD="./../../ppq_std/main -p -t${THREADS} -i${INSERTS} -f${FIXED}"
+        eval ${CMD}
+        #echo ${CMD}
+        # sequential
+        #./../../ppq_lock_free/main -p -t${THREADS} -i${INSERTS} -f${FIXED}
+        #lock based
+        CMD="./../../ppq_with_locks/main -p -t${THREADS} -i${INSERTS} -f${FIXED}"
+        eval ${CMD}
+        #echo ${CMD}
+        #lock-free
+        CMD="./../../ppq_lock_free/main -p -t${THREADS} -i${INSERTS} -f${FIXED}"
+        eval ${CMD}
+        #echo ${CMD}
+        #tbb
+        CMD="./../../ppq_tbb/main -p -t${THREADS} -i${INSERTS} -f${FIXED} -c "
+        eval ${CMD}
+        #echo ${CMD}
+        echo 
+    done < "${PARAMS}"
+}
+
+while getopts ":r :c :m: :t: :f: :i: :h :p:" opt; do
    case $opt in
         c)
             COMP=1
@@ -62,6 +91,9 @@ while getopts ":r :c :m: :t: :f: :i: :h" opt; do
             ;;
         i)
             INSERTS=${OPTARG} 
+            ;;
+        p)
+            PARAMS=${OPTARG}
             ;;
        \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -107,6 +139,10 @@ if [ ${COMP} -eq 1 ]; then
     compile
 fi
 
+if [ -n ${PARAMS} ]; then
+    run_params
+    exit 0
+fi
 # std
 ./../../ppq_std/main -p -t${THREADS} -i${INSERTS} -f${FIXED}
 
@@ -121,3 +157,4 @@ fi
 
 #tbb
 ./../../ppq_tbb/main -c -p -t${THREADS} -i${INSERTS} -f${FIXED} 
+
