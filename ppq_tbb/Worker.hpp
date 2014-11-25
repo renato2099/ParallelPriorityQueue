@@ -3,7 +3,12 @@
 #include "tbb/task_scheduler_init.h"
 class Worker 
 {
-    /*...*/
+	priority_queue<int>* ppq;
+	int id;
+	int numInserts;
+	float fixInserts;
+
+	/*...*/
     void runComputeHeavyOperation(int i);
     
     void computeHeavyMethod() {
