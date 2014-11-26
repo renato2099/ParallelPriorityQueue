@@ -18,9 +18,6 @@ def get_cmap(N):
         return scalar_map.to_rgba(index)
     return map_index_to_rgb_color
 
-# Number of runs TODO should be calculated from param files
-N = 3
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--results", help="results file")
 parser.add_argument("--params", help="params file")
@@ -36,12 +33,9 @@ with open(args.results) as f:
     data = f.read();
 
 data = data.split('\n')
-#data.remove('')
 data = filter(None, data)#.remove('')
 
 ddata={}
-#mydict = dict((k.strip(), v.strip()) for k,v in (item.split(':') for item in data))
-#mydict = dict(k.strip(), v.strip())
 k_count = 0
 for k,v in (item.split(':') for item in data):
     k_count += 1
@@ -64,7 +58,7 @@ for item in labs:
     labels.append(item[0] + 'threads \n' + item[1] + 'ops')
     fix_i=float(item[2])
 #    print item
-
+N = len(labs)
 
 #menMeans = (20, 35, 30, 35, 27)
 #menMeans = ddata.get('Lock-free Elapsed[ms]')#(20, 35, 30, 35, 27)
@@ -102,11 +96,14 @@ ax.set_xticklabels( labels )#('1 thread\n75000ops', 'G2', 'G3', 'G4', 'G5') )
 
 lgd = ax.legend(colours, names, loc='right', bbox_to_anchor=(1.4, 0.9), prop=fontP)
 
+
 def autolabel(rects):
+    title_font = {'size':'10'} 
     # attach some text labels
     for rect in rects:
         height = rect.get_height()
-        ax.text(rect.get_x()+rect.get_width()/2., 1.05*height, '%d'%int(height), ha='center', va='bottom')
+        ax.text(rect.get_x()+rect.get_width()/2., 1.025*height, '%d'%int(height), ha='center', va='bottom', **title_font)
+
 for rect in rects:
     autolabel(rect)
 #autolabel(rects1)
