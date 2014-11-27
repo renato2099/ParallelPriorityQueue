@@ -1,0 +1,15 @@
+TBB Elapsed[ms]: 4
+TBB Elapsed[ms]: 31
+TBB Elapsed[ms]: 133
+TBB Elapsed[ms]: 1066
+TBB Elapsed[ms]: 8212
+Lock-free Elapsed[ms]: 18
+Lock-free Elapsed[ms]: 46
+Lock-free Elapsed[ms]: 173
+Lock-free Elapsed[ms]: 721
+Lock-free Elapsed[ms]: 2989
+XP_Lock-free Elapsed[ms]: 370
+XP_Lock-free Elapsed[ms]: 1689
+XP_Lock-free Elapsed[ms]: 13988
+XP_Lock-free Elapsed[ms]: 159808
+XP_Lock-free Elapsed[ms]: 0
