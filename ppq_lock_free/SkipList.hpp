@@ -39,8 +39,8 @@ class SkipList
 	bool empty() const;
 	size_t size() const;
 	bool insert(const T& data);
-	/*void insert(T *data[], int k);
-	T    find(T data);*/
+	size_t insert(T data[], int k);
+	/*T    find(T data);*/
 	bool remove(const T& data);
 	bool    pop_front(T& data);
 	size_t	  pop_front(T data[], int k);
@@ -238,6 +238,168 @@ bool SkipList<T,Comparator>::insert(const T& data)
 	return false;
 
 };
+
+template<class T, class Comparator>
+size_t SkipList<T,Comparator>::insert(T data[], int k)
+{
+	int bottomLevel = 0;
+	int count, inserted, n, topLevel, batch_maxLevel, next;
+	Node<T>** preds = new Node<T> *[MAX_LEVEL + 1];
+	Node<T>** succs = new Node<T> *[MAX_LEVEL + 1];
+
+	/* sorting */
+	for (int i = 0; i < k - 1; i++)
+	{
+		for (int j = 0; j < k - 1 - i; j++)
+		{
+			if (comp(data[j + 1], data[j]))
+			{
+				T temp = data[j + 1];
+				data[j + 1] = data[j];
+				data[j] = temp;
+			}
+		}
+	}
+
+	/* duplicates elimination */
+    for (int i = 0; i < k - 1; i++)
+    {
+        while (i + 1 < k && !comp(data[i], data[i + 1]))
+        {
+            for (int j = 0; j < k - 2 - i; j++)
+            {
+                data[i + 1 + j] = data[i + 2 + j];
+            }
+            k--;
+        }
+    }
+
+	count = 0;
+	inserted = 0;
+	while (count < k)
+	{
+		bool found = findNode(data[count], preds, succs);
+		if (found)
+		{
+			/* if one element is already in the SkipList, we ignore it */
+			count++;
+		}
+		else
+		{
+			/* we want to compute the number of elements that have to been inserted in this position
+			 * i.e. their key < succ->key
+			 * if succ[0] is the nullptr, all elements have to been inserted, because I am at the end
+			 * we store this number in "n" variable
+			 */
+			if (succs[0] != nullptr)
+			{
+				n = count;
+				while (n < k && comp(data[n], succs[0]->data))
+				{
+					n++;
+				}
+				n -= count;
+			}
+			else
+			{
+				n = k - count;
+			}
+
+			Node<T> **nnode = new Node<T> *[n]();
+			for (int i = 0; i < n; i++)
+			{
+				nnode[i] = new Node<T>();
+			}
+
+			/* we store in "batch_maxLevel" the maximum level between the "n" elements */
+			batch_maxLevel = 0;
+			for (int i = 0; i < n; i++)
+			{
+				nnode[i]->data = data[count + i];
+
+				topLevel = 0;
+				while (topLevel < (MAX_LEVEL - 1) && topLevel <= mLevel && ((float) rand() / RAND_MAX) < PROB)
+				{
+					topLevel++;
+				}
+
+				if (topLevel > mLevel)
+				{
+					mLevel = topLevel;
+				}
+
+				if (topLevel > batch_maxLevel)
+				{
+					batch_maxLevel = topLevel;
+				}
+
+				nnode[i]->level = topLevel;
+			}
+
+			/* we link all the nodes */
+			for (int i = 0; i < n - 1; i++)
+			{
+				for (int level = bottomLevel; level <= nnode[i]->level; level++)
+				{
+					/* we have to look for the next node with the appropriate level */
+					next = i + 1;
+					while (next < n && nnode[next]->level < level)
+					{
+						next++;
+					}
+
+					Node<T>* succ;
+					succ = (next == n) ? succs[level] : nnode[next];
+					nnode[i]->next[level].setRef(succ, false);
+				}
+			}
+
+			/* we link last of the "n" nodes to the succs */
+			for (int level = bottomLevel; level <= nnode[n - 1]->level; level++)
+			{
+				Node<T>* succ = succs[level];
+				nnode[n - 1]->next[level].setRef(succ, false);
+			}
+
+			Node<T> *pred = preds[bottomLevel];
+			Node<T> *succ = succs[bottomLevel];
+
+			if (!(pred->next[bottomLevel].compareAndSet(succ, nnode[0], false, false)))
+			{
+				continue;
+			}
+
+			for (int level = bottomLevel + 1; level <= batch_maxLevel; level++)
+			{
+				/* we have to look for the node with the appropiate level again
+				 * but not inside the next while loop
+				 */
+				next = 0;
+				while (next < n && nnode[next]->level < level)
+				{
+					next++;
+				}
+
+				while (true)
+				{
+					pred = preds[level];
+					succ = succs[level];
+					if (pred->next[level].compareAndSet(succ, nnode[next], false, false))
+					{
+						break;
+					}
+					findNode(data[count], preds, succs);
+				}	
+			}
+
+			count += n;
+			inserted += n;
+		}
+	}
+
+	mSize += inserted;
+	return (inserted);
+}
 
 template<class T, class Comparator>
 bool SkipList<T,Comparator>::remove(const T& data)
