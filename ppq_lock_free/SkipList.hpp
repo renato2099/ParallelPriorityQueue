@@ -262,17 +262,17 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 	}
 
 	/* duplicates elimination */
-    for (int i = 0; i < k - 1; i++)
-    {
-        while (i + 1 < k && !comp(data[i], data[i + 1]))
-        {
-            for (int j = 0; j < k - 2 - i; j++)
-            {
-                data[i + 1 + j] = data[i + 2 + j];
-            }
-            k--;
-        }
-    }
+	for (int i = 0; i < k - 1; i++)
+	{
+		while (i + 1 < k && !comp(data[i], data[i + 1]))
+		{
+			for (int j = 0; j < k - 2 - i; j++)
+			{
+				data[i + 1 + j] = data[i + 2 + j];
+			}
+			k--;
+		}
+	}
 
 	count = 0;
 	inserted = 0;
