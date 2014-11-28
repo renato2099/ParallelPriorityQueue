@@ -45,6 +45,10 @@ print_help(){
 }
 
 run_params(){
+    if [ -z ${PARAMS} ];then
+        echo "ERROR. No parameters passed."
+        exit 1
+    fi
     echo ${PARAMS}
     while read line
     do
@@ -140,7 +144,11 @@ if [ ${COMP} -eq 1 ]; then
     compile
 fi
 
-if [ -n ${PARAMS} ]; then
+
+if [ -z ${PARAMS} ]; then
+    echo "[INFO] No parameters file provided."
+    echo "[INFO] Running with command line parameters."
+else
     run_params
     exit 0
 fi
