@@ -88,7 +88,7 @@ for k,v in ddata.iteritems():
 
 # add some text for labels, title and axes ticks
 ax.set_ylabel('Msecs')
-ax.set_title('Performance using ' + str(fix_i*100) + '% insertions' )
+ax.set_title('Runtime graph using ' + str(fix_i*100) + '% insertions' )
 ax.set_xticks(ind+width)
 ax.set_xticklabels( labels )#('1 thread\n75000ops', 'G2', 'G3', 'G4', 'G5') )
 
