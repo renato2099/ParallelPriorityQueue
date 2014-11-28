@@ -48,7 +48,6 @@ for k,v in (item.split(':') for item in data):
 with open(args.params) as ff:
     labs = ff.read();
 labs = labs.split('\n')
-#labs.remove('')
 labs = filter(None, labs)#.remove('')
 labels=[]
 fix_i=0.0
@@ -57,20 +56,13 @@ for item in labs:
     item = filter(None, item)
     labels.append(item[0] + 'threads \n' + item[1] + 'ops')
     fix_i=float(item[2])
-#    print item
 N = len(labs)
 
-#menMeans = (20, 35, 30, 35, 27)
-#menMeans = ddata.get('Lock-free Elapsed[ms]')#(20, 35, 30, 35, 27)
 
 ind = np.arange(N)  # the x locations for the groups
 width = 0.2 # / k_count       # the width of the bars
 
 fig, ax = plt.subplots()
-#rects1 = ax.bar(ind, menMeans, width, color='r')#, yerr=menStd)
-
-#womenMeans = ddata.get('TBB Elapsed[ms]')#(25, 32, 34, 20, 25)
-#rects2 = ax.bar(ind+width, womenMeans, width, color='y')#, yerr=womenStd)
 
 rects=[]
 names=[]
@@ -91,18 +83,18 @@ ax.set_ylabel('Msecs')
 ax.set_title('Runtime graph using ' + str(fix_i*100) + '% insertions' )
 ax.set_xticks(ind+width)
 ax.set_xticklabels( labels )#('1 thread\n75000ops', 'G2', 'G3', 'G4', 'G5') )
-
-
+for tick in ax.xaxis.get_major_ticks():
+    tick.label.set_fontsize('x-small')
 
 lgd = ax.legend(colours, names, loc='right', bbox_to_anchor=(1.4, 0.9), prop=fontP)
 
 
 def autolabel(rects):
-    title_font = {'size':'10'} 
+    title_font = {'size':'9'} 
     # attach some text labels
     for rect in rects:
         height = rect.get_height()
-        ax.text(rect.get_x()+rect.get_width()/2., 1.025*height, '%d'%int(height), ha='center', va='bottom', **title_font)
+        ax.text(rect.get_x()+rect.get_width()/2., 2+height, '%d'%int(height), ha='center', va='bottom', **title_font)
 
 for rect in rects:
     autolabel(rect)

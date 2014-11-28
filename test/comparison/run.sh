@@ -41,6 +41,7 @@ print_help(){
     echo "\t-t, Define number of threads"
     echo "\t-i, Define number of insert operations"
     echo "\t-f, Define percentage of fixed insert operations"
+    echo "\t-p, Parameters file. Will not use any other of the parameters."
 }
 
 run_params(){
