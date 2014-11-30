@@ -16,8 +16,8 @@ using namespace std;
 
 template <typename T>  struct Node
 {	
-	T		data;
-	int		level;
+	T data;
+	int	level;
 	AtomicRef<Node>	next[MAX_LEVEL];
 };
 
@@ -25,13 +25,12 @@ template <class T, class Comparator>
 class SkipList
 {
 	private:
-	std::atomic<size_t>				mSize;
-	std::atomic<int>					mLevel;
-	Node<T>*						head;
+	std::atomic<size_t>	mSize;
+	std::atomic<int> mLevel;
+	Node<T> *head;
 	//friend bool comparator_ <T,Comparator> (const T& t1, const T& t2);
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
 	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); }; //TODO get rid of this
-
 
 	public:
 	SkipList();
@@ -40,13 +39,14 @@ class SkipList
 	size_t size() const;
 	bool insert(const T& data);
 	size_t insert(T data[], int k);
-	/*T    find(T data);*/
+	/*T find(T data);*/
 	bool remove(const T& data);
-	bool    pop_front(T& data);
-	size_t	  pop_front(T data[], int k);
+	bool pop_front(T& data);
+	size_t pop_front(T data[], int k);
 	void print();
 	//void printLevel(int l);
-private:
+
+	private:
 	bool findNode(const T& data, Node<T>** preds, Node<T>** succs);
 };
 
@@ -54,21 +54,21 @@ private:
  * Implementation of template class
  */
 
-
 template<class T, class Comparator>
 SkipList<T,Comparator>::SkipList()
 {
-   srand(SEED);
+	srand(SEED);
 	mLevel = 0; // rename level and head
 	mSize = 0;
+
 	//TODO initialize head;
 	head = new Node<T>();
-	head->level = MAX_LEVEL;
+	head->level = MAX_LEVEL; // FIXME I think this should be "MAX_LEVEL - 1"
 	/*for (int i = 0; i < MAX_LEVEL-1; i++)
 	{
 		head->next[i] = nullptr;//maybe to in Node class
 	}*/
-};
+}
 
 template<class T, class Comparator>
 SkipList<T,Comparator>::~SkipList()
@@ -84,7 +84,7 @@ SkipList<T,Comparator>::~SkipList()
 		delete tmp;
 	}
 	delete head;
-};
+}
 
 //TODO have to clean up
 template<class T, class Comparator>
@@ -96,15 +96,15 @@ bool SkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>**
 	Node<T>* pred = nullptr;
 	Node<T>* curr = nullptr;
 	Node<T>* succ = nullptr;
+
 	retry:
 	while(true) 
 	{
-
 		pred = this->head;
 		for (int level = MAX_LEVEL-1; level >= bottomLevel; level--)
 		{
 			curr = pred->next[level].getRef();
-			while(true)
+			while (true)
 			{
 				//If there is not a successor then stop
 				if (curr == nullptr)
@@ -113,7 +113,7 @@ bool SkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>**
 				marked = curr->next[level].getMarked();
 				succ = curr->next[level].getRef();
 				// check if the node is marked
-				while(marked)
+				while (marked)
 				{
 					snip = pred->next[level].compareAndSet(curr, succ, false, false);
 					if (!snip) 
@@ -152,6 +152,7 @@ bool SkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>**
 		else 
 			return false;
 	}
+
 	return false;
 }
 
@@ -168,25 +169,21 @@ size_t SkipList<T,Comparator>::size() const
 	return mSize;
 }
 
-
 template<class T, class Comparator>
 bool SkipList<T,Comparator>::insert(const T& data)
 {
 	int topLevel = 0;
+	int bottomLevel = 0;
+	//FIXME why we don't delete this memory before return?
+	Node<T>** preds = new Node<T>*[MAX_LEVEL+1]; //FIXME I think this should be MAX_LEVEL
+	Node<T>** succs = new Node<T>*[MAX_LEVEL+1]; //FIXME the same here
+
 	while (topLevel < (MAX_LEVEL - 1) && topLevel <= mLevel && ((float) rand() / RAND_MAX) < PROB)
 	{
 		topLevel++;
 	}
-
-	if (topLevel > mLevel)
-	{
-		mLevel = topLevel;
-	}	
-	int bottomLevel = 0;
-	Node<T>** preds = new Node<T>*[MAX_LEVEL+1];
-	Node<T>** succs = new Node<T>*[MAX_LEVEL+1];
 	
-	while(true)
+	while (true)
 	{
 		bool found = findNode(data, preds, succs);
 		if (found)
@@ -200,8 +197,12 @@ bool SkipList<T,Comparator>::insert(const T& data)
 			nnode->data = data;
 			nnode->level = topLevel;
 			
+			//FIXME Could we move this for loop after the "compareAndSet"?
+			//FIXME the difference is when it fails, because we don't perform useless operations
+			//FIXME I think it suffices if we link only the bottom level, which is done actually twice
+			//FIXME the first time happens inside the next loop, and the second time happens before the compareAndSet, WHY?
 			// The new node gets the reference from the successor
-			for(int level = bottomLevel; level <=topLevel; level++)
+			for (int level = bottomLevel; level <=topLevel; level++)
 			{
 				Node<T>* succ = succs[level];
 				nnode->next[level].setRef(succ, false);
@@ -214,12 +215,20 @@ bool SkipList<T,Comparator>::insert(const T& data)
 
 			if (!(pred->next[bottomLevel].compareAndSet(succ, nnode, false, false)))
 			{
+				//FIXME I think we can use "delete nnode;" here, because we start from scratch
 				continue;
-			}	
-			// Update predecessors
-			for(int level = bottomLevel+1; level <= topLevel; level++)
+			}
+
+			/* we increase the level of the SkipList only if we have successfully linked the node */
+			if (topLevel > mLevel)
 			{
-				while(true)
+				mLevel = topLevel;
+			}
+
+			// Update predecessors
+			for (int level = bottomLevel+1; level <= topLevel; level++)
+			{
+				while (true)
 				{
 					pred = preds[level];
 					succ = succs[level];
@@ -236,18 +245,18 @@ bool SkipList<T,Comparator>::insert(const T& data)
 		break;
 	}
 	return false;
-
-};
+}
 
 template<class T, class Comparator>
 size_t SkipList<T,Comparator>::insert(T data[], int k)
 {
 	int bottomLevel = 0;
-	int count, inserted, n, topLevel, batch_maxLevel, next;
-	Node<T>** preds = new Node<T> *[MAX_LEVEL + 1];
-	Node<T>** succs = new Node<T> *[MAX_LEVEL + 1];
-
+	int count, inserted, n, batch_maxLevel, next;
+	Node<T>** preds = new Node<T> *[MAX_LEVEL];
+	Node<T>** succs = new Node<T> *[MAX_LEVEL];
+	
 	/* sorting */
+	// FIXME we could improve it, by using a sorting algorithm with better complexity
 	for (int i = 0; i < k - 1; i++)
 	{
 		for (int j = 0; j < k - 1 - i; j++)
@@ -270,7 +279,25 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 			{
 				data[i + 1 + j] = data[i + 2 + j];
 			}
+
 			k--;
+		}
+	}
+
+	int *batch_topLevel = new int[k];
+
+	batch_maxLevel = mLevel;
+	for (int i = 0; i < k; i++)
+	{
+		batch_topLevel[i] = 0;
+		while (batch_topLevel[i] < (MAX_LEVEL - 1) && batch_topLevel[i] <= batch_maxLevel && ((float) rand() / RAND_MAX) < PROB)
+		{
+			batch_topLevel[i]++;
+		}
+
+		if (batch_topLevel[i] > batch_maxLevel)
+		{
+			batch_maxLevel = batch_topLevel[i];
 		}
 	}
 
@@ -286,9 +313,9 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 		}
 		else
 		{
-			/* we want to compute the number of elements that have to been inserted in this position
+			/* we want to compute the number of elements that have to be inserted in this position
 			 * i.e. their key < succ->key
-			 * if succ[0] is the nullptr, all elements have to been inserted, because I am at the end
+			 * if succ[0] is the nullptr, all elements have to be inserted, because I am at the end
 			 * we store this number in "n" variable
 			 */
 			if (succs[0] != nullptr)
@@ -311,29 +338,16 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 				nnode[i] = new Node<T>();
 			}
 
-			/* we store in "batch_maxLevel" the maximum level between the "n" elements */
 			batch_maxLevel = 0;
 			for (int i = 0; i < n; i++)
 			{
 				nnode[i]->data = data[count + i];
+				nnode[i]->level = batch_topLevel[inserted + i];
 
-				topLevel = 0;
-				while (topLevel < (MAX_LEVEL - 1) && topLevel <= mLevel && ((float) rand() / RAND_MAX) < PROB)
+				if (nnode[i]->level > batch_maxLevel)
 				{
-					topLevel++;
+					batch_maxLevel = nnode[i]->level;
 				}
-
-				if (topLevel > mLevel)
-				{
-					mLevel = topLevel;
-				}
-
-				if (topLevel > batch_maxLevel)
-				{
-					batch_maxLevel = topLevel;
-				}
-
-				nnode[i]->level = topLevel;
 			}
 
 			/* we link all the nodes */
@@ -348,8 +362,7 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 						next++;
 					}
 
-					Node<T>* succ;
-					succ = (next == n) ? succs[level] : nnode[next];
+					Node<T> *succ = (next == n) ? succs[level] : nnode[next];
 					nnode[i]->next[level].setRef(succ, false);
 				}
 			}
@@ -366,7 +379,20 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 
 			if (!(pred->next[bottomLevel].compareAndSet(succ, nnode[0], false, false)))
 			{
+				for (int i = 0; i < n; i++)
+				{
+					delete nnode[i];
+				}
+
+				delete [] nnode;
+
 				continue;
+			}
+
+			/* we can now update the level of the SkipList, based ONLY on the level of the current batch */
+			if (batch_maxLevel > mLevel)
+			{
+				mLevel = batch_maxLevel;
 			}
 
 			for (int level = bottomLevel + 1; level <= batch_maxLevel; level++)
@@ -394,8 +420,14 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 
 			count += n;
 			inserted += n;
+
+			delete [] nnode;
 		}
 	}
+
+	delete [] preds;
+	delete [] succs;
+	delete [] batch_topLevel;
 
 	mSize += inserted;
 	return (inserted);
@@ -405,15 +437,16 @@ template<class T, class Comparator>
 bool SkipList<T,Comparator>::remove(const T& data)
 {
 	int bottomLevel = 0;
-	Node<T>** preds = new Node<T>*[MAX_LEVEL+1];
-	Node<T>** succs = new Node<T>*[MAX_LEVEL+1];
+	//FIXME why we don't delete this memory before return?
+	Node<T>** preds = new Node<T>*[MAX_LEVEL+1]; //FIXME I think this should be MAX_LEVEL
+	Node<T>** succs = new Node<T>*[MAX_LEVEL+1]; //FIXME the same here
 	Node<T>* succ;
 	bool marked = false;
 	
-	while(true) //This loop makes no sense
+	while (true) //This loop makes no sense
 	{
 		bool found = findNode(data, preds, succs);
-		if(!found)
+		if (!found)
 		{
 			return false;
 		}
@@ -424,7 +457,7 @@ bool SkipList<T,Comparator>::remove(const T& data)
 			//TODO this should be an atomic operation
 			//marked = node2rm->next[bottomLevel].getMarked();
 			//succ = node2rm->next[bottomLevel].getRef();
-			while(true) //!marked
+			while (true) //!marked
 			{
 				bool iMarkedIt = node2rm->next[bottomLevel].compareAndSet(succ, succ, false, true);
 				//bool iMarkedIt = node2rm->next[bottomLevel].setMark(succ);
@@ -434,12 +467,12 @@ bool SkipList<T,Comparator>::remove(const T& data)
 				if (iMarkedIt)
 				{
 					// Now mark upper levels
-					for(int level = node2rm->level; level >= bottomLevel+1; level--)
+					for (int level = node2rm->level; level >= bottomLevel+1; level--)
 					{
 					marked = node2rm->next[level].getMarked();
 					succ = node2rm->next[level].getRef();
 				
-						while(!marked)
+						while (!marked)
 						{
 							node2rm->next[level].setMark(succ); //TODO this should simply return success
 							marked = node2rm->next[level].getMarked();
@@ -487,12 +520,12 @@ bool SkipList<T,Comparator>::pop_front(T& data)
 			if (iMarkedIt)
 			{
 				//Now mark upper levels
-				for(int level = curr->level; level >= bottomLevel+1; level--)
+				for (int level = curr->level; level >= bottomLevel+1; level--)
 				{
 					marked = curr->next[level].getMarked();
 					succ = curr->next[level].getRef();
 				
-					while(!marked)
+					while (!marked)
 					{
 						curr->next[level].setMark(succ); //TODO this should simply return success
 						marked = curr->next[level].getMarked();
@@ -515,7 +548,7 @@ bool SkipList<T,Comparator>::pop_front(T& data)
 	} // currptr != null
 	// reached end of skip list
 	return false;
-};
+}
 
 template<class T, class Comparator>
 size_t SkipList<T,Comparator>::pop_front(T data[], int k)
@@ -543,18 +576,17 @@ size_t SkipList<T,Comparator>::pop_front(T data[], int k)
 			if (iMarkedIt)
 			{
 				//Now mark upper levels
-				for(int level = curr->level; level >= bottomLevel+1; level--)
+				for (int level = curr->level; level >= bottomLevel+1; level--)
 				{
 					marked = curr->next[level].getMarked();
 					succ = curr->next[level].getRef();
 				
-					while(!marked)
+					while (!marked)
 					{
 						curr->next[level].setMark(succ); //TODO this should simply return success
 						marked = curr->next[level].getMarked();
 						succ = curr->next[level].getRef();
 					}
-				
 				}
 
 				// return data
@@ -590,7 +622,7 @@ void SkipList<T,Comparator>::print()
 		p = p->next[0].getRef();
 	}
 	std::cout << "---------------END-----------------------" << std::endl;
-};
+}
 
 /*template<class T, class Comparator>
 void SkipList<T,Comparator>::printLevel(int l)
@@ -598,11 +630,11 @@ void SkipList<T,Comparator>::printLevel(int l)
 	Node<T> *p;
 	// the skip list is traversed by level
 	p = head->next[l];
-	while(p != nullptr)
+	while (p != nullptr)
 	{
 		cout << p->data << endl;
 		p = p->next[l];
 	}
-};*/
+}*/
 
 #endif
