@@ -265,7 +265,7 @@ size_t SkipList<T,Comparator>::insert_t(T data[], int k)
 	thread* tids = new thread[k];
 	for (int i = 0; i < k; i++)
 	{
-		tids[i] = thread(i_rout, (SkipList *) this, data[i]);	
+		tids[i] = thread(i_rout, this, data[i]);	
 	}
 
 	for (int i = 0; i < k; i++)
