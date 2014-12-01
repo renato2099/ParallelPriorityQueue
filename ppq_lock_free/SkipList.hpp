@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdint.h>
 #include <atomic>
+#include <thread>
 #include "../inc/AtomicRef.hpp"
 
 #ifndef SKIPLIST_HPP
@@ -9,6 +10,7 @@
 #define SEED		10
 #define MAX_LEVEL	21
 #define PROB		0.5
+#define THREADS 	2
 
 using namespace std;
 
@@ -33,17 +35,20 @@ class SkipList
 	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); }; //TODO get rid of this
 
 	public:
+	SkipList* me;
 	SkipList();
 	~SkipList();
 	bool empty() const;
 	size_t size() const;
 	bool insert(const T& data);
 	size_t insert(T data[], int k);
+	size_t insert_t(T data[], int k);
 	/*T find(T data);*/
 	bool remove(const T& data);
 	bool pop_front(T& data);
 	size_t pop_front(T data[], int k);
 	void print();
+	static void i_rout(SkipList *sk, T data);
 	//void printLevel(int l);
 
 	private:
@@ -245,6 +250,29 @@ bool SkipList<T,Comparator>::insert(const T& data)
 		break;
 	}
 	return false;
+}
+
+template<class T, class Comparator>
+void SkipList<T,Comparator>::i_rout(SkipList *sk, T data)
+{
+	sk->insert(data);
+}
+
+template<class T, class Comparator>
+size_t SkipList<T,Comparator>::insert_t(T data[], int k)
+{
+	//define threads 
+	thread* tids = new thread[k];
+	for (int i = 0; i < k; i++)
+	{
+		tids[i] = thread(i_rout, (SkipList *) this, data[i]);	
+	}
+
+	for (int i = 0; i < k; i++)
+	{
+		tids[i].join();
+	}
+
 }
 
 template<class T, class Comparator>
