@@ -7,10 +7,12 @@
 #ifndef SKIPLIST_HPP
 #define SKIPLIST_HPP
 
-#define SEED		10
-#define MAX_LEVEL	21
-#define PROB		0.5
-#define THREADS 	2
+#define SEED				10
+#define MAX_LEVEL			21
+#define PROB				0.5
+
+#define INSERT_THREADS		2
+#define INSERT_THRESHOLD	100
 
 using namespace std;
 
@@ -42,17 +44,16 @@ class SkipList
 	size_t size() const;
 	bool insert(const T& data);
 	size_t insert(T data[], int k);
-	size_t insert_t(T data[], int k);
 	/*T find(T data);*/
 	bool remove(const T& data);
 	bool pop_front(T& data);
 	size_t pop_front(T data[], int k);
 	void print();
-	static void i_rout(SkipList *sk, T data);
 	//void printLevel(int l);
 
 	private:
 	bool findNode(const T& data, Node<T>** preds, Node<T>** succs);
+	static void insert_aux_thread(SkipList<T,Comparator> *mthis, T data[], int k, int *inserted);
 };
 
 /*
@@ -249,26 +250,157 @@ bool SkipList<T,Comparator>::insert(const T& data)
 }
 
 template<class T, class Comparator>
-void SkipList<T,Comparator>::i_rout(SkipList *sk, T data)
+void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T data[], int k, int *inserted)
 {
-	sk->insert(data);
-}
+	int bottomLevel = 0;
+	int count, n, batch_maxLevel, next;
+	Node<T>** preds = new Node<T> *[MAX_LEVEL];
+	Node<T>** succs = new Node<T> *[MAX_LEVEL];
 
-template<class T, class Comparator>
-size_t SkipList<T,Comparator>::insert_t(T data[], int k)
-{
-	//define threads 
-	thread* tids = new thread[k];
+	int *batch_topLevel = new int[k];
+
+	batch_maxLevel = mthis->mLevel;
 	for (int i = 0; i < k; i++)
 	{
-		tids[i] = thread(i_rout, this, data[i]);	
+		batch_topLevel[i] = 0;
+		while (batch_topLevel[i] < (MAX_LEVEL - 1) && batch_topLevel[i] <= batch_maxLevel && ((float) rand() / RAND_MAX) < PROB)
+		{
+			batch_topLevel[i]++;
+		}
+
+		if (batch_topLevel[i] > batch_maxLevel)
+		{
+			batch_maxLevel = batch_topLevel[i];
+		}
 	}
 
-	for (int i = 0; i < k; i++)
+	count = 0;
+	*inserted = 0;
+	while (count < k)
 	{
-		tids[i].join();
+		bool found = mthis->findNode(data[count], preds, succs);
+		if (found)
+		{
+			/* if one element is already in the SkipList, we ignore it */
+			count++;
+		}
+		else
+		{
+			/* we want to compute the number of elements that have to be inserted in this position
+			 * i.e. their key < succ->key
+			 * if succ[0] is the nullptr, all elements have to be inserted, because I am at the end
+			 * we store this number in "n" variable
+			 */
+			if (succs[0] != nullptr)
+			{
+				n = count;
+				while (n < k && mthis->comp(data[n], succs[0]->data))
+				{
+					n++;
+				}
+				n -= count;
+			}
+			else
+			{
+				n = k - count;
+			}
+
+			Node<T> **nnode = new Node<T> *[n]();
+			for (int i = 0; i < n; i++)
+			{
+				nnode[i] = new Node<T>();
+			}
+
+			batch_maxLevel = 0;
+			for (int i = 0; i < n; i++)
+			{
+				nnode[i]->data = data[count + i];
+				nnode[i]->level = batch_topLevel[*inserted + i];
+
+				if (nnode[i]->level > batch_maxLevel)
+				{
+					batch_maxLevel = nnode[i]->level;
+				}
+			}
+
+			/* we link all the nodes */
+			for (int i = 0; i < n - 1; i++)
+			{
+				for (int level = bottomLevel; level <= nnode[i]->level; level++)
+				{
+					/* we have to look for the next node with the appropriate level */
+					next = i + 1;
+					while (next < n && nnode[next]->level < level)
+					{
+						next++;
+					}
+
+					Node<T> *succ = (next == n) ? succs[level] : nnode[next];
+					nnode[i]->next[level].setRef(succ, false);
+				}
+			}
+
+			/* we link last of the "n" nodes to the succs */
+			for (int level = bottomLevel; level <= nnode[n - 1]->level; level++)
+			{
+				Node<T>* succ = succs[level];
+				nnode[n - 1]->next[level].setRef(succ, false);
+			}
+
+			Node<T> *pred = preds[bottomLevel];
+			Node<T> *succ = succs[bottomLevel];
+
+			if (!(pred->next[bottomLevel].compareAndSet(succ, nnode[0], false, false)))
+			{
+				for (int i = 0; i < n; i++)
+				{
+					delete nnode[i];
+				}
+
+				delete [] nnode;
+
+				continue;
+			}
+
+			/* we can now update the level of the SkipList, based ONLY on the level of the current batch */
+			if (batch_maxLevel > mthis->mLevel)
+			{
+				mthis->mLevel = batch_maxLevel;
+			}
+
+			for (int level = bottomLevel + 1; level <= batch_maxLevel; level++)
+			{
+				/* we have to look for the node with the appropiate level again
+				 * but not inside the next while loop
+				 */
+				next = 0;
+				while (next < n && nnode[next]->level < level)
+				{
+					next++;
+				}
+
+				while (true)
+				{
+					pred = preds[level];
+					succ = succs[level];
+					if (pred->next[level].compareAndSet(succ, nnode[next], false, false))
+					{
+						break;
+					}
+					mthis->findNode(data[count], preds, succs);
+				}	
+			}
+
+			count += n;
+			*inserted += n;
+
+			delete [] nnode;
+		}
 	}
 
+	delete [] preds;
+	delete [] succs;
+	delete [] batch_topLevel;
 }
 
 template<class T, class Comparator>
@@ -280,7 +412,6 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 	Node<T>** succs = new Node<T> *[MAX_LEVEL];
 	
 	/* sorting */
-	// FIXME we could improve it, by using a sorting algorithm with better complexity
 	for (int i = 0; i < k - 1; i++)
 	{
 		for (int j = 0; j < k - 1 - i; j++)
@@ -306,6 +437,40 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 
 			k--;
 		}
+	}
+
+	if (k > INSERT_THRESHOLD)
+	{
+		delete [] preds;
+		delete [] succs;
+
+		thread tid[INSERT_THREADS];
+		int inserted_nodes[INSERT_THREADS];
+
+		for (int j = 0; j < INSERT_THREADS - 1; j++)
+		{
+			tid[j] = thread(insert_aux_thread,
+							(SkipList<T,Comparator> *) this,
+							&(data[j * (k / INSERT_THREADS)]),
+							k / INSERT_THREADS,
+							&(inserted_nodes[j]));
+		}
+
+		tid[INSERT_THREADS - 1] = thread(insert_aux_thread,
+										(SkipList<T,Comparator> *) this,
+										&(data[(INSERT_THREADS - 1) * (k / INSERT_THREADS)]),
+										k / INSERT_THREADS + k % INSERT_THREADS,
+										&(inserted_nodes[INSERT_THREADS - 1]));
+
+		inserted = 0;
+		for (int j = 0; j < INSERT_THREADS; j++)
+		{
+			tid[j].join();
+			inserted += inserted_nodes[j];
+		}
+
+		mSize += inserted;
+		return (inserted);
 	}
 
 	int *batch_topLevel = new int[k];
@@ -439,7 +604,7 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 						break;
 					}
 					findNode(data[count], preds, succs);
-				}	
+				}
 			}
 
 			count += n;
