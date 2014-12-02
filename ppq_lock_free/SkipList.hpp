@@ -204,8 +204,6 @@ bool SkipList<T,Comparator>::insert(const T& data)
 			
 			//FIXME Could we move this for loop after the "compareAndSet"?
 			//FIXME the difference is when it fails, because we don't perform useless operations
-			//FIXME I think it suffices if we link only the bottom level, which is done actually twice
-			//FIXME the first time happens inside the next loop, and the second time happens before the compareAndSet, WHY?
 			// The new node gets the reference from the successor
 			for (int level = bottomLevel; level <=topLevel; level++)
 			{
@@ -215,8 +213,6 @@ bool SkipList<T,Comparator>::insert(const T& data)
 
 			Node<T>* pred = preds[bottomLevel];
 			Node<T>* succ = succs[bottomLevel];
-
-			nnode->next[bottomLevel].setRef(succ, false);
 
 			if (!(pred->next[bottomLevel].compareAndSet(succ, nnode, false, false)))
 			{
@@ -468,7 +464,7 @@ bool SkipList<T,Comparator>::remove(const T& data)
 	//FIXME why we don't delete this memory before return?
 	Node<T>** preds = new Node<T>*[MAX_LEVEL+1]; //FIXME I think this should be MAX_LEVEL
 	Node<T>** succs = new Node<T>*[MAX_LEVEL+1]; //FIXME the same here
-	Node<T>* succ;
+	Node<T>* succ = nullptr;
 	bool marked = false;
 	
 	while (true) //This loop makes no sense
