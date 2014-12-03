@@ -52,7 +52,7 @@ class SkipList
 	//void printLevel(int l);
 
 	private:
-	bool findNode(const T& data, Node<T>** preds, Node<T>** succs);
+	bool findNode(const T& data, Node<T>** preds, Node<T>** succs, int topLevel);
 	static void insert_aux_thread(SkipList<T,Comparator> *mthis, T data[], int k, int *inserted);
 };
 
@@ -94,7 +94,7 @@ SkipList<T,Comparator>::~SkipList()
 
 //TODO have to clean up
 template<class T, class Comparator>
-bool SkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>** succs)
+bool SkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>** succs, int topLevel)
 {
 	int bottomLevel = 0;
 	bool marked = false;
@@ -107,7 +107,8 @@ bool SkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>**
 	while(true) 
 	{
 		pred = this->head;
-		for (int level = MAX_LEVEL-1; level >= bottomLevel; level--)
+		
+		for (int level = topLevel; level >= bottomLevel; level--)
 		{
 			curr = pred->next[level].getRef();
 			while (true)
@@ -191,7 +192,7 @@ bool SkipList<T,Comparator>::insert(const T& data)
 	
 	while (true)
 	{
-		bool found = findNode(data, preds, succs);
+		bool found = findNode(data, preds, succs, topLevel);
 		if (found)
 		{
 			return false;
@@ -238,7 +239,7 @@ bool SkipList<T,Comparator>::insert(const T& data)
 					{
 						break;
 					}
-					findNode(data, preds, succs);
+					findNode(data, preds, succs, mLevel);
 				}
 			}
 			mSize++;
@@ -634,7 +635,7 @@ bool SkipList<T,Comparator>::remove(const T& data)
 	
 	while (true) //This loop makes no sense
 	{
-		bool found = findNode(data, preds, succs);
+		bool found = findNode(data, preds, succs, mLevel);
 		if (!found)
 		{
 			return false;
@@ -669,7 +670,7 @@ bool SkipList<T,Comparator>::remove(const T& data)
 						}
 				
 					}
-					findNode(data, preds, succs); //is this for cleanup?? hangs without it
+					findNode(data, preds, succs, mLevel); //is this for cleanup?? hangs without it
 					mSize--;
 					return true;
 				}

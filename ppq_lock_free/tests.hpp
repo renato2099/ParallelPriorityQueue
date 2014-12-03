@@ -72,6 +72,7 @@ void pop_benchmark(int numThreads, int numInserts, float fixInserts, bool verbos
 	clock::time_point t1 = clock::now();
 
 	//std::cout << "done." << std::endl;
+
 	milliseconds total_ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
 	std::cout << "Lock-free Elapsed[ms]: " << total_ms.count() << std::endl;
 }
