@@ -164,6 +164,7 @@ namespace {
 
 void duplicate_test()
 {
+	std::cout << "Duplicate Test1 running ..." << std::endl;
 	PPQ<Item>* ppq = new PPQ<Item>();
 	Item item;
 	for (int i = 0; i < 10; i++)
@@ -184,8 +185,9 @@ void duplicate_test()
 	delete ppq;
 }
 
-/*duplicate_test2()
+void duplicate_test2(int numThreads)
 {
+	std::cout << "Duplicate Test2 running ..." << std::endl;
 	PPQ<int>* ppq = new PPQ<int>();
 	thread* tids = new thread[numThreads];
 	int numInserts = 10000;
@@ -198,10 +200,23 @@ void duplicate_test()
 	{
 		tids[i].join();
 	}
-}*/
 
-void test()
+	int value;
+	int currmax = 0;
+	while(ppq->pop_front(value))
+	{
+		if (value < currmax)
+		{
+			std::cout << "BUG: " << value << " was dequeued after " << currmax << std::endl;
+		}
+		currmax = value;
+	}
+}
+
+void test(int numThreads)
 {
 	std::cout << "----------------- TESTS ----------------" << std::endl;
 	duplicate_test();
+	duplicate_test2(numThreads);
+	std::cout << "----------------- TESTS END --------------" << std::endl;
 }

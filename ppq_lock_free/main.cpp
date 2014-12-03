@@ -25,18 +25,19 @@ struct ComparePoints
 	}
 };
 
-int readCmdLine(int argc, char** argv, bool &benchEn, bool &pop, bool &rm, int &numThreads, int &numInserts, float &fixInserts, bool &verbose)
+int readCmdLine(int argc, char** argv, bool &benchEn, bool &pop, bool &rm, int &numThreads, int &numInserts, float &fixInserts, bool &verbose, bool& testEn)
 {
 	// program options
 	po::options_description desc;
 	desc.add_options()
 		("help,h", "produce help message")
+		("unit tests,u", po::bool_switch(&testEn)->default_value(false), "run unit tests")
 		("benchmark,b", po::bool_switch(&benchEn)->default_value(false), "run benchmarks")
 		("pop_front,p", po::bool_switch(&pop)->default_value(false), "benchmark pop_front method")
 		("remove,r", po::bool_switch(&rm)->default_value(false), "benchmark remove method")
 		("threads,t", po::value<int>(&numThreads)->default_value(1), "number of threads")
 		("# inserts,i", po::value<int>(&numInserts)->default_value(1), "number of insert operations")
-		("\% fixed inserts,f", po::value<float>(&fixInserts)->default_value(1), "percentage of fixed inserts")
+		("% fixed inserts,f", po::value<float>(&fixInserts)->default_value(1), "percentage of fixed inserts")
 		("verbose,v", po::bool_switch(&verbose)->default_value(false), "print extra messages")
 		;
 	po::variables_map vm;
@@ -62,11 +63,11 @@ int readCmdLine(int argc, char** argv, bool &benchEn, bool &pop, bool &rm, int &
 
 int main(int argc, char** argv)
 {
-	bool benchEn = false, pop = false, rm = false, verbose = false;
+	bool benchEn = false, pop = false, rm = false, verbose = false, testEn = false;
 	int numThreads = 1, numInserts = 1;
 	float fixInserts;
 
-	if (!readCmdLine(argc, argv, benchEn, pop, rm, numThreads, numInserts, fixInserts, verbose))
+	if (!readCmdLine(argc, argv, benchEn, pop, rm, numThreads, numInserts, fixInserts, verbose, testEn))
 	{
 		if (benchEn)
 		{
@@ -79,6 +80,10 @@ int main(int argc, char** argv)
 			return 1;
 		}
 		benchmark(pop, rm, numThreads, numInserts, fixInserts, verbose);
+		if (testEn)
+		{
+			test(numThreads);
+		}
 	}//IF-CMD-LINE
 	return 0;
 }
