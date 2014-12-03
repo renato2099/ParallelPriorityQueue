@@ -140,3 +140,67 @@ void benchmark(bool pop, bool rm, int numThreads, int numInserts, float fixInser
 		rm_benchmark(numThreads, numInserts, fixInserts, verbose);
 	}
 }
+
+/*
+ * Tests
+ */
+struct Item
+{
+	int value;
+	int insertion_point;
+	bool operator<(const Item& other) const
+	{
+		return other.value < value;
+	}
+};
+
+namespace {
+	std::ostream& operator <<(std::ostream& o, const Item& s) {
+		o << "(" << s.value << ", " << s.insertion_point << ")";
+		return o;
+	}
+}
+
+void duplicate_test()
+{
+	PPQ<Item>* ppq = new PPQ<Item>();
+	Item item;
+	for (int i = 0; i < 10; i++)
+	{
+		if ((i % 2) == 0)
+		{
+			item.value = 2;
+			item.insertion_point = i;
+		}
+		else
+		{
+			item.value = i;
+			item.insertion_point = i;
+		}
+		ppq->push(item);
+	}
+	ppq->print();
+	delete ppq;
+}
+
+/*duplicate_test2()
+{
+	PPQ<int>* ppq = new PPQ<int>();
+	thread* tids = new thread[numThreads];
+	int numInserts = 10000;
+	for (int i = 0; i < numThreads; i++)
+	{
+		tids[i] = thread(basic_pop_routine, std::ref(ppq), i, numInserts, 1.0);	
+	}
+
+	for (int i = 0; i < numThreads; i++)
+	{
+		tids[i].join();
+	}
+}*/
+
+void test()
+{
+	std::cout << "----------------- TESTS ----------------" << std::endl;
+	duplicate_test();
+}

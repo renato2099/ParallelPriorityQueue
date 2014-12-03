@@ -34,7 +34,7 @@ class SkipList
 	Node<T> *head;
 	//friend bool comparator_ <T,Comparator> (const T& t1, const T& t2);
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
-	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); }; //TODO get rid of this
+	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); }; 
 
 	public:
 	SkipList* me;
@@ -69,11 +69,7 @@ SkipList<T,Comparator>::SkipList()
 
 	//TODO initialize head;
 	head = new Node<T>();
-	head->level = MAX_LEVEL; // FIXME I think this should be "MAX_LEVEL - 1"
-	/*for (int i = 0; i < MAX_LEVEL-1; i++)
-	{
-		head->next[i] = nullptr;//maybe to in Node class
-	}*/
+	head->level = MAX_LEVEL-1;
 }
 
 template<class T, class Comparator>
@@ -107,8 +103,13 @@ bool SkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>**
 	while(true) 
 	{
 		pred = this->head;
-		for (int level = MAX_LEVEL-1; level >= bottomLevel; level--)
+		for (int level = mLevel; level >= bottomLevel; level--)
 		{
+		//std::cout << level  << "\t" << mLevel << std::endl;
+		if (level < 0 || level > MAX_LEVEL-1)
+		{
+			//std::cout << "BUG: " << level << std::endl;
+		}
 			curr = pred->next[level].getRef();
 			while (true)
 			{
@@ -150,7 +151,7 @@ bool SkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>**
 					break;
 				}
 			}
-			preds[level] = pred; //TODO replace with pointer array
+			preds[level] = pred;
 			succs[level] = curr;
 		}
 		if (curr != NULL)
@@ -180,9 +181,9 @@ bool SkipList<T,Comparator>::insert(const T& data)
 {
 	int topLevel = 0;
 	int bottomLevel = 0;
-	//FIXME why we don't delete this memory before return?
-	Node<T>** preds = new Node<T>*[MAX_LEVEL+1]; //FIXME I think this should be MAX_LEVEL
-	Node<T>** succs = new Node<T>*[MAX_LEVEL+1]; //FIXME the same here
+	Node<T>** preds = new Node<T>*[MAX_LEVEL];
+	Node<T>** succs = new Node<T>*[MAX_LEVEL];
+	Node<T>*  nnode = nullptr;
 
 	while (topLevel < (MAX_LEVEL - 1) && topLevel <= mLevel && ((float) rand() / RAND_MAX) < PROB)
 	{
@@ -192,20 +193,25 @@ bool SkipList<T,Comparator>::insert(const T& data)
 	while (true)
 	{
 		bool found = findNode(data, preds, succs);
-		if (found)
+		/*if (found)
 		{
+			delete[] preds;
+			delete[] succs;
 			return false;
 		}
-		else
+		else*/
 		{
-
-			Node<T>* nnode = new Node<T>();
+			if (nnode == nullptr)
+			{
+				nnode = new Node<T>();
+			}
 			nnode->data = data;
 			nnode->level = topLevel;
 			
 			//FIXME Could we move this for loop after the "compareAndSet"?
 			//FIXME the difference is when it fails, because we don't perform useless operations
 			// The new node gets the reference from the successor
+			// probably doesn't matter
 			for (int level = bottomLevel; level <=topLevel; level++)
 			{
 				Node<T>* succ = succs[level];
@@ -217,7 +223,6 @@ bool SkipList<T,Comparator>::insert(const T& data)
 
 			if (!(pred->next[bottomLevel].compareAndSet(succ, nnode, false, false)))
 			{
-				//FIXME I think we can use "delete nnode;" here, because we start from scratch
 				continue;
 			}
 
@@ -242,10 +247,14 @@ bool SkipList<T,Comparator>::insert(const T& data)
 				}
 			}
 			mSize++;
+			delete[] preds;
+			delete[] succs;
 			return true;
 		}
 		break;
 	}
+	delete[] preds;
+	delete[] succs;
 	return false;
 }
 
@@ -626,9 +635,8 @@ template<class T, class Comparator>
 bool SkipList<T,Comparator>::remove(const T& data)
 {
 	int bottomLevel = 0;
-	//FIXME why we don't delete this memory before return?
-	Node<T>** preds = new Node<T>*[MAX_LEVEL+1]; //FIXME I think this should be MAX_LEVEL
-	Node<T>** succs = new Node<T>*[MAX_LEVEL+1]; //FIXME the same here
+	Node<T>** preds = new Node<T>*[MAX_LEVEL];
+	Node<T>** succs = new Node<T>*[MAX_LEVEL];
 	Node<T>* succ = nullptr;
 	bool marked = false;
 	
@@ -637,15 +645,14 @@ bool SkipList<T,Comparator>::remove(const T& data)
 		bool found = findNode(data, preds, succs);
 		if (!found)
 		{
+			delete[] preds;
+			delete[] succs;
 			return false;
 		}
 		else
 		{
 			Node<T>* node2rm = succs[bottomLevel];
 			
-			//TODO this should be an atomic operation
-			//marked = node2rm->next[bottomLevel].getMarked();
-			//succ = node2rm->next[bottomLevel].getRef();
 			while (true) //!marked
 			{
 				bool iMarkedIt = node2rm->next[bottomLevel].compareAndSet(succ, succ, false, true);
@@ -669,12 +676,16 @@ bool SkipList<T,Comparator>::remove(const T& data)
 						}
 				
 					}
-					findNode(data, preds, succs); //is this for cleanup?? hangs without it
+					//findNode(data, preds, succs); //is this for cleanup?? hangs without it
 					mSize--;
+					delete[] preds;
+					delete[] succs;
 					return true;
 				}
 				else if (marked)
 				{
+					delete[] preds;
+					delete[] succs;
 					return false;
 				}
 				marked = node2rm->next[bottomLevel].getMarked();
@@ -748,6 +759,10 @@ size_t SkipList<T,Comparator>::pop_front(T data[], int k)
 	Node<T>* succ = nullptr;
 	int count = 0;
 
+	if (k == 0)
+	{
+		return 0;
+	}
 	curr = head->next[bottomLevel].getRef();
 	while (curr != nullptr)
 	{
