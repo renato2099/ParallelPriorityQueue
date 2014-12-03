@@ -105,11 +105,6 @@ bool SkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>**
 		pred = this->head;
 		for (int level = mLevel; level >= bottomLevel; level--)
 		{
-		//std::cout << level  << "\t" << mLevel << std::endl;
-		if (level < 0 || level > MAX_LEVEL-1)
-		{
-			//std::cout << "BUG: " << level << std::endl;
-		}
 			curr = pred->next[level].getRef();
 			while (true)
 			{
@@ -184,15 +179,17 @@ bool SkipList<T,Comparator>::insert(const T& data)
 	Node<T>** preds = new Node<T>*[MAX_LEVEL];
 	Node<T>** succs = new Node<T>*[MAX_LEVEL];
 	Node<T>*  nnode = nullptr;
-
 	while (topLevel < (MAX_LEVEL - 1) && topLevel <= mLevel && ((float) rand() / RAND_MAX) < PROB)
 	{
 		topLevel++;
 	}
-	
+	if (topLevel > mLevel)
+	{
+		mLevel = topLevel;
+	}
 	while (true)
 	{
-		bool found = findNode(data, preds, succs);
+		findNode(data, preds, succs);
 		/*if (found)
 		{
 			delete[] preds;
@@ -211,7 +208,7 @@ bool SkipList<T,Comparator>::insert(const T& data)
 			//FIXME Could we move this for loop after the "compareAndSet"?
 			//FIXME the difference is when it fails, because we don't perform useless operations
 			// The new node gets the reference from the successor
-			// probably doesn't matter
+			// I would leave it like this, probably doesn't matter
 			for (int level = bottomLevel; level <=topLevel; level++)
 			{
 				Node<T>* succ = succs[level];
@@ -224,12 +221,6 @@ bool SkipList<T,Comparator>::insert(const T& data)
 			if (!(pred->next[bottomLevel].compareAndSet(succ, nnode, false, false)))
 			{
 				continue;
-			}
-
-			/* we increase the level of the SkipList only if we have successfully linked the node */
-			if (topLevel > mLevel)
-			{
-				mLevel = topLevel;
 			}
 
 			// Update predecessors
@@ -251,6 +242,7 @@ bool SkipList<T,Comparator>::insert(const T& data)
 			delete[] succs;
 			return true;
 		}
+		//this is actually never executed
 		break;
 	}
 	delete[] preds;
@@ -676,7 +668,7 @@ bool SkipList<T,Comparator>::remove(const T& data)
 						}
 				
 					}
-					//findNode(data, preds, succs); //is this for cleanup?? hangs without it
+					findNode(data, preds, succs); //is this for cleanup?? hangs without it
 					mSize--;
 					delete[] preds;
 					delete[] succs;
