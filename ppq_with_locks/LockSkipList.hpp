@@ -9,7 +9,7 @@
 #define LOCKSKIPLIST_HPP
 
 #define SEED		10
-#define MAX_LEVEL	10
+#define MAX_LEVEL	21
 #define PROB		0.5
 
 using namespace std;
@@ -72,11 +72,11 @@ LockSkipList<T,Comparator>::LockSkipList()
    srand(SEED);
 	level = 0;
 	head = new Node<T>();
-	if (head == NULL)
+/*	if (head == NULL)
 	{
 		exit(1);
 	}
-	for (int i = 0; i < MAX_LEVEL; i++)
+*/	for (int i = 0; i < MAX_LEVEL; i++)
 	{
 		head->forward[i] = NULL;
 	}
@@ -103,11 +103,11 @@ void LockSkipList<T,Comparator>::insert(T data)
 	Node<T> *p, *q, *update[MAX_LEVEL];
 
 	q = new Node<T>();
-	if (q == NULL)
+/*	if (q == NULL)
 	{
 		exit(1);
 	}
-	q->data = data;
+*/	q->data = data;
 #ifdef THREAD_SAFE
 	mtx.lock();
 #endif
@@ -115,7 +115,7 @@ void LockSkipList<T,Comparator>::insert(T data)
  	* its level may exceed the current level of the list, at most, by 1
  	*/
 	q->level = 0;
-	while (q->level < MAX_LEVEL && q->level <= this->level && ((float) rand() / RAND_MAX) < PROB)
+	while (q->level < (MAX_LEVEL - 1) && q->level <= this->level && ((float) rand() / RAND_MAX) < PROB)
 	{
 		q->level++;
 	}
