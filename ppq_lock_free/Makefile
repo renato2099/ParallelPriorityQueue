@@ -2,6 +2,13 @@
 
 LDLIBS = -pthread -lboost_program_options
 CC = g++
+
+# For compiling in OSX
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+  CC = clang++
+endif
+
 CFLAGS = -g -std=c++11 -O2 -Wall -pthread
 
 OBJECTS = main.o #PPQ.o SkipList.o

@@ -1,0 +1,24 @@
+XP_Lock-free Elapsed[ms]: 241
+Lock-based Elapsed[ms]: 134
+Lock-free Elapsed[ms]: 24
+TBB Elapsed[ms]: 4
+
+XP_Lock-free Elapsed[ms]: 1026
+Lock-based Elapsed[ms]: 390
+Lock-free Elapsed[ms]: 48
+TBB Elapsed[ms]: 31
+
+XP_Lock-free Elapsed[ms]: 6917
+Lock-based Elapsed[ms]: 1764
+Lock-free Elapsed[ms]: 145
+TBB Elapsed[ms]: 142
+
+XP_Lock-free Elapsed[ms]: 68958
+Lock-based Elapsed[ms]: 16585
+Lock-free Elapsed[ms]: 531
+TBB Elapsed[ms]: 1126
+
+XP_Lock-free Elapsed[ms]: 392800
+Lock-based Elapsed[ms]: 0
+Lock-free Elapsed[ms]: 2078
+TBB Elapsed[ms]: 8729
