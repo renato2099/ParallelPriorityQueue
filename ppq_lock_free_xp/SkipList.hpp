@@ -28,17 +28,6 @@ template <typename T>  struct Node
 	AtomicRef<Node>	next[MAX_LEVEL];
 };
 
-template<typename T> struct MemArray
-{
-	int id;
-	Node<T>** n_array;
-	/*bool operator<(const MemArray &other) const {
-		if (other.id < id)
-			return true;
-		return false;
-	}*/
-};
-
 template <class T, class Comparator>
 class SkipList
 {
