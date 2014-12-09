@@ -1,6 +1,6 @@
 # Makefile for GNU make
 
-LDLIBS = -pthread -lboost_program_options
+LDLIBS = -pthread -lboost_program_options -ltbb
 CC = g++
 
 # For compiling in OSX
@@ -9,7 +9,7 @@ ifeq ($(UNAME_S),Darwin)
   CC = clang++
 endif
 
-CFLAGS = -g -std=c++11 -O2 -Wall -pthread
+CFLAGS = -g -std=c++11 -O2 -Wall -pthread 
 
 OBJECTS = main.o #PPQ.o SkipList.o
 

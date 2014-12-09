@@ -2,19 +2,22 @@
 #include <stdint.h>
 #include <atomic>
 #include <thread>
+
+#include "tbb/concurrent_queue.h"
 #include "../inc/AtomicRef.hpp"
 
 #ifndef SKIPLIST_HPP
 #define SKIPLIST_HPP
 
 #define SEED				10
-#define MAX_LEVEL			21
 #define PROB				0.5
+#define MAX_LEVEL			21
 
 #define INSERT_THREADS		2
 #define INSERT_THRESHOLD	100
 
 using namespace std;
+using namespace tbb;
 
 // might do it like: http://stackoverflow.com/questions/19609417/atomic-operations-for-lock-free-doubly-linked-list
 
@@ -23,6 +26,17 @@ template <typename T>  struct Node
 	T data;
 	int	level;
 	AtomicRef<Node>	next[MAX_LEVEL];
+};
+
+template<typename T> struct MemArray
+{
+	int id;
+	Node<T>** n_array;
+	/*bool operator<(const MemArray &other) const {
+		if (other.id < id)
+			return true;
+		return false;
+	}*/
 };
 
 template <class T, class Comparator>
@@ -49,6 +63,20 @@ class SkipList
 	bool pop_front(T& data);
 	size_t pop_front(T data[], int k);
 	void print();
+	concurrent_queue<Node<T>**>* mem;
+	void putMem(Node<T>** nnode) {
+		mem->push(nnode);
+	}
+	Node<T>** getArray() {
+		Node<T>** nnode;
+		do{
+			if ( mem->empty() )
+			return new Node<T>*[MAX_LEVEL];
+		}
+		while (!mem->try_pop(nnode) );
+		
+		return nnode;
+	}
 	//void printLevel(int l);
 
 	private:
@@ -63,6 +91,7 @@ class SkipList
 template<class T, class Comparator>
 SkipList<T,Comparator>::SkipList()
 {
+	mem = new concurrent_queue<Node<T>**>();
 	srand(SEED);
 	mLevel = 0; // rename level and head
 	mSize = 0;
@@ -176,8 +205,10 @@ bool SkipList<T,Comparator>::insert(const T& data)
 {
 	int topLevel = 0;
 	int bottomLevel = 0;
-	Node<T>** preds = new Node<T>*[MAX_LEVEL];
-	Node<T>** succs = new Node<T>*[MAX_LEVEL];
+	
+	Node<T>** preds = this->getArray();//new Node<T>*[MAX_LEVEL];
+	Node<T>** succs = this->getArray();//new Node<T>*[MAX_LEVEL];
+
 	Node<T>*  nnode = nullptr;
 	while (topLevel < (MAX_LEVEL - 1) && topLevel <= mLevel && ((float) rand() / RAND_MAX) < PROB)
 	{
@@ -238,15 +269,19 @@ bool SkipList<T,Comparator>::insert(const T& data)
 				}
 			}
 			mSize++;
-			delete[] preds;
-			delete[] succs;
+			this->putMem(preds);
+			this->putMem(succs);
+			//delete[] preds;
+			//delete[] succs;
 			return true;
 		}
 		//this is actually never executed
 		break;
 	}
-	delete[] preds;
-	delete[] succs;
+	this->putMem(preds);
+	this->putMem(succs);
+	//delete[] preds;
+	//delete[] succs;
 	return false;
 }
 
@@ -409,8 +444,8 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 {
 	int bottomLevel = 0;
 	int count, inserted, n, batch_maxLevel, next;
-	Node<T>** preds = new Node<T> *[MAX_LEVEL];
-	Node<T>** succs = new Node<T> *[MAX_LEVEL];
+	Node<T>** preds = this->getArray();//new Node<T> *[MAX_LEVEL];
+	Node<T>** succs = this->getArray();//new Node<T> *[MAX_LEVEL];
 	
 	/* sorting */
 	for (int i = 0; i < k - 1; i++)
@@ -627,8 +662,8 @@ template<class T, class Comparator>
 bool SkipList<T,Comparator>::remove(const T& data)
 {
 	int bottomLevel = 0;
-	Node<T>** preds = new Node<T>*[MAX_LEVEL];
-	Node<T>** succs = new Node<T>*[MAX_LEVEL];
+	Node<T>** preds = this->getArray();//new Node<T>*[MAX_LEVEL];
+	Node<T>** succs = this->getArray();//new Node<T>*[MAX_LEVEL];
 	Node<T>* succ = nullptr;
 	bool marked = false;
 	
@@ -637,8 +672,10 @@ bool SkipList<T,Comparator>::remove(const T& data)
 		bool found = findNode(data, preds, succs);
 		if (!found)
 		{
-			delete[] preds;
-			delete[] succs;
+			this->putMem(preds);
+			this->putMem(succs);
+		//	delete[] preds;
+			//delete[] succs;
 			return false;
 		}
 		else
@@ -670,14 +707,18 @@ bool SkipList<T,Comparator>::remove(const T& data)
 					}
 					findNode(data, preds, succs); //is this for cleanup?? hangs without it
 					mSize--;
-					delete[] preds;
-					delete[] succs;
+					this->putMem(preds);
+					this->putMem(succs);
+					//delete[] preds;
+					//delete[] succs;
 					return true;
 				}
 				else if (marked)
 				{
-					delete[] preds;
-					delete[] succs;
+					this->putMem(preds);
+					this->putMem(succs);
+					//delete[] preds;
+					//delete[] succs;
 					return false;
 				}
 				marked = node2rm->next[bottomLevel].getMarked();
@@ -812,11 +853,11 @@ void SkipList<T,Comparator>::print()
 	std::cout << "---------------BEGIN-----------------------" << std::endl;
 
 	p = this->head->next[0].getRef();
-	while (p != nullptr)
-	{
-		std::cout << "value: " << p->data << "\t\t" << p->level << "\t\t" << p->next[0].getMarked() << std::endl;
-		p = p->next[0].getRef();
-	}
+//	while (p != nullptr)
+//	{
+//		std::cout << "value: " << p->data << "\t\t" << p->level << "\t\t" << p->next[0].getMarked() << std::endl;
+//		p = p->next[0].getRef();
+//	}
 	std::cout << "---------------END-----------------------" << std::endl;
 }
 
