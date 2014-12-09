@@ -7,8 +7,7 @@
 #include "tbb/concurrent_priority_queue.h"
 #include "common/utility/utility.h"
 #include "common/utility/fast_random.h"
-#include "boost/program_options.hpp"
-#include "boost/program_options.hpp"
+//#include "boost/program_options.hpp"
 
 #include "PPQ.hpp"
 
@@ -86,7 +85,7 @@ void lf_pop_benchmark(int numThreads, int numInserts, float fixInserts, bool ver
 	typedef std::chrono::milliseconds milliseconds;
 
 	if (verbose)
-		std::cout << "Pop method benchmark: " << numThreads << "threads | " << numInserts << "inserts | " << fixInserts << "\% fixed inserts" <<std::endl;
+		std::cout << "Pop method benchmark: " << numThreads << "threads | " << numInserts << "inserts | " << fixInserts << "%% fixed inserts" <<std::endl;
 	//TODO this type should be parametrized
 	PPQ<int>* ppq = new PPQ<int>();
 	tbb::task_scheduler_init init(numThreads);  // Explicit number of threads

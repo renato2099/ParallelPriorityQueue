@@ -1,6 +1,6 @@
 # Makefile for GNU make
 
-LDLIBS = -mmic -pthread /home/dphpc0/boost/boost_1_57_0/stage/lib/libboost_program_options.a 
+LDLIBS = -mmic -pthread 
 CC = icpc
 
 # For compiling in OSX
@@ -9,7 +9,7 @@ ifeq ($(UNAME_S),Darwin)
   CC = clang++
 endif
 
-CFLAGS = -g -mmic -std=c++11 -O2 -Wall -pthread -I /home/dphpc0/boost/boost_1_57_0 -tbb
+CFLAGS = -g -mmic -std=c++11 -O2 -Wall -pthread -tbb
 
 OBJECTS = main.o 
 

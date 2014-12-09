@@ -19,8 +19,8 @@
 # GNU Makefile that builds and runs example.
 run_cmd=
 PROG=main
-ARGS=4 N=1000 start=0 end=999 verbose
-PERF_RUN_ARGS=auto N=1000 start=0 end=99 silent
+#ARGS=4 N=1000 start=0 end=999 verbose
+#PERF_RUN_ARGS=auto N=1000 start=0 end=99 silent
 
 # The C++ compiler
 ifneq (,$(shell which icc 2>/dev/null))
@@ -41,10 +41,11 @@ LIBS+= -lrt
 endif
 endif
 
-LIBS+= -lboost_program_options
+#LIBS+= -lboost_program_options
 CXX0XFLAGS+=-std=c++11
 
-all:    release test
+#all:    release test
+all:    release
 
 release: *.cpp
 	$(CXX) -O2 -DNDEBUG $(CXXFLAGS) -o $(PROG) $^ -ltbb $(LIBS) $(CXX0XFLAGS) 
@@ -61,4 +62,4 @@ test:
 perf_build: release
 
 perf_run:
-	$(run_cmd) ./$(PROG) $(PERF_RUN_ARGS)
+	#$(run_cmd) ./$(PROG) $(PERF_RUN_ARGS)
