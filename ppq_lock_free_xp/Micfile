@@ -1,7 +1,7 @@
 # Makefile for GNU make
 
 #LDLIBS = -pthread -lboost_program_options -mmic
-LDLIBS = -pthread -ltbb -ltbbmalloc /home/dphpc0/boost/boost_1_57_0/stage/lib/libboost_program_options.a
+LDLIBS = -pthread -ltbb -ltbbmalloc 
 CC = icc
 
 # For compiling in OSX
@@ -10,7 +10,7 @@ ifeq ($(UNAME_S),Darwin)
   CC = clang++
 endif
 
-CFLAGS = -g -std=c++11 -O2 -Wall -pthread -mmic -I /home/dphpc0/boost/boost_1_57_0
+CFLAGS = -g -std=c++11 -O2 -Wall -pthread -mmic 
 
 OBJECTS = main.o #PPQ.o SkipList.o
 
