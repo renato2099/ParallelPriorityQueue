@@ -52,7 +52,7 @@ void pop_benchmark(int numThreads, int numInserts, float fixInserts, bool verbos
 	typedef std::chrono::milliseconds milliseconds;
 
 	if (verbose)
-		std::cout << "Pop method benchmark: " << numThreads << "threads | " << numInserts << "pushs | " << fixInserts << "\% fixed pushs" <<std::endl;
+		std::cout << "Pop method benchmark: " << numThreads << "threads | " << numInserts << "pushs | " << fixInserts << "%% fixed pushs" <<std::endl;
 	//std::cout << 
 	//int fix_i = numInserts * fixInserts, ran_i = numInserts - fix_i;
 	//TODO this type should be parametrized
@@ -106,7 +106,7 @@ void rm_benchmark(int numThreads, int numInserts, float fixInserts, bool verbose
 	typedef std::chrono::milliseconds milliseconds;
 
 	if (verbose)
-		std::cout << "Remove method benchmark: " << numThreads << "threads | " << numInserts << "pushs | " << fixInserts << "\% fixed pushs" <<std::endl;
+		std::cout << "Remove method benchmark: " << numThreads << "threads | " << numInserts << "pushs | " << fixInserts << "%% fixed pushs" <<std::endl;
 	//std::cout << 
 	//int fix_i = numInserts * fixInserts, ran_i = numInserts - fix_i;
 	//TODO this type should be parametrized
