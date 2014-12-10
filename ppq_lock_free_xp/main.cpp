@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <sstream>
-#include "optionparser.h"
+#include "../ppq_tbb/optionparser.h"
 #include "PPQ.hpp"
-#include "tests.hpp"
+#include "../benchmark.hpp"
+#include "../ppq_lock_free/tests.hpp"
 
 using namespace std;
 
@@ -158,6 +159,7 @@ int main(int argc, char** argv)
 	bool benchEn = false, pop = false, rm = false, verbose = false, testEn = false;
 	int numThreads = 1, numInserts = 1;
 	float fixInserts;
+	Benchmark<PPQ<int>> bench;
 
 	if (!readCmdLine(argc, argv, benchEn, pop, rm, numThreads, numInserts, fixInserts, verbose, testEn))
 	{
@@ -171,7 +173,7 @@ int main(int argc, char** argv)
 			cout << "Choose a method to benchmark." << endl;
 			return 1;
 		}
-		benchmark(pop, rm, numThreads, numInserts, fixInserts, verbose);
+		bench.run(pop, rm, numThreads, numInserts, fixInserts, verbose);
 		if (testEn)
 		{
 			test(numThreads);
