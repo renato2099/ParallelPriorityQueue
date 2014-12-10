@@ -2,22 +2,22 @@
 #include <stdint.h>
 #include <atomic>
 #include <thread>
-
-#include "tbb/concurrent_queue.h"
 #include "../inc/AtomicRef.hpp"
+
+#include <tbb/scalable_allocator.h>
+#include <tbb/cache_aligned_allocator.h>
 
 #ifndef SKIPLIST_HPP
 #define SKIPLIST_HPP
 
 #define SEED				10
-#define PROB				0.5
 #define MAX_LEVEL			21
+#define PROB				0.5
 
 #define INSERT_THREADS		2
 #define INSERT_THRESHOLD	100
 
 using namespace std;
-using namespace tbb;
 
 // might do it like: http://stackoverflow.com/questions/19609417/atomic-operations-for-lock-free-doubly-linked-list
 
@@ -39,6 +39,27 @@ class SkipList
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
 	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); }; 
 
+	Node<T>* allocate(size_t n=1, const void* hint=0)
+	{
+		return tbb::scalable_allocator<Node<T>>().allocate(n, hint);
+		//return tbb::cache_aligned_allocator<Node<T>>().allocate(n, hint);
+	};
+	void deallocate(Node<T>* p, size_t n=1)
+	{
+		return tbb::scalable_allocator<Node<T>>().deallocate(p, n);
+		//return tbb::cache_aligned_allocator<Node<T>>().deallocate(p, n);
+	};
+	Node<T>** allocate_array(size_t n, const void* hint=0)
+	{
+		return tbb::scalable_allocator<Node<T>*>().allocate(n, hint);
+		//return tbb::cache_aligned_allocator<Node<T>*>().allocate(n, hint);
+	};
+	void deallocate_array(Node<T>** p, size_t n=MAX_LEVEL)
+	{
+		return tbb::scalable_allocator<Node<T>*>().deallocate(p, n);
+		//return tbb::cache_aligned_allocator<Node<T>*>().deallocate(p, n);
+	};
+
 	public:
 	SkipList* me;
 	SkipList();
@@ -52,20 +73,6 @@ class SkipList
 	bool pop_front(T& data);
 	size_t pop_front(T data[], int k);
 	void print();
-	concurrent_queue<Node<T>**>* mem;
-	void putMem(Node<T>** nnode) {
-		mem->push(nnode);
-	}
-	Node<T>** getArray() {
-		Node<T>** nnode;
-		do{
-			if ( mem->empty() )
-			return new Node<T>*[MAX_LEVEL];
-		}
-		while (!mem->try_pop(nnode) );
-		
-		return nnode;
-	}
 	//void printLevel(int l);
 
 	private:
@@ -80,13 +87,11 @@ class SkipList
 template<class T, class Comparator>
 SkipList<T,Comparator>::SkipList()
 {
-	mem = new concurrent_queue<Node<T>**>();
 	srand(SEED);
 	mLevel = 0; // rename level and head
 	mSize = 0;
 
-	//TODO initialize head;
-	head = new Node<T>();
+	head = allocate(1);
 	head->level = MAX_LEVEL-1;
 }
 
@@ -101,9 +106,9 @@ SkipList<T,Comparator>::~SkipList()
 	{
 		tmp = curr;
 		curr = curr->next[0].getRef();
-		delete tmp;
+		deallocate(tmp);
 	}
-	delete head;
+	deallocate(head);
 }
 
 //TODO have to clean up
@@ -194,10 +199,8 @@ bool SkipList<T,Comparator>::insert(const T& data)
 {
 	int topLevel = 0;
 	int bottomLevel = 0;
-	
-	Node<T>** preds = this->getArray();//new Node<T>*[MAX_LEVEL];
-	Node<T>** succs = this->getArray();//new Node<T>*[MAX_LEVEL];
-
+	Node<T>** preds = allocate_array(MAX_LEVEL);
+	Node<T>** succs = allocate_array(MAX_LEVEL);
 	Node<T>*  nnode = nullptr;
 	while (topLevel < (MAX_LEVEL - 1) && topLevel <= mLevel && ((float) rand() / RAND_MAX) < PROB)
 	{
@@ -220,7 +223,7 @@ bool SkipList<T,Comparator>::insert(const T& data)
 		{
 			if (nnode == nullptr)
 			{
-				nnode = new Node<T>();
+				nnode = allocate(1);
 			}
 			nnode->data = data;
 			nnode->level = topLevel;
@@ -258,8 +261,8 @@ bool SkipList<T,Comparator>::insert(const T& data)
 				}
 			}
 			mSize++;
-			this->putMem(preds);
-			this->putMem(succs);
+			deallocate_array(preds, MAX_LEVEL);
+			deallocate_array(succs, MAX_LEVEL);
 			//delete[] preds;
 			//delete[] succs;
 			return true;
@@ -267,8 +270,8 @@ bool SkipList<T,Comparator>::insert(const T& data)
 		//this is actually never executed
 		break;
 	}
-	this->putMem(preds);
-	this->putMem(succs);
+	deallocate_array(preds, MAX_LEVEL);
+	deallocate_array(succs, MAX_LEVEL);
 	//delete[] preds;
 	//delete[] succs;
 	return false;
@@ -433,8 +436,8 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 {
 	int bottomLevel = 0;
 	int count, inserted, n, batch_maxLevel, next;
-	Node<T>** preds = this->getArray();//new Node<T> *[MAX_LEVEL];
-	Node<T>** succs = this->getArray();//new Node<T> *[MAX_LEVEL];
+	Node<T>** preds = new Node<T> *[MAX_LEVEL];
+	Node<T>** succs = new Node<T> *[MAX_LEVEL];
 	
 	/* sorting */
 	for (int i = 0; i < k - 1; i++)
@@ -651,8 +654,8 @@ template<class T, class Comparator>
 bool SkipList<T,Comparator>::remove(const T& data)
 {
 	int bottomLevel = 0;
-	Node<T>** preds = this->getArray();//new Node<T>*[MAX_LEVEL];
-	Node<T>** succs = this->getArray();//new Node<T>*[MAX_LEVEL];
+	Node<T>** preds = allocate_array(MAX_LEVEL);
+	Node<T>** succs = allocate_array(MAX_LEVEL);
 	Node<T>* succ = nullptr;
 	bool marked = false;
 	
@@ -661,10 +664,8 @@ bool SkipList<T,Comparator>::remove(const T& data)
 		bool found = findNode(data, preds, succs);
 		if (!found)
 		{
-			this->putMem(preds);
-			this->putMem(succs);
-		//	delete[] preds;
-			//delete[] succs;
+			deallocate_array(preds, MAX_LEVEL);
+			deallocate_array(succs, MAX_LEVEL);
 			return false;
 		}
 		else
@@ -696,18 +697,14 @@ bool SkipList<T,Comparator>::remove(const T& data)
 					}
 					findNode(data, preds, succs); //is this for cleanup?? hangs without it
 					mSize--;
-					this->putMem(preds);
-					this->putMem(succs);
-					//delete[] preds;
-					//delete[] succs;
+					deallocate_array(preds, MAX_LEVEL);
+					deallocate_array(succs, MAX_LEVEL);
 					return true;
 				}
 				else if (marked)
 				{
-					this->putMem(preds);
-					this->putMem(succs);
-					//delete[] preds;
-					//delete[] succs;
+					deallocate_array(preds, MAX_LEVEL);
+					deallocate_array(succs, MAX_LEVEL);
 					return false;
 				}
 				marked = node2rm->next[bottomLevel].getMarked();
@@ -842,11 +839,11 @@ void SkipList<T,Comparator>::print()
 	std::cout << "---------------BEGIN-----------------------" << std::endl;
 
 	p = this->head->next[0].getRef();
-//	while (p != nullptr)
-//	{
-//		std::cout << "value: " << p->data << "\t\t" << p->level << "\t\t" << p->next[0].getMarked() << std::endl;
-//		p = p->next[0].getRef();
-//	}
+	while (p != nullptr)
+	{
+		std::cout << "value: " << p->data << "\t\t" << p->level << "\t\t" << p->next[0].getMarked() << std::endl;
+		p = p->next[0].getRef();
+	}
 	std::cout << "---------------END-----------------------" << std::endl;
 }
 
