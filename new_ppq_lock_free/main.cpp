@@ -3,7 +3,7 @@
 #include "../inc/optionparser.h"
 #include "PPQ.hpp"
 #include "tests.hpp"
-#include "../benchmark.hpp"
+#include "../inc/benchmark.hpp"
 
 using namespace std;
 

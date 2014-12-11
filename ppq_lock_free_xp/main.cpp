@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <sstream>
-#include "../ppq_tbb/optionparser.h"
+#include "../inc/optionparser.h"
 #include "PPQ.hpp"
-#include "../benchmark.hpp"
+#include "../inc/benchmark.hpp"
 #include "../ppq_lock_free/tests.hpp"
 
 using namespace std;

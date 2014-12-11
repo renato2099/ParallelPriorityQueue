@@ -3,7 +3,7 @@
 #include "boost/program_options.hpp"
 
 #include "ppq_lock.hpp"
-#include "../benchmark.hpp"
+#include "../inc/benchmark.hpp"
 
 using namespace std;
 namespace po = boost::program_options;

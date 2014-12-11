@@ -2,7 +2,7 @@
 #include <sstream>
 #include "tests.hpp"
 #include "tests_lf.hpp"
-#include "optionparser.h"
+#include "../inc/optionparser.h"
 
 using namespace std;
 using namespace tbb;
