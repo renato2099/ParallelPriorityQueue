@@ -11,7 +11,7 @@
 #define SKIPLIST_HPP
 
 #define SEED				10
-#define MAX_LEVEL			21
+#define MAX_LEVEL			25
 #define PROB				0.5
 
 #define INSERT_THREADS		2
@@ -25,7 +25,7 @@ template <typename T>  struct Node
 {	
 	T data;
 	int	level;
-	AtomicRef<Node>	next[MAX_LEVEL];
+	AtomicRef<Node>	next[0];
 };
 
 template <class T, class Comparator>
@@ -39,25 +39,22 @@ class SkipList
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
 	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); }; 
 
-	Node<T>* allocate(size_t n=1, const void* hint=0)
+	Node<T>* allocate(int l)
 	{
-		return tbb::scalable_allocator<Node<T>>().allocate(n, hint);
-		//return tbb::cache_aligned_allocator<Node<T>>().allocate(n, hint);
+		return reinterpret_cast<Node<T>*>(scalable_aligned_malloc(sizeof(Node<T>) + ((l+1) * sizeof(AtomicRef<Node<T>>)), 64));
 	};
-	void deallocate(Node<T>* p, size_t n=1)
+	void deallocate(Node<T>* p)
 	{
-		return tbb::scalable_allocator<Node<T>>().deallocate(p, n);
-		//return tbb::cache_aligned_allocator<Node<T>>().deallocate(p, n);
+		scalable_aligned_free(p);
+		//return tbb::scalable_allocator<Node<T>>().deallocate(p, n);
 	};
-	Node<T>** allocate_array(size_t n, const void* hint=0)
+	Node<T>** allocate_array(size_t n=MAX_LEVEL, const void* hint=0)
 	{
 		return tbb::scalable_allocator<Node<T>*>().allocate(n, hint);
-		//return tbb::cache_aligned_allocator<Node<T>*>().allocate(n, hint);
 	};
 	void deallocate_array(Node<T>** p, size_t n=MAX_LEVEL)
 	{
 		return tbb::scalable_allocator<Node<T>*>().deallocate(p, n);
-		//return tbb::cache_aligned_allocator<Node<T>*>().deallocate(p, n);
 	};
 
 	public:
@@ -91,7 +88,7 @@ SkipList<T,Comparator>::SkipList()
 	mLevel = 0; // rename level and head
 	mSize = 0;
 
-	head = allocate(1);
+	head = allocate(MAX_LEVEL);
 	head->level = MAX_LEVEL-1;
 }
 
@@ -213,67 +210,54 @@ bool SkipList<T,Comparator>::insert(const T& data)
 	while (true)
 	{
 		findNode(data, preds, succs);
-		/*if (found)
+		if (nnode == nullptr)
 		{
-			delete[] preds;
-			delete[] succs;
-			return false;
+			nnode = allocate(topLevel);
 		}
-		else*/
-		{
-			if (nnode == nullptr)
-			{
-				nnode = allocate(1);
-			}
-			nnode->data = data;
-			nnode->level = topLevel;
+		nnode->data = data;
+		nnode->level = topLevel;
 			
 			//FIXME Could we move this for loop after the "compareAndSet"?
 			//FIXME the difference is when it fails, because we don't perform useless operations
 			// The new node gets the reference from the successor
 			// I would leave it like this, probably doesn't matter
-			for (int level = bottomLevel; level <=topLevel; level++)
-			{
-				Node<T>* succ = succs[level];
-				nnode->next[level].setRef(succ, false);
-			}
-
-			Node<T>* pred = preds[bottomLevel];
-			Node<T>* succ = succs[bottomLevel];
-
-			if (!(pred->next[bottomLevel].compareAndSet(succ, nnode, false, false)))
-			{
-				continue;
-			}
-
-			// Update predecessors
-			for (int level = bottomLevel+1; level <= topLevel; level++)
-			{
-				while (true)
-				{
-					pred = preds[level];
-					succ = succs[level];
-					if (pred->next[level].compareAndSet(succ, nnode, false, false))
-					{
-						break;
-					}
-					findNode(data, preds, succs);
-				}
-			}
-			mSize++;
-			deallocate_array(preds, MAX_LEVEL);
-			deallocate_array(succs, MAX_LEVEL);
-			//delete[] preds;
-			//delete[] succs;
-			return true;
+		for (int level = bottomLevel; level <=topLevel; level++)
+		{
+			Node<T>* succ = succs[level];
+			nnode->next[level].setRef(succ, false);
 		}
-		//this is actually never executed
-		break;
+
+		Node<T>* pred = preds[bottomLevel];
+		Node<T>* succ = succs[bottomLevel];
+
+		if (!(pred->next[bottomLevel].compareAndSet(succ, nnode, false, false)))
+		{
+			continue;
+		}
+
+		// Update predecessors
+		for (int level = bottomLevel+1; level <= topLevel; level++)
+		{
+			while (true)
+			{
+				pred = preds[level];
+				succ = succs[level];
+				if (pred->next[level].compareAndSet(succ, nnode, false, false))
+				{
+					break;
+				}
+				findNode(data, preds, succs);
+			}
+		}
+		mSize++;
+		deallocate_array(preds, MAX_LEVEL);
+		deallocate_array(succs, MAX_LEVEL);
+		return true;
+	//this is actually never executed
+	break;
 	}
 	deallocate_array(preds, MAX_LEVEL);
 	deallocate_array(succs, MAX_LEVEL);
-	//delete[] preds;
-	//delete[] succs;
 	return false;
 }
 

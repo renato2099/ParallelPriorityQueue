@@ -1,7 +1,7 @@
 # Makefile for GNU make
 
 #LDLIBS = -pthread -lboost_program_options -mmic
-LDLIBS = -pthread -ltbb -ltbbmalloc 
+LDLIBS = -pthread -ltbb -ltbbmalloc #-ltbbmalloc_proxy
 CC = icc
 
 # For compiling in OSX
