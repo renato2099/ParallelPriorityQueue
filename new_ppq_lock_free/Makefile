@@ -1,15 +1,9 @@
 # Makefile for GNU make
 
-LDLIBS = -pthread -ltbb -ltbbmalloc -ltbbmalloc_proxy
-CC = icpc
+LDLIBS = -pthread -lboost_program_options -ltbb -ltbbmalloc -ltbbmalloc_proxy
+CC = g++
 
-# For compiling in OSX
-#UNAME_S := $(shell uname -s)
-#ifeq ($(UNAME_S),Darwin)
-#  CC = clang++
-#endif
-
-CFLAGS = -g -std=c++11 -O2 -Wall -pthread 
+CFLAGS = -g -std=c++11 -O2 -Wall -pthread
 
 OBJECTS = main.o #PPQ.o SkipList.o
 

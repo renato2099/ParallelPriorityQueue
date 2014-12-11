@@ -27,22 +27,14 @@ public:
 	Node *forward[MAX_LEVEL];
 };
 
-template <class T, class Comparator> class LockSkipList;
-/*template <class T, class Comparator> bool comparator_(const T& t1, const T& t2)
-{
-	return Comparator()(t1, t2);
-};*/
-
-
 template <class T, class Comparator>
 class LockSkipList
 {
 	private:
 	int level;
 	Node<T> *head;
-	//friend bool comparator_ <T,Comparator> (const T& t1, const T& t2);
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
-	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); }; //TODO get rid of this
+	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); };
 
 #ifdef THREAD_SAFE
 	mutex mtx;
@@ -52,12 +44,12 @@ class LockSkipList
 	LockSkipList();
 	~LockSkipList();
 
-	void insert(T data);
+	void insert(const T& data);
 	void insert(T *data[], int k);
-	T    find(T data);
-	void remove(T data);
-	T    pop_front();
-	T*	  pop_front(int k);
+	T    find(const T& data);
+	void remove(const T& data);
+	bool pop_front(T& data);
+	size_t	  pop_front(T* data, int k);
 	void print();
 	void printLevel(int l);
 };
@@ -72,13 +64,9 @@ LockSkipList<T,Comparator>::LockSkipList()
    srand(SEED);
 	level = 0;
 	head = new Node<T>();
-/*	if (head == NULL)
+	for (int i = 0; i < MAX_LEVEL; i++) //TODO is this necessary?
 	{
-		exit(1);
-	}
-*/	for (int i = 0; i < MAX_LEVEL; i++)
-	{
-		head->forward[i] = NULL;
+		head->forward[i] = nullptr;
 	}
 };
 
@@ -93,23 +81,18 @@ LockSkipList<T,Comparator>::~LockSkipList()
 		p = p->forward[0];
 		delete tmp;
 	}
-	//delete tmp; //TODO is this necessary?
 };
 
 template<class T, class Comparator>
-void LockSkipList<T,Comparator>::insert(T data)
+void LockSkipList<T,Comparator>::insert(const T& data)
 {
 	int min_level;
 	Node<T> *p, *q, *update[MAX_LEVEL];
 
 	q = new Node<T>();
-/*	if (q == NULL)
-	{
-		exit(1);
-	}
-*/	q->data = data;
+	q->data = data;
 #ifdef THREAD_SAFE
-	mtx.lock();
+	std::lock_guard<std::mutex> guard(mtx);
 #endif
 	/* gets a random level for the new node
  	* its level may exceed the current level of the list, at most, by 1
@@ -157,9 +140,6 @@ for (int i = 0; i <= min_level; i++)
 		q->forward[q->level] = NULL;
 	}
 
-#ifdef THREAD_SAFE
-	mtx.unlock();
-#endif
 };
 
 template<class T, class Comparator>
@@ -172,7 +152,7 @@ void LockSkipList<T,Comparator>::insert(T *data[], int k)
 };
 
 template<class T, class Comparator>
-T LockSkipList<T,Comparator>::find(T data)
+T LockSkipList<T,Comparator>::find(const T& data)
 {
 #ifdef THREAD_SAFE
 	std::lock_guard<std::mutex> guard(mtx);
@@ -204,7 +184,7 @@ T LockSkipList<T,Comparator>::find(T data)
 };
 
 template<class T, class Comparator>
-void LockSkipList<T,Comparator>::remove(T data)
+void LockSkipList<T,Comparator>::remove(const T& data)
 {
 #ifdef THREAD_SAFE
 	std::lock_guard<std::mutex> guard(mtx);
@@ -247,32 +227,40 @@ void LockSkipList<T,Comparator>::remove(T data)
 };
 
 template<class T, class Comparator>
-T LockSkipList<T,Comparator>::pop_front()
+bool LockSkipList<T,Comparator>::pop_front(T& data)
 {
 	Node<T> *p;
 #ifdef THREAD_SAFE
 	std::lock_guard<std::mutex> guard(mtx);
 #endif
 	p = head->forward[0];
-	if (p != NULL)
+	if (p != nullptr)
 	{
 		for (int i = 0; i <= p->level; i++)
 		{
 			head->forward[i] = p->forward[i];
 		}
-		return p->data;
+		data = p->data;
+		return true;
 	}
-	return T();
+	return false;
 };
 
 template<class T, class Comparator>
-T* LockSkipList<T,Comparator>::pop_front(int k)
+size_t LockSkipList<T,Comparator>::pop_front(T* data, int k)
 {
+	data = new T[k]();
+	bool success = false;
+	size_t count = 0;
 	for (int i = 0; i < k; i++)
 	{
-		pop_front();
+		success = pop_front(data[i]);
+		if (success)
+			count++;
+		else
+			break;
 	}
-	return NULL;
+	return count;
 };
 
 template<class T, class Comparator>
