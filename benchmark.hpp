@@ -1,9 +1,10 @@
 #include <stdlib.h>
 #include <iostream>
 #include <thread>
-#include <mutex>
 #include <chrono>
 #include <random>
+#include <limits>
+#include <assert.h>
 
 template <class T>
 class Benchmark
@@ -28,13 +29,18 @@ void Benchmark<T>::basic_pop_routine(T* pq, int id, int numInserts, float fixIns
 	int value = 0;
 	int sum = 0;
 	int fix_i = numInserts * fixInserts, ran_i = numInserts - fix_i;
+	// Coin Flip
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::bernoulli_distribution coin_flip(0.5);
+	// Random values
+	std::default_random_engine num_gen;
+	std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
 
 	while (count < fix_i)
 	{
-		pq->push(count);
+		value = rand_val(num_gen);
+		pq->push(value);
 		count++;
 	}
 
@@ -43,18 +49,25 @@ void Benchmark<T>::basic_pop_routine(T* pq, int id, int numInserts, float fixIns
 	{
 		if (coin_flip(gen))	//push
 		{
-			pq->push(count);
-			value++;
+			value = rand_val(num_gen);
+			pq->push(value);
 		}
 		else //pop_front
 		{
 			bool succ = pq->pop_front(value);
-			if (succ)
+			if (succ) //this is here, such that the value is not optimized away
 				sum += value;
 		}
 		count++;
 	}
-	//std::cout <<  sum << std::endl;
+	if (ran_i == 0)
+	{
+		assert(sum == 0);
+	}
+	else
+	{
+		assert(sum != 0);
+	}
 }
 
 template <class T>
@@ -64,9 +77,7 @@ void Benchmark<T>::pop_benchmark(int numThreads, int numInserts, float fixInsert
 	typedef std::chrono::milliseconds milliseconds;
 
 	if (verbose)
-		std::cout << "Pop method benchmark: " << numThreads << "threads | " << numInserts << "pushs | " << fixInserts << "\% fixed pushs" <<std::endl;
-	//std::cout << 
-	//int fix_i = numInserts * fixInserts, ran_i = numInserts - fix_i;
+		std::cout << "Pop method benchmark: " << numThreads << "threads | " << numInserts << "pushs | " << fixInserts << "% fixed pushs" <<std::endl;
 	//TODO this type should be parametrized
 	//PPQ<int>* pq = new PPQ<int>();
 	T* pq = new T();
@@ -112,7 +123,7 @@ void Benchmark<T>::rm_benchmark(int numThreads, int numInserts, float fixInserts
 	typedef std::chrono::milliseconds milliseconds;
 
 	if (verbose)
-		std::cout << "Remove method benchmark: " << numThreads << "threads | " << numInserts << "pushs | " << fixInserts << "\% fixed pushs" <<std::endl;
+		std::cout << "Remove method benchmark: " << numThreads << "threads | " << numInserts << "pushs | " << fixInserts << "% fixed pushs" <<std::endl;
 	//TODO this type should be parametrized
 	//PPQ<int>* pq = new PPQ<int>();
 	T* pq = new T();
