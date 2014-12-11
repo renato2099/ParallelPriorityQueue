@@ -1,12 +1,9 @@
-#include <stdlib.h>
 #include <iostream>
-#include <thread>
-#include <mutex>
 
 #include "boost/program_options.hpp"
 
-#include "LOCK_PPQ.hpp"
-#include "tests.hpp"
+#include "ppq_lock.hpp"
+#include "../benchmark.hpp"
 
 using namespace std;
 namespace po = boost::program_options;
@@ -29,18 +26,18 @@ struct ComparePoints
 	}
 };
 
-void point_routine(int id, LOCK_PPQ<Point, ComparePoints>* ppq)
+void point_routine(int id, ppq_lock<Point, ComparePoints>* ppq)
 {
 	for (int i = 0; i < 10; i++)
 	{
-		ppq->insert(Point(i, i*2));
+		ppq->push(Point(i, i*2));
 	}
 
 	for (int i = 0; i < 9; i++)
 	{
 		Point p;
 		p = ppq->find(Point(1, 0));
-		p = ppq->pop_front();
+		ppq->pop_front(p);
 		//std::cout << p.x << " " << p.y << std::endl;
 	}
 }
@@ -56,7 +53,7 @@ int readCmdLine(int argc, char** argv, bool &benchEn, bool &pop, bool &rm, int &
 		("remove,r", po::bool_switch(&rm)->default_value(false), "benchmark remove method")
 		("threads,t", po::value<int>(&numThreads)->default_value(1), "number of threads")
 		("# inserts,i", po::value<int>(&numInserts)->default_value(1), "number of insert operations")
-		("\% fixed inserts,f", po::value<float>(&fixInserts)->default_value(1), "percentage of fixed inserts")
+		("% fixed inserts,f", po::value<float>(&fixInserts)->default_value(1), "percentage of fixed inserts")
 		("verbose,v", po::bool_switch(&verbose)->default_value(false), "print extra messages")
 		;
 	po::variables_map vm;
@@ -85,6 +82,7 @@ int main(int argc, char** argv)
 	bool benchEn = false, pop = false, rm = false, verbose = false;
 	int numThreads = 1, numInserts = 1;
 	float fixInserts;
+	Benchmark<ppq_lock<int>> bench;
 
 	if (!readCmdLine(argc, argv, benchEn, pop, rm, numThreads, numInserts, fixInserts, verbose))
 	{
@@ -98,7 +96,7 @@ int main(int argc, char** argv)
 			cout << "Choose a method to benchmark." << endl;
 			return 1;
 		}
-		benchmark(pop, rm, numThreads, numInserts, fixInserts, verbose);
+		bench.run(pop, rm, numThreads, numInserts, fixInserts, verbose);
 	}//IF-CMD-LINE
 	return 0;
 	
