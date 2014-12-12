@@ -1,5 +1,4 @@
 #include <iostream>
-#include <atomic>
 #include <stdint.h>
 #include <mutex>
 
@@ -32,8 +31,8 @@ class LockSkipList
 	private:
 	mutex mtx;
 	Node<T> *head;
-	std::atomic<size_t>	mSize;
-	std::atomic<int> level;
+	size_t mSize;
+	int level;
 
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
 	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); };
@@ -98,6 +97,8 @@ bool LockSkipList<T,Comparator>::insert(const T& data)
 	int min_level, topLevel;
 	Node<T> *p, *q, *update[MAX_LEVEL];
 
+	std::lock_guard<std::mutex> guard(mtx);
+
 	/* gets a random level for the new node
  	* its level may exceed the current level of the list, at most, by 1
  	*/
@@ -110,8 +111,6 @@ bool LockSkipList<T,Comparator>::insert(const T& data)
 	q = (Node<T> *) scalable_malloc(sizeof(Node<T>) + (topLevel + 1) * sizeof(Node<T> *));
 	q->level = topLevel;
 	q->data = data;
-
-	std::lock_guard<std::mutex> guard(mtx);
 
 	/* starts from the current top level and keeps track of the places
  	* where the search drops down one level, by storing their address in an array
@@ -145,7 +144,7 @@ bool LockSkipList<T,Comparator>::insert(const T& data)
  	*/ 
 	if (this->level < q->level)
 	{
-		this->level = q->level;
+		this->level++;
 		this->head->next[q->level] = q;
 		q->next[q->level] = NULL;
 	}
@@ -231,8 +230,8 @@ bool LockSkipList<T,Comparator>::remove(T& data)
 		data = p->data;
 		scalable_free(p);
 
-		// if the top level of the skip list head points to NULL, that level is redundatn
-		while (level > 0 && head->next[level - 1] == NULL)
+		// if the top level of the skip list head points to NULL, that level is redundant
+		while (level > 0 && head->next[level] == NULL)
 		{
 			level--;
 		}
@@ -263,6 +262,13 @@ bool LockSkipList<T,Comparator>::pop_front(T& data)
 
 		data = p->data;
 		scalable_free(p);
+
+		// if the top level of the skip list head points to NULL, that level is redundant
+		while (level > 0 && head->next[level] == NULL)
+		{
+			level--;
+		}
+
 		mSize--;
 		return true;
 	}
