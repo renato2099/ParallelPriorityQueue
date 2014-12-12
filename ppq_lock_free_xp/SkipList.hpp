@@ -264,7 +264,7 @@ void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T 
 	Node<T>** preds = (Node<T>**) preds_mem;
 	Node<T>** succs = (Node<T>**) succs_mem;
 
-	int *batch_topLevel = (int *) malloc(k * sizeof(int));
+	int *batch_topLevel = reinterpret_cast <int *> (scalable_malloc(k * sizeof(int)));
 
 	batch_maxLevel = mthis->mLevel;
 	for (int i = 0; i < k; i++)
@@ -312,10 +312,10 @@ void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T 
 				n = k - count;
 			}
 
-			Node<T> **nnode = (Node<T> **) malloc(n * sizeof(Node<T> *));
+			Node<T> **nnode = reinterpret_cast <Node<T> **> (scalable_malloc(n * sizeof(Node<T> *)));
 			for (int i = 0; i < n; i++)
 			{
-				nnode[i] = (Node<T> *) malloc(sizeof(Node<T>));
+				nnode[i] = reinterpret_cast <Node<T> *> (scalable_malloc(sizeof(Node<T>)));
 			}
 
 			batch_maxLevel = 0;
@@ -361,10 +361,10 @@ void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T 
 			{
 				for (int i = 0; i < n; i++)
 				{
-					free(nnode[i]);
+					scalable_free(nnode[i]);
 				}
 
-				free(nnode);
+				scalable_free(nnode);
 
 				continue;
 			}
@@ -401,11 +401,11 @@ void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T 
 			count += n;
 			*inserted += n;
 
-			free(nnode);
+			scalable_free(nnode);
 		}
 	}
 
-	free(batch_topLevel);
+	scalable_free(batch_topLevel);
 }
 
 template<class T, class Comparator>
@@ -475,7 +475,7 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 		return (inserted);
 	}
 
-	int *batch_topLevel = (int *) malloc(k * sizeof(int));
+	int *batch_topLevel = reinterpret_cast <int *> (scalable_malloc(k * sizeof(int)));
 
 	batch_maxLevel = mLevel;
 	for (int i = 0; i < k; i++)
@@ -523,10 +523,10 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 				n = k - count;
 			}
 
-			Node<T> **nnode = (Node<T> **) malloc(n * sizeof(Node<T> *));
+			Node<T> **nnode = reinterpret_cast <Node<T> **> (scalable_malloc(n * sizeof(Node<T> *)));
 			for (int i = 0; i < n; i++)
 			{
-				nnode[i] = (Node<T> *) malloc(sizeof(Node<T>));
+				nnode[i] = reinterpret_cast <Node<T> *> (scalable_malloc(sizeof(Node<T>)));
 			}
 
 			batch_maxLevel = 0;
@@ -572,10 +572,10 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 			{
 				for (int i = 0; i < n; i++)
 				{
-					free(nnode[i]);
+					scalable_free(nnode[i]);
 				}
 
-				free(nnode);
+				scalable_free(nnode);
 
 				continue;
 			}
@@ -612,11 +612,11 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 			count += n;
 			inserted += n;
 
-			free(nnode);
+			scalable_free(nnode);
 		}
 	}
 
-	free(batch_topLevel);
+	scalable_free(batch_topLevel);
 
 	mSize += inserted;
 	return (inserted);
