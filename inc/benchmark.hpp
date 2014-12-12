@@ -113,7 +113,8 @@ void Benchmark<T>::basic_rm_routine(T* pq, int id, int numInserts, float fixInse
 
 	for (int i = 1; i < N * numThreads; i++)
 	{
-		pq->remove(10 * (id * 10 + i + 1));
+		int key = 10 * (id * 10 + i + 1);
+		pq->remove(key);
 	}
 }
 
