@@ -6,7 +6,7 @@
 #define LOCKSKIPLIST_HPP
 
 #define SEED		10
-#define MAX_LEVEL	21
+#define MAX_LEVEL	27
 #define PROB		0.5
 
 using namespace std;

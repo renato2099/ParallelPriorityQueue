@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <sstream>
 #include "../inc/optionparser.h"
+#include "../inc/benchmark.hpp"
 #include "PPQ.hpp"
 #include "tests.hpp"
-#include "../inc/benchmark.hpp"
 
 using namespace std;
 
