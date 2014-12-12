@@ -5,13 +5,13 @@
 #include "../inc/AtomicRef.hpp"
 
 #include <tbb/scalable_allocator.h>
-#include <tbb/cache_aligned_allocator.h>
+//#include <tbb/cache_aligned_allocator.h>
 
 #ifndef SKIPLIST_HPP
 #define SKIPLIST_HPP
 
 #define SEED				10
-#define MAX_LEVEL			25
+#define MAX_LEVEL			27
 #define PROB				0.5
 
 #define INSERT_THREADS		2
@@ -35,30 +35,24 @@ class SkipList
 	std::atomic<size_t>	mSize;
 	std::atomic<int> mLevel;
 	Node<T> *head;
+
+	bool findNode(const T& data, Node<T>** preds, Node<T>** succs);
+	static void insert_aux_thread(SkipList<T,Comparator> *mthis, T data[], int k, int *inserted);
 	//friend bool comparator_ <T,Comparator> (const T& t1, const T& t2);
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
 	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); }; 
 
-	Node<T>* allocate(int l)
+	Node<T> *allocate(int l)
 	{
-		return reinterpret_cast<Node<T>*>(scalable_aligned_malloc(sizeof(Node<T>) + ((l+1) * sizeof(AtomicRef<Node<T>>)), 64));
-	};
-	void deallocate(Node<T>* p)
+		return reinterpret_cast <Node<T> *> (scalable_malloc(sizeof(Node<T>) + ((l + 1) * sizeof(AtomicRef<Node<T>>))));
+	}
+
+	void deallocate(Node<T> *p)
 	{
-		scalable_aligned_free(p);
-		//return tbb::scalable_allocator<Node<T>>().deallocate(p, n);
-	};
-	Node<T>** allocate_array(size_t n=MAX_LEVEL, const void* hint=0)
-	{
-		return tbb::scalable_allocator<Node<T>*>().allocate(n, hint);
-	};
-	void deallocate_array(Node<T>** p, size_t n=MAX_LEVEL)
-	{
-		return tbb::scalable_allocator<Node<T>*>().deallocate(p, n);
-	};
+		scalable_free(p);
+	}
 
 	public:
-	SkipList* me;
 	SkipList();
 	~SkipList();
 	bool empty() const;
@@ -71,11 +65,10 @@ class SkipList
 	size_t pop_front(T data[], int k);
 	void print();
 	//void printLevel(int l);
-
-	private:
-	bool findNode(const T& data, Node<T>** preds, Node<T>** succs);
-	static void insert_aux_thread(SkipList<T,Comparator> *mthis, T data[], int k, int *inserted);
 };
+
+__thread void *preds_mem[MAX_LEVEL];
+__thread void *succs_mem[MAX_LEVEL];
 
 /*
  * Implementation of template class
@@ -89,14 +82,14 @@ SkipList<T,Comparator>::SkipList()
 	mSize = 0;
 
 	head = allocate(MAX_LEVEL);
-	head->level = MAX_LEVEL-1;
+	head->level = MAX_LEVEL - 1;
 }
 
 template<class T, class Comparator>
 SkipList<T,Comparator>::~SkipList()
 {
-	Node<T>* tmp;
-	Node<T>* curr;
+	Node<T> *tmp;
+	Node<T> *curr;
 
 	curr = head->next[0].getRef(); //head.load();
 	while (curr != nullptr)
@@ -169,6 +162,7 @@ bool SkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>**
 			preds[level] = pred;
 			succs[level] = curr;
 		}
+
 		if (curr != NULL)
 			return (equal(curr->data, data));
 		else 
@@ -196,17 +190,20 @@ bool SkipList<T,Comparator>::insert(const T& data)
 {
 	int topLevel = 0;
 	int bottomLevel = 0;
-	Node<T>** preds = allocate_array(MAX_LEVEL);
-	Node<T>** succs = allocate_array(MAX_LEVEL);
 	Node<T>*  nnode = nullptr;
+	Node<T>** preds = (Node<T>**) preds_mem;
+	Node<T>** succs = (Node<T>**) succs_mem;
+
 	while (topLevel < (MAX_LEVEL - 1) && topLevel <= mLevel && ((float) rand() / RAND_MAX) < PROB)
 	{
 		topLevel++;
 	}
+
 	if (topLevel > mLevel)
 	{
 		mLevel = topLevel;
 	}
+
 	while (true)
 	{
 		findNode(data, preds, succs);
@@ -217,10 +214,10 @@ bool SkipList<T,Comparator>::insert(const T& data)
 		nnode->data = data;
 		nnode->level = topLevel;
 			
-			//FIXME Could we move this for loop after the "compareAndSet"?
-			//FIXME the difference is when it fails, because we don't perform useless operations
-			// The new node gets the reference from the successor
-			// I would leave it like this, probably doesn't matter
+		//FIXME Could we move this for loop after the "compareAndSet"?
+		//FIXME the difference is when it fails, because we don't perform useless operations
+		// The new node gets the reference from the successor
+		// I would leave it like this, probably doesn't matter
 		for (int level = bottomLevel; level <=topLevel; level++)
 		{
 			Node<T>* succ = succs[level];
@@ -250,14 +247,12 @@ bool SkipList<T,Comparator>::insert(const T& data)
 			}
 		}
 		mSize++;
-		deallocate_array(preds, MAX_LEVEL);
-		deallocate_array(succs, MAX_LEVEL);
+
 		return true;
-	//this is actually never executed
-	break;
+		//this is actually never executed
+		break;
 	}
-	deallocate_array(preds, MAX_LEVEL);
-	deallocate_array(succs, MAX_LEVEL);
+
 	return false;
 }
 
@@ -266,10 +261,10 @@ void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T 
 {
 	int bottomLevel = 0;
 	int count, n, batch_maxLevel, next;
-	Node<T>** preds = new Node<T> *[MAX_LEVEL];
-	Node<T>** succs = new Node<T> *[MAX_LEVEL];
+	Node<T>** preds = (Node<T>**) preds_mem;
+	Node<T>** succs = (Node<T>**) succs_mem;
 
-	int *batch_topLevel = new int[k];
+	int *batch_topLevel = (int *) malloc(k * sizeof(int));
 
 	batch_maxLevel = mthis->mLevel;
 	for (int i = 0; i < k; i++)
@@ -317,10 +312,10 @@ void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T 
 				n = k - count;
 			}
 
-			Node<T> **nnode = new Node<T> *[n]();
+			Node<T> **nnode = (Node<T> **) malloc(n * sizeof(Node<T> *));
 			for (int i = 0; i < n; i++)
 			{
-				nnode[i] = new Node<T>();
+				nnode[i] = (Node<T> *) malloc(sizeof(Node<T>));
 			}
 
 			batch_maxLevel = 0;
@@ -366,10 +361,10 @@ void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T 
 			{
 				for (int i = 0; i < n; i++)
 				{
-					delete nnode[i];
+					free(nnode[i]);
 				}
 
-				delete [] nnode;
+				free(nnode);
 
 				continue;
 			}
@@ -406,13 +401,11 @@ void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T 
 			count += n;
 			*inserted += n;
 
-			delete [] nnode;
+			free(nnode);
 		}
 	}
 
-	delete [] preds;
-	delete [] succs;
-	delete [] batch_topLevel;
+	free(batch_topLevel);
 }
 
 template<class T, class Comparator>
@@ -420,8 +413,8 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 {
 	int bottomLevel = 0;
 	int count, inserted, n, batch_maxLevel, next;
-	Node<T>** preds = new Node<T> *[MAX_LEVEL];
-	Node<T>** succs = new Node<T> *[MAX_LEVEL];
+	Node<T>** preds = (Node<T>**) preds_mem;
+	Node<T>** succs = (Node<T>**) succs_mem;
 	
 	/* sorting */
 	for (int i = 0; i < k - 1; i++)
@@ -453,9 +446,6 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 
 	if (k > INSERT_THRESHOLD)
 	{
-		delete [] preds;
-		delete [] succs;
-
 		thread tid[INSERT_THREADS];
 		int inserted_nodes[INSERT_THREADS];
 
@@ -485,7 +475,7 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 		return (inserted);
 	}
 
-	int *batch_topLevel = new int[k];
+	int *batch_topLevel = (int *) malloc(k * sizeof(int));
 
 	batch_maxLevel = mLevel;
 	for (int i = 0; i < k; i++)
@@ -533,10 +523,10 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 				n = k - count;
 			}
 
-			Node<T> **nnode = new Node<T> *[n]();
+			Node<T> **nnode = (Node<T> **) malloc(n * sizeof(Node<T> *));
 			for (int i = 0; i < n; i++)
 			{
-				nnode[i] = new Node<T>();
+				nnode[i] = (Node<T> *) malloc(sizeof(Node<T>));
 			}
 
 			batch_maxLevel = 0;
@@ -582,10 +572,10 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 			{
 				for (int i = 0; i < n; i++)
 				{
-					delete nnode[i];
+					free(nnode[i]);
 				}
 
-				delete [] nnode;
+				free(nnode);
 
 				continue;
 			}
@@ -622,13 +612,11 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 			count += n;
 			inserted += n;
 
-			delete [] nnode;
+			free(nnode);
 		}
 	}
 
-	delete [] preds;
-	delete [] succs;
-	delete [] batch_topLevel;
+	free(batch_topLevel);
 
 	mSize += inserted;
 	return (inserted);
@@ -638,18 +626,16 @@ template<class T, class Comparator>
 bool SkipList<T,Comparator>::remove(const T& data)
 {
 	int bottomLevel = 0;
-	Node<T>** preds = allocate_array(MAX_LEVEL);
-	Node<T>** succs = allocate_array(MAX_LEVEL);
 	Node<T>* succ = nullptr;
 	bool marked = false;
-	
+	Node<T>** preds = (Node<T>**) preds_mem;
+	Node<T>** succs = (Node<T>**) succs_mem;
+
 	while (true) //This loop makes no sense
 	{
 		bool found = findNode(data, preds, succs);
 		if (!found)
 		{
-			deallocate_array(preds, MAX_LEVEL);
-			deallocate_array(succs, MAX_LEVEL);
 			return false;
 		}
 		else
@@ -681,14 +667,10 @@ bool SkipList<T,Comparator>::remove(const T& data)
 					}
 					findNode(data, preds, succs); //is this for cleanup?? hangs without it
 					mSize--;
-					deallocate_array(preds, MAX_LEVEL);
-					deallocate_array(succs, MAX_LEVEL);
 					return true;
 				}
 				else if (marked)
 				{
-					deallocate_array(preds, MAX_LEVEL);
-					deallocate_array(succs, MAX_LEVEL);
 					return false;
 				}
 				marked = node2rm->next[bottomLevel].getMarked();
@@ -697,7 +679,6 @@ bool SkipList<T,Comparator>::remove(const T& data)
 		}
 	}
 }
-
 
 template<class T, class Comparator>
 bool SkipList<T,Comparator>::pop_front(T& data)
@@ -766,6 +747,7 @@ size_t SkipList<T,Comparator>::pop_front(T data[], int k)
 	{
 		return 0;
 	}
+
 	curr = head->next[bottomLevel].getRef();
 	while (curr != nullptr)
 	{
