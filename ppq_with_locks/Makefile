@@ -1,6 +1,6 @@
 # Makefile for GNU make
 
-LDLIBS = -pthread -lboost_program_options
+LDLIBS = -pthread -lboost_program_options -ltbb -ltbbmalloc #-ltbbmalloc_proxy
 CC = g++
 
 # For compiling in OSX
@@ -11,13 +11,7 @@ endif
 
 CFLAGS = -g -std=c++11 -O2 -Wall -pthread
 
-OBJECTS = main.o #PPQ.o SkipList.o
-
-ifdef version
-  ifeq "$(version)" "par"
-    CFLAGS += -DTHREAD_SAFE
-  endif
-endif
+OBJECTS = main.o
 
 main: $(OBJECTS) 
 	$(CC) $(CFLAGS) -o $@ $(OBJECTS) $(LDLIBS)
