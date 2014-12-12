@@ -40,7 +40,10 @@ void Benchmark<T>::basic_pop_routine(T* pq, int id, int numInserts, float fixIns
 	while (count < fix_i)
 	{
 		value = rand_val(num_gen);
-		pq->push(value);
+		if (pq == nullptr)
+			std::cout << "amn" << std::endl;
+		else
+			pq->push(value);
 		count++;
 	}
 
@@ -78,8 +81,6 @@ void Benchmark<T>::pop_benchmark(int numThreads, int numInserts, float fixInsert
 
 	if (verbose)
 		std::cout << "Pop method benchmark: " << numThreads << "threads | " << numInserts << "pushs | " << fixInserts << "% fixed pushs" <<std::endl;
-	//TODO this type should be parametrized
-	//PPQ<int>* pq = new PPQ<int>();
 	T* pq = new T();
 	std::thread* tids = new std::thread[numThreads];
 
@@ -96,7 +97,7 @@ void Benchmark<T>::pop_benchmark(int numThreads, int numInserts, float fixInsert
 	clock::time_point t1 = clock::now();
 
 	milliseconds total_ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
-	std::cout << "Lock-free Elapsed[ms]: " << total_ms.count() << std::endl;
+	std::cout << "Elapsed[ms]: " << total_ms.count() << std::endl;
 }
 
 template <class T>
@@ -124,8 +125,6 @@ void Benchmark<T>::rm_benchmark(int numThreads, int numInserts, float fixInserts
 
 	if (verbose)
 		std::cout << "Remove method benchmark: " << numThreads << "threads | " << numInserts << "pushs | " << fixInserts << "% fixed pushs" <<std::endl;
-	//TODO this type should be parametrized
-	//PPQ<int>* pq = new PPQ<int>();
 	T* pq = new T();
 	std::thread* tids = new std::thread[numThreads];
 
@@ -142,7 +141,7 @@ void Benchmark<T>::rm_benchmark(int numThreads, int numInserts, float fixInserts
 	clock::time_point t1 = clock::now();
 
 	milliseconds total_ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
-	std::cout << "Lock-free Elapsed[ms]: " << total_ms.count() << std::endl;
+	std::cout << "Elapsed[ms]: " << total_ms.count() << std::endl;
 }
 
 template <class T>

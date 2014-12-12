@@ -21,11 +21,11 @@ using namespace std;
 
 // might do it like: http://stackoverflow.com/questions/19609417/atomic-operations-for-lock-free-doubly-linked-list
 
-template <typename T>  struct Node
+template <typename T>  struct LockFreeNode
 {	
 	T data;
 	int	level;
-	AtomicRef<Node>	next[0];
+	AtomicRef<LockFreeNode>	next[0];
 };
 
 template <class T, class Comparator>
@@ -34,20 +34,20 @@ class SkipList
 	private:
 	std::atomic<size_t>	mSize;
 	std::atomic<int> mLevel;
-	Node<T> *head;
+	LockFreeNode<T> *head;
 
-	bool findNode(const T& data, Node<T>** preds, Node<T>** succs);
+	bool findLockFreeNode(const T& data, LockFreeNode<T>** preds, LockFreeNode<T>** succs);
 	static void insert_aux_thread(SkipList<T,Comparator> *mthis, T data[], int k, int *inserted);
 	//friend bool comparator_ <T,Comparator> (const T& t1, const T& t2);
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
 	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); }; 
 
-	Node<T> *allocate(int l)
+	LockFreeNode<T> *allocate(int l)
 	{
-		return reinterpret_cast <Node<T> *> (scalable_malloc(sizeof(Node<T>) + ((l + 1) * sizeof(AtomicRef<Node<T>>))));
+		return reinterpret_cast <LockFreeNode<T> *> (scalable_malloc(sizeof(LockFreeNode<T>) + ((l + 1) * sizeof(AtomicRef<LockFreeNode<T>>))));
 	}
 
-	void deallocate(Node<T> *p)
+	void deallocate(LockFreeNode<T> *p)
 	{
 		scalable_free(p);
 	}
@@ -88,8 +88,8 @@ SkipList<T,Comparator>::SkipList()
 template<class T, class Comparator>
 SkipList<T,Comparator>::~SkipList()
 {
-	Node<T> *tmp;
-	Node<T> *curr;
+	LockFreeNode<T> *tmp;
+	LockFreeNode<T> *curr;
 
 	curr = head->next[0].getRef(); //head.load();
 	while (curr != nullptr)
@@ -103,14 +103,14 @@ SkipList<T,Comparator>::~SkipList()
 
 //TODO have to clean up
 template<class T, class Comparator>
-bool SkipList<T, Comparator>::findNode(const T& data, Node<T>** preds, Node<T>** succs)
+bool SkipList<T, Comparator>::findLockFreeNode(const T& data, LockFreeNode<T>** preds, LockFreeNode<T>** succs)
 {
 	int bottomLevel = 0;
 	bool marked = false;
 	bool snip = false;
-	Node<T>* pred = nullptr;
-	Node<T>* curr = nullptr;
-	Node<T>* succ = nullptr;
+	LockFreeNode<T>* pred = nullptr;
+	LockFreeNode<T>* curr = nullptr;
+	LockFreeNode<T>* succ = nullptr;
 
 	retry:
 	while(true) 
@@ -190,9 +190,9 @@ bool SkipList<T,Comparator>::insert(const T& data)
 {
 	int topLevel = 0;
 	int bottomLevel = 0;
-	Node<T>*  nnode = nullptr;
-	Node<T>** preds = (Node<T>**) preds_mem;
-	Node<T>** succs = (Node<T>**) succs_mem;
+	LockFreeNode<T>*  nnode = nullptr;
+	LockFreeNode<T>** preds = (LockFreeNode<T>**) preds_mem;
+	LockFreeNode<T>** succs = (LockFreeNode<T>**) succs_mem;
 
 	while (topLevel < (MAX_LEVEL - 1) && topLevel <= mLevel && ((float) rand() / RAND_MAX) < PROB)
 	{
@@ -206,7 +206,7 @@ bool SkipList<T,Comparator>::insert(const T& data)
 
 	while (true)
 	{
-		findNode(data, preds, succs);
+		findLockFreeNode(data, preds, succs);
 		if (nnode == nullptr)
 		{
 			nnode = allocate(topLevel);
@@ -220,12 +220,12 @@ bool SkipList<T,Comparator>::insert(const T& data)
 		// I would leave it like this, probably doesn't matter
 		for (int level = bottomLevel; level <=topLevel; level++)
 		{
-			Node<T>* succ = succs[level];
+			LockFreeNode<T>* succ = succs[level];
 			nnode->next[level].setRef(succ, false);
 		}
 
-		Node<T>* pred = preds[bottomLevel];
-		Node<T>* succ = succs[bottomLevel];
+		LockFreeNode<T>* pred = preds[bottomLevel];
+		LockFreeNode<T>* succ = succs[bottomLevel];
 
 		if (!(pred->next[bottomLevel].compareAndSet(succ, nnode, false, false)))
 		{
@@ -243,7 +243,7 @@ bool SkipList<T,Comparator>::insert(const T& data)
 				{
 					break;
 				}
-				findNode(data, preds, succs);
+				findLockFreeNode(data, preds, succs);
 			}
 		}
 		mSize++;
@@ -261,8 +261,8 @@ void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T 
 {
 	int bottomLevel = 0;
 	int count, n, batch_maxLevel, next;
-	Node<T>** preds = (Node<T>**) preds_mem;
-	Node<T>** succs = (Node<T>**) succs_mem;
+	LockFreeNode<T>** preds = (LockFreeNode<T>**) preds_mem;
+	LockFreeNode<T>** succs = (LockFreeNode<T>**) succs_mem;
 
 	int *batch_topLevel = reinterpret_cast <int *> (scalable_malloc(k * sizeof(int)));
 
@@ -285,7 +285,7 @@ void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T 
 	*inserted = 0;
 	while (count < k)
 	{
-		bool found = mthis->findNode(data[count], preds, succs);
+		bool found = mthis->findLockFreeNode(data[count], preds, succs);
 		if (found)
 		{
 			/* if one element is already in the SkipList, we ignore it */
@@ -312,10 +312,10 @@ void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T 
 				n = k - count;
 			}
 
-			Node<T> **nnode = reinterpret_cast <Node<T> **> (scalable_malloc(n * sizeof(Node<T> *)));
+			LockFreeNode<T> **nnode = reinterpret_cast <LockFreeNode<T> **> (scalable_malloc(n * sizeof(LockFreeNode<T> *)));
 			for (int i = 0; i < n; i++)
 			{
-				nnode[i] = reinterpret_cast <Node<T> *> (scalable_malloc(sizeof(Node<T>)));
+				nnode[i] = reinterpret_cast <LockFreeNode<T> *> (scalable_malloc(sizeof(LockFreeNode<T>)));
 			}
 
 			batch_maxLevel = 0;
@@ -342,7 +342,7 @@ void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T 
 						next++;
 					}
 
-					Node<T> *succ = (next == n) ? succs[level] : nnode[next];
+					LockFreeNode<T> *succ = (next == n) ? succs[level] : nnode[next];
 					nnode[i]->next[level].setRef(succ, false);
 				}
 			}
@@ -350,12 +350,12 @@ void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T 
 			/* we link last of the "n" nodes to the succs */
 			for (int level = bottomLevel; level <= nnode[n - 1]->level; level++)
 			{
-				Node<T>* succ = succs[level];
+				LockFreeNode<T>* succ = succs[level];
 				nnode[n - 1]->next[level].setRef(succ, false);
 			}
 
-			Node<T> *pred = preds[bottomLevel];
-			Node<T> *succ = succs[bottomLevel];
+			LockFreeNode<T> *pred = preds[bottomLevel];
+			LockFreeNode<T> *succ = succs[bottomLevel];
 
 			if (!(pred->next[bottomLevel].compareAndSet(succ, nnode[0], false, false)))
 			{
@@ -394,7 +394,7 @@ void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T 
 					{
 						break;
 					}
-					mthis->findNode(data[count], preds, succs);
+					mthis->findLockFreeNode(data[count], preds, succs);
 				}	
 			}
 
@@ -413,8 +413,8 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 {
 	int bottomLevel = 0;
 	int count, inserted, n, batch_maxLevel, next;
-	Node<T>** preds = (Node<T>**) preds_mem;
-	Node<T>** succs = (Node<T>**) succs_mem;
+	LockFreeNode<T>** preds = (LockFreeNode<T>**) preds_mem;
+	LockFreeNode<T>** succs = (LockFreeNode<T>**) succs_mem;
 	
 	/* sorting */
 	for (int i = 0; i < k - 1; i++)
@@ -496,7 +496,7 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 	inserted = 0;
 	while (count < k)
 	{
-		bool found = findNode(data[count], preds, succs);
+		bool found = findLockFreeNode(data[count], preds, succs);
 		if (found)
 		{
 			/* if one element is already in the SkipList, we ignore it */
@@ -523,10 +523,10 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 				n = k - count;
 			}
 
-			Node<T> **nnode = reinterpret_cast <Node<T> **> (scalable_malloc(n * sizeof(Node<T> *)));
+			LockFreeNode<T> **nnode = reinterpret_cast <LockFreeNode<T> **> (scalable_malloc(n * sizeof(LockFreeNode<T> *)));
 			for (int i = 0; i < n; i++)
 			{
-				nnode[i] = reinterpret_cast <Node<T> *> (scalable_malloc(sizeof(Node<T>)));
+				nnode[i] = reinterpret_cast <LockFreeNode<T> *> (scalable_malloc(sizeof(LockFreeNode<T>)));
 			}
 
 			batch_maxLevel = 0;
@@ -553,7 +553,7 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 						next++;
 					}
 
-					Node<T> *succ = (next == n) ? succs[level] : nnode[next];
+					LockFreeNode<T> *succ = (next == n) ? succs[level] : nnode[next];
 					nnode[i]->next[level].setRef(succ, false);
 				}
 			}
@@ -561,12 +561,12 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 			/* we link last of the "n" nodes to the succs */
 			for (int level = bottomLevel; level <= nnode[n - 1]->level; level++)
 			{
-				Node<T>* succ = succs[level];
+				LockFreeNode<T>* succ = succs[level];
 				nnode[n - 1]->next[level].setRef(succ, false);
 			}
 
-			Node<T> *pred = preds[bottomLevel];
-			Node<T> *succ = succs[bottomLevel];
+			LockFreeNode<T> *pred = preds[bottomLevel];
+			LockFreeNode<T> *succ = succs[bottomLevel];
 
 			if (!(pred->next[bottomLevel].compareAndSet(succ, nnode[0], false, false)))
 			{
@@ -605,7 +605,7 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 					{
 						break;
 					}
-					findNode(data[count], preds, succs);
+					findLockFreeNode(data[count], preds, succs);
 				}
 			}
 
@@ -626,21 +626,21 @@ template<class T, class Comparator>
 bool SkipList<T,Comparator>::remove(const T& data)
 {
 	int bottomLevel = 0;
-	Node<T>* succ = nullptr;
+	LockFreeNode<T>* succ = nullptr;
 	bool marked = false;
-	Node<T>** preds = (Node<T>**) preds_mem;
-	Node<T>** succs = (Node<T>**) succs_mem;
+	LockFreeNode<T>** preds = (LockFreeNode<T>**) preds_mem;
+	LockFreeNode<T>** succs = (LockFreeNode<T>**) succs_mem;
 
 	while (true) //This loop makes no sense
 	{
-		bool found = findNode(data, preds, succs);
+		bool found = findLockFreeNode(data, preds, succs);
 		if (!found)
 		{
 			return false;
 		}
 		else
 		{
-			Node<T>* node2rm = succs[bottomLevel];
+			LockFreeNode<T>* node2rm = succs[bottomLevel];
 			
 			while (true) //!marked
 			{
@@ -665,7 +665,7 @@ bool SkipList<T,Comparator>::remove(const T& data)
 						}
 				
 					}
-					findNode(data, preds, succs); //is this for cleanup?? hangs without it
+					findLockFreeNode(data, preds, succs); //is this for cleanup?? hangs without it
 					mSize--;
 					return true;
 				}
@@ -685,8 +685,8 @@ bool SkipList<T,Comparator>::pop_front(T& data)
 {
 	int bottomLevel = 0;
 	bool marked;
-	Node<T>* curr = nullptr;
-	Node<T>* succ = nullptr;
+	LockFreeNode<T>* curr = nullptr;
+	LockFreeNode<T>* succ = nullptr;
 
 	curr = head->next[bottomLevel].getRef();
 	while (curr != nullptr)
@@ -739,8 +739,8 @@ size_t SkipList<T,Comparator>::pop_front(T data[], int k)
 {
 	int bottomLevel = 0;
 	bool marked;
-	Node<T>* curr = nullptr;
-	Node<T>* succ = nullptr;
+	LockFreeNode<T>* curr = nullptr;
+	LockFreeNode<T>* succ = nullptr;
 	int count = 0;
 
 	if (k == 0)
@@ -800,7 +800,7 @@ size_t SkipList<T,Comparator>::pop_front(T data[], int k)
 template<class T, class Comparator>
 void SkipList<T,Comparator>::print()
 {
-	Node<T>* p;
+	LockFreeNode<T>* p;
 	std::cout << "SkipList, level: " << mLevel << " size: " << mSize << std::endl;
 	std::cout << "---------------BEGIN-----------------------" << std::endl;
 
@@ -816,7 +816,7 @@ void SkipList<T,Comparator>::print()
 /*template<class T, class Comparator>
 void SkipList<T,Comparator>::printLevel(int l)
 {
-	Node<T> *p;
+	LockFreeNode<T> *p;
 	// the skip list is traversed by level
 	p = head->next[l];
 	while (p != nullptr)

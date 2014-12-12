@@ -1,9 +1,6 @@
 #include <iostream>
 #include <stdint.h>
-
-#ifdef THREAD_SAFE
 #include <mutex>
-#endif
 
 #ifndef LOCKSKIPLIST_HPP
 #define LOCKSKIPLIST_HPP
@@ -36,9 +33,7 @@ class LockSkipList
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
 	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); };
 
-#ifdef THREAD_SAFE
-	mutex mtx;
-#endif
+	std::mutex mtx;
 
 	public:
 	LockSkipList();
@@ -91,9 +86,7 @@ void LockSkipList<T,Comparator>::insert(const T& data)
 
 	q = new Node<T>();
 	q->data = data;
-#ifdef THREAD_SAFE
 	std::lock_guard<std::mutex> guard(mtx);
-#endif
 	/* gets a random level for the new node
  	* its level may exceed the current level of the list, at most, by 1
  	*/
@@ -154,9 +147,7 @@ void LockSkipList<T,Comparator>::insert(T *data[], int k)
 template<class T, class Comparator>
 T LockSkipList<T,Comparator>::find(const T& data)
 {
-#ifdef THREAD_SAFE
 	std::lock_guard<std::mutex> guard(mtx);
-#endif
 	Node<T> *p;
 
 	// searches the node with the greatest key that does not exceed the desired key
@@ -186,9 +177,7 @@ T LockSkipList<T,Comparator>::find(const T& data)
 template<class T, class Comparator>
 void LockSkipList<T,Comparator>::remove(const T& data)
 {
-#ifdef THREAD_SAFE
 	std::lock_guard<std::mutex> guard(mtx);
-#endif
 	Node<T> *p, *update[MAX_LEVEL];
 
 	/* searches the node with the greatest key that does not exceed the desired key
@@ -230,9 +219,7 @@ template<class T, class Comparator>
 bool LockSkipList<T,Comparator>::pop_front(T& data)
 {
 	Node<T> *p;
-#ifdef THREAD_SAFE
 	std::lock_guard<std::mutex> guard(mtx);
-#endif
 	p = head->forward[0];
 	if (p != nullptr)
 	{
