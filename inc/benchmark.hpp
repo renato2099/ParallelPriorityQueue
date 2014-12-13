@@ -18,12 +18,16 @@ private:
 
 	void rm_benchmark(int numThreads, int numInserts, float fixInserts, bool verbose);
 
+	void populate(T* pq, int numInserts);
+	
+	enum benchType {INSERT, POP, MIXED};
+
 public:
 	void run(bool pop, bool rm, int numThreads, int numInserts, float fixInserts, bool verbose);
 };
 
 template <class T>
-void Benchmark<T>::basic_pop_routine(T* pq, int id, int numInserts, float fixInserts)
+void Benchmark<T>::basic_pop_routine(T* pq, int numInserts, float fixInserts, benchType type)
 {
 	int count = 0;
 	int value = 0;
@@ -37,31 +41,34 @@ void Benchmark<T>::basic_pop_routine(T* pq, int id, int numInserts, float fixIns
 	std::default_random_engine num_gen;
 	std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
 
-	while (count < fix_i)
+	if (type == INSERT || type == MIXED)
 	{
-		value = rand_val(num_gen);
-		if (pq == nullptr)
-			std::cout << "amn" << std::endl;
-		else
-			pq->push(value);
-		count++;
-	}
-
-	count = 0;
-	while (count < ran_i)
-	{
-		if (coin_flip(gen))	//push
+		while (count < fix_i)
 		{
 			value = rand_val(num_gen);
 			pq->push(value);
+			count++;
 		}
-		else //pop_front
+	}
+
+	count = 0;
+	if (type == POP || type === MIXED)
+	{
+		while (count < ran_i)
 		{
-			bool succ = pq->pop_front(value);
-			if (succ) //this is here, such that the value is not optimized away
-				sum += value;
+			if (coin_flip(gen))	//push
+			{
+				value = rand_val(num_gen);
+				pq->push(value);
+			}
+			else //pop_front
+			{
+				bool succ = pq->pop_front(value);
+				if (succ) //this is here, such that the value is not optimized away
+					sum += value;
+			}
+			count++;
 		}
-		count++;
 	}
 	if (ran_i == 0)
 	{
@@ -84,10 +91,21 @@ void Benchmark<T>::pop_benchmark(int numThreads, int numInserts, float fixInsert
 	T* pq = new T();
 	std::thread* tids = new std::thread[numThreads];
 
+	benchType type = MIXED;
+	if (fixInserts == 1.0)
+	{
+		type = INSERT;
+	}
+	else if (fixInserts == 0.0)
+	{
+		type = POP; //TODO this should be pop only
+		populate(pq, numInserts);
+	}
+
 	clock::time_point t0 = clock::now();
 	for (int i = 0; i < numThreads; i++)
 	{
-		tids[i] = std::thread(&Benchmark<T>::basic_pop_routine, this, std::ref(pq), i, numInserts, fixInserts);	
+		tids[i] = std::thread(&Benchmark<T>::basic_pop_routine, this, std::ref(pq), numInserts, fixInserts, type);	
 	}
 
 	for (int i = 0; i < numThreads; i++)
@@ -142,6 +160,22 @@ void Benchmark<T>::rm_benchmark(int numThreads, int numInserts, float fixInserts
 
 	milliseconds total_ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
 	std::cout << "Elapsed[ms]: " << total_ms.count() << std::endl;
+}
+
+template <class T>
+void Benchmark<T>::populate(T* pq, int numInserts)
+{
+	int count = 0;
+	int value = 0;
+	// Random values
+	std::default_random_engine num_gen;
+
+	while (count < fix_i)
+	{
+		value = rand_val(num_gen);
+		pq->push(value);
+		count++;
+	}
 }
 
 template <class T>
