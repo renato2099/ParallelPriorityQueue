@@ -35,7 +35,8 @@ void Benchmark<T>::basic_pop_routine(T* pq, int id, int numInserts, float fixIns
 	std::bernoulli_distribution coin_flip(0.5);
 	// Random values
 	std::default_random_engine num_gen;
-	std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
+	//std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
+	std::uniform_real<int> rand_val(0,std::numeric_limits<int>::max());
 
 	while (count < fix_i)
 	{
