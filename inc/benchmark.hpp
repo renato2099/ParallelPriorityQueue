@@ -39,10 +39,13 @@ void Benchmark<T>::basic_pop_routine(T* pq, int numInserts, float fixInserts, be
 	std::bernoulli_distribution coin_flip(0.5);
 	// Random values
 	std::mt19937 num_gen(rd());
-#if defined(__ICC) || defined(__INTEL_COMPILER)
-	std::uniform_real<int> rand_val(0,std::numeric_limits<int>::max());
-#else//#elif defined(__GNUC__) || defined(__GNUG__)
+#if __GNUC__ > 4 || \
+              (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \
+                                 (__GNUC_MINOR__ == 4 && \
+                                  __GNUC_PATCHLEVEL__ > 7)))
 	std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
+#else
+	std::uniform_real<int> rand_val(0,std::numeric_limits<int>::max());
 #endif
 	
 
@@ -176,10 +179,13 @@ void Benchmark<T>::populate(T* pq, int numInserts)
 	// Random values
 	std::random_device rd;
 	std::mt19937 num_gen(rd());
-#if defined(__ICC) || defined(__INTEL_COMPILER)
-	std::uniform_real<int> rand_val(0,std::numeric_limits<int>::max());
-#else//#elif defined(__GNUC__) || defined(__GNUG__)
+#if __GNUC__ > 4 || \
+              (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \
+                                 (__GNUC_MINOR__ == 4 && \
+                                  __GNUC_PATCHLEVEL__ > 7)))
 	std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
+#else
+	std::uniform_real<int> rand_val(0,std::numeric_limits<int>::max());
 #endif
 	while (count < numInserts)
 	{
