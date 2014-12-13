@@ -38,12 +38,13 @@ void Benchmark<T>::basic_pop_routine(T* pq, int numInserts, float fixInserts, be
 	std::mt19937 gen(rd());
 	std::bernoulli_distribution coin_flip(0.5);
 	// Random values
-	std::default_random_engine num_gen;
-#if defined(__GNUC__) || defined(__GNUG__)
-	std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
-#else
+	std::mt19937 num_gen(rd());
+#if defined(__ICC) || defined(__INTEL_COMPILER)
 	std::uniform_real<int> rand_val(0,std::numeric_limits<int>::max());
+#else//#elif defined(__GNUC__) || defined(__GNUG__)
+	std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
 #endif
+	
 
 	if (type == INSERT_ONLY || type == MIXED)
 	{
@@ -173,13 +174,13 @@ void Benchmark<T>::populate(T* pq, int numInserts)
 	int count = 0;
 	int value = 0;
 	// Random values
-	std::default_random_engine num_gen;
-#if defined(__GNUC__) || defined(__GNUG__)
-	std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
-#else
+	std::random_device rd;
+	std::mt19937 num_gen(rd());
+#if defined(__ICC) || defined(__INTEL_COMPILER)
 	std::uniform_real<int> rand_val(0,std::numeric_limits<int>::max());
+#else//#elif defined(__GNUC__) || defined(__GNUG__)
+	std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
 #endif
-
 	while (count < numInserts)
 	{
 		value = rand_val(num_gen);
