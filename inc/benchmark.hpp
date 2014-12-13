@@ -39,7 +39,8 @@ void Benchmark<T>::basic_pop_routine(T* pq, int numInserts, float fixInserts, be
 	std::bernoulli_distribution coin_flip(0.5);
 	// Random values
 	std::default_random_engine num_gen;
-	std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
+	//std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
+	std::uniform_real<int> rand_val(0,std::numeric_limits<int>::max());
 
 	if (type == INSERT || type == MIXED)
 	{
@@ -131,7 +132,8 @@ void Benchmark<T>::basic_rm_routine(T* pq, int id, int numInserts, float fixInse
 
 	for (int i = 1; i < N * numThreads; i++)
 	{
-		pq->remove(10 * (id * 10 + i + 1));
+		int key = 10 * (id * 10 + i + 1);
+		pq->remove(key);
 	}
 }
 

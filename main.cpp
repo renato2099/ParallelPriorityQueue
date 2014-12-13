@@ -5,9 +5,9 @@
 #include "ppq_with_locks/ppq_lock.hpp"
 #include "ppq_lock_free_xp/PPQ.hpp"
 #include "inc/benchmark.hpp"
+#include "ppq_tbb/TBB_PPQ.hpp"
 
 using namespace std;
-
 
 struct Point
 {
@@ -161,7 +161,7 @@ int main(int argc, char** argv)
 	Benchmark<PPQ<int>> lfBench;
 	Benchmark<ppq_lock<int>> lockBench;
 	Benchmark<ppq_std<int>> stdBench;
-	//tbb bench missing
+	Benchmark<TBB_PPQ<int>> tbbBench;
 
 	if (!readCmdLine(argc, argv, benchEn, pop, rm, numThreads, numInserts, fixInserts, verbose, testEn))
 	{
@@ -182,10 +182,8 @@ int main(int argc, char** argv)
 		std::cout << "Running TBB: skipped" << std::endl;
 		std::cout << "Running Lock-free: " << std::endl;
 		lfBench.run(pop, rm, numThreads, numInserts, fixInserts, verbose);
-		/*if (testEn)
-		{
-			test(numThreads);
-		}*/
+		std::cout << "Running TBB: " << std::endl;
+		tbbBench.run(pop, rm, numThreads, numInserts, fixInserts, verbose);
 	}//IF-CMD-LINE
 	return 0;
 }
