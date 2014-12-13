@@ -6,11 +6,13 @@
 #include <limits>
 #include <assert.h>
 
+enum benchType {INSERT_ONLY, POP_ONLY, MIXED};
+
 template <class T>
 class Benchmark
 {
 private:
-	void basic_pop_routine(T* pq, int id, int numInserts, float fixInserts);
+	void basic_pop_routine(T* pq, int numInserts, float fixInserts, benchType type);
 
 	void pop_benchmark(int numThreads, int numInserts, float fixInserts, bool verbose);
 
@@ -20,8 +22,6 @@ private:
 
 	void populate(T* pq, int numInserts);
 	
-	enum benchType {INSERT, POP, MIXED};
-
 public:
 	void run(bool pop, bool rm, int numThreads, int numInserts, float fixInserts, bool verbose);
 };
@@ -39,10 +39,13 @@ void Benchmark<T>::basic_pop_routine(T* pq, int numInserts, float fixInserts, be
 	std::bernoulli_distribution coin_flip(0.5);
 	// Random values
 	std::default_random_engine num_gen;
-	//std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
+#if defined(__GNUC__) || defined(__GNUG__)
+	std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
+#else
 	std::uniform_real<int> rand_val(0,std::numeric_limits<int>::max());
+#endif
 
-	if (type == INSERT || type == MIXED)
+	if (type == INSERT_ONLY || type == MIXED)
 	{
 		while (count < fix_i)
 		{
@@ -53,7 +56,7 @@ void Benchmark<T>::basic_pop_routine(T* pq, int numInserts, float fixInserts, be
 	}
 
 	count = 0;
-	if (type == POP || type === MIXED)
+	if (type == POP_ONLY || type == MIXED)
 	{
 		while (count < ran_i)
 		{
@@ -95,11 +98,11 @@ void Benchmark<T>::pop_benchmark(int numThreads, int numInserts, float fixInsert
 	benchType type = MIXED;
 	if (fixInserts == 1.0)
 	{
-		type = INSERT;
+		type = INSERT_ONLY;
 	}
 	else if (fixInserts == 0.0)
 	{
-		type = POP; //TODO this should be pop only
+		type = POP_ONLY; //TODO this should be pop only
 		populate(pq, numInserts);
 	}
 
@@ -171,8 +174,13 @@ void Benchmark<T>::populate(T* pq, int numInserts)
 	int value = 0;
 	// Random values
 	std::default_random_engine num_gen;
+#if defined(__GNUC__) || defined(__GNUG__)
+	std::uniform_int_distribution<int> rand_val(0,std::numeric_limits<int>::max());
+#else
+	std::uniform_real<int> rand_val(0,std::numeric_limits<int>::max());
+#endif
 
-	while (count < fix_i)
+	while (count < numInserts)
 	{
 		value = rand_val(num_gen);
 		pq->push(value);
