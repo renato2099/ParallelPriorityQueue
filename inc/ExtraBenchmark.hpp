@@ -210,7 +210,8 @@ void ExtraBenchmark<T>::batch_pop_benchmark(int numThreads, int numPush, int num
 	std::thread* tids = new std::thread[numThreads];
 
 	// Random values
-	std::default_random_engine num_gen;
+	std::random_device rd;
+	std::mt19937 num_gen(rd());
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || (__GNUC_MINOR__ == 4 && __GNUC_PATCHLEVEL__ > 7)))
 	std::uniform_int_distribution<int> rand_val(0, std::numeric_limits<int>::max());
