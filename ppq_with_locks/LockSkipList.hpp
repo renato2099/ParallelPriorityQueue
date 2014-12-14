@@ -43,7 +43,7 @@ class LockSkipList
 	bool empty() const;
 	size_t size() const;
 	bool insert(const T& data);
-	bool insert(T *data[], int k);
+	bool insert(T data[], int k);
 	T find(const T& data);
 	bool remove(T& data);
 	bool pop_front(T& data);
@@ -155,7 +155,7 @@ bool LockSkipList<T,Comparator>::insert(const T& data)
 }
 
 template<class T, class Comparator>
-bool LockSkipList<T,Comparator>::insert(T *data[], int k)
+bool LockSkipList<T,Comparator>::insert(T data[], int k)
 {
 	for (int i = 0; i < k; i++)
 	{

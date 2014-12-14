@@ -754,7 +754,7 @@ size_t SkipList<T,Comparator>::pop_front(T data[], int k)
 		// try to delete/mark curr
 		marked = curr->next[bottomLevel].getMarked();
 		succ = curr->next[bottomLevel].getRef();
-		std::cout << curr->data << "\t\t" << marked << std::endl;
+//		std::cout << curr->data << "\t\t" << marked << std::endl;
 		// if already deleted we continue
 		while (!marked)
 		{
