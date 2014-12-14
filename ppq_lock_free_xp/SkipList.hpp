@@ -14,8 +14,10 @@
 #define MAX_LEVEL			27
 #define PROB				0.5
 
+/*
 #define INSERT_THREADS		2
 #define INSERT_THRESHOLD	100
+*/
 
 using namespace std;
 
@@ -431,6 +433,7 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 	}
 
 	/* duplicates elimination */
+/*
 	for (int i = 0; i < k - 1; i++)
 	{
 		while (i + 1 < k && !comp(data[i], data[i + 1]))
@@ -474,7 +477,7 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 		mSize += inserted;
 		return (inserted);
 	}
-
+*/
 	int *batch_topLevel = reinterpret_cast <int *> (scalable_malloc(k * sizeof(int)));
 
 	batch_maxLevel = mLevel;
