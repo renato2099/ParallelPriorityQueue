@@ -34,7 +34,7 @@ void ExtraBenchmark<T>::push_pop_routine(T* pq, int numOperations, float push_pr
 	std::bernoulli_distribution coin_flip(push_prob);
 
 	// Random values
-	std::default_random_engine num_gen;
+	std::mt19937 num_gen(rd());
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || (__GNUC_MINOR__ == 4 && __GNUC_PATCHLEVEL__ > 7)))
 	std::uniform_int_distribution<int> rand_val(0, std::numeric_limits<int>::max());
@@ -71,7 +71,8 @@ void ExtraBenchmark<T>::push_pop_benchmark(int numThreads, int numPush, int numO
 	std::thread* tids = new std::thread[numThreads];
 
 	// Random values
-	std::default_random_engine num_gen;
+	std::random_device rd;
+	std::mt19937 num_gen(rd());
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || (__GNUC_MINOR__ == 4 && __GNUC_PATCHLEVEL__ > 7)))
 	std::uniform_int_distribution<int> rand_val(0, std::numeric_limits<int>::max());
@@ -109,7 +110,8 @@ void ExtraBenchmark<T>::batch_push_routine(T* pq, int numOperations, int k)
 	int *value = new int[k];
 
 	// Random values
-	std::default_random_engine num_gen;
+	std::random_device rd;
+	std::mt19937 num_gen(rd());
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || (__GNUC_MINOR__ == 4 && __GNUC_PATCHLEVEL__ > 7)))
 	std::uniform_int_distribution<int> rand_val(0, std::numeric_limits<int>::max());
@@ -146,7 +148,8 @@ void ExtraBenchmark<T>::batch_push_benchmark(int numThreads, int numPush, int nu
 	std::thread* tids = new std::thread[numThreads];
 
 	// Random values
-	std::default_random_engine num_gen;
+	std::random_device rd;
+	std::mt19937 num_gen(rd());
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || (__GNUC_MINOR__ == 4 && __GNUC_PATCHLEVEL__ > 7)))
 	std::uniform_int_distribution<int> rand_val(0, std::numeric_limits<int>::max());
