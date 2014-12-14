@@ -181,7 +181,7 @@ int readCmdLine(int argc, char** argv, bool &benchEn, bool &pop, bool &rm, int &
 
 int check_parameters(int code, int numThreads, int numPush, int numOperations, float push_prob, int k)
 {
-	if (code < 0 || code > 5)
+	if (code < 1 || code > 5)
 	{
 		cerr << "Benchmark code has to be from 1 to 5." << endl;
 		return 1;
