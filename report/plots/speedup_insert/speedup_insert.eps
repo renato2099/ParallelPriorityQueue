@@ -1,7 +1,7 @@
 %!PS-Adobe-2.0 EPSF-2.0
 %%Title: speedup_insert.eps
 %%Creator: gnuplot 4.6 patchlevel 6
-%%CreationDate: Sun Dec 14 17:25:06 2014
+%%CreationDate: Mon Dec 15 00:07:09 2014
 %%DocumentFonts: (atend)
 %%BoundingBox: 50 50 410 302
 %%EndComments
@@ -433,7 +433,7 @@ SDict begin [
   /Author (dasidler)
 %  /Producer (gnuplot)
 %  /Keywords ()
-  /CreationDate (Sun Dec 14 17:25:06 2014)
+  /CreationDate (Mon Dec 15 00:07:09 2014)
   /DOCINFO pdfmark
 end
 } ifelse
@@ -617,7 +617,7 @@ Z stroke
 LCb setrgbcolor
 112 2533 M
 currentpoint gsave translate -270 rotate 0 0 M
-(Time [s]) Cshow
+(Speedup \(base 30 threads\)) Cshow
 grestore
 LTb
 LCb setrgbcolor
@@ -625,7 +625,7 @@ LCb setrgbcolor
 (# Threads) Cshow
 LTb
 3816 4829 M
-(Speedup on Xeon Phi - 10Mio. inserts) Cshow
+(Speedup on Xeon Phi - 10Mio. pushs) Cshow
 1.000 UP
 1.000 UL
 LTb
@@ -641,14 +641,16 @@ LCb setrgbcolor
 LT0
 6380 4486 M
 399 0 V
-1147 1838 M
-791 -13 V
-1582 65 V
-3163 504 V
-1147 1838 Pls
-1938 1825 Pls
-3520 1890 Pls
-6683 2394 Pls
+752 1838 M
+395 16 V
+791 13 V
+1582 -64 V
+6683 1452 L
+752 1838 Pls
+1147 1854 Pls
+1938 1867 Pls
+3520 1803 Pls
+6683 1452 Pls
 6579 4486 Pls
 % End plot #1
 % Begin plot #2
@@ -662,14 +664,16 @@ LCb setrgbcolor
 LT1
 6380 4346 M
 399 0 V
-1147 1838 M
-791 13 V
-1582 -48 V
-3163 20 V
-1147 1838 Crs
-1938 1851 Crs
-3520 1803 Crs
-6683 1823 Crs
+752 1838 M
+395 -120 V
+791 -12 V
+1582 45 V
+3163 -19 V
+752 1838 Crs
+1147 1718 Crs
+1938 1706 Crs
+3520 1751 Crs
+6683 1732 Crs
 6579 4346 Crs
 % End plot #2
 % Begin plot #3
@@ -683,14 +687,16 @@ LCb setrgbcolor
 LT2
 6380 4206 M
 399 0 V
-1147 1838 M
-791 -15 V
-1582 -5 V
-6683 1552 L
-1147 1838 Star
-1938 1823 Star
-3520 1818 Star
-6683 1552 Star
+752 1838 M
+395 80 V
+791 17 V
+1582 5 V
+3163 359 V
+752 1838 Star
+1147 1918 Star
+1938 1935 Star
+3520 1940 Star
+6683 2299 Star
 6579 4206 Star
 % End plot #3
 % Begin plot #4
@@ -704,14 +710,16 @@ LCb setrgbcolor
 LT3
 6380 4066 M
 399 0 V
-1147 1838 M
-791 53 V
-1582 443 V
-6683 3542 L
-1147 1838 Box
-1938 1891 Box
-3520 2334 Box
-6683 3542 Box
+752 1838 M
+395 8 V
+791 -51 V
+3520 1479 L
+6683 1076 L
+752 1838 Box
+1147 1846 Box
+1938 1795 Box
+3520 1479 Box
+6683 1076 Box
 6579 4066 Box
 % End plot #4
 1.000 UL
