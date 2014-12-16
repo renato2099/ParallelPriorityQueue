@@ -14,11 +14,6 @@
 #define MAX_LEVEL			27
 #define PROB				0.5
 
-/*
-#define INSERT_THREADS		2
-#define INSERT_THRESHOLD	100
-*/
-
 using namespace std;
 
 // might do it like: http://stackoverflow.com/questions/19609417/atomic-operations-for-lock-free-doubly-linked-list
@@ -259,158 +254,6 @@ bool SkipList<T,Comparator>::insert(const T& data)
 }
 
 template<class T, class Comparator>
-void SkipList<T,Comparator>::insert_aux_thread(SkipList<T,Comparator> *mthis, T data[], int k, int *inserted)
-{
-	int bottomLevel = 0;
-	int count, n, batch_maxLevel, next;
-	LockFreeNode<T>** preds = (LockFreeNode<T>**) preds_mem;
-	LockFreeNode<T>** succs = (LockFreeNode<T>**) succs_mem;
-
-	int *batch_topLevel = reinterpret_cast <int *> (scalable_malloc(k * sizeof(int)));
-
-	batch_maxLevel = mthis->mLevel;
-	for (int i = 0; i < k; i++)
-	{
-		batch_topLevel[i] = 0;
-		while (batch_topLevel[i] < (MAX_LEVEL - 1) && batch_topLevel[i] <= batch_maxLevel && ((float) rand() / RAND_MAX) < PROB)
-		{
-			batch_topLevel[i]++;
-		}
-
-		if (batch_topLevel[i] > batch_maxLevel)
-		{
-			batch_maxLevel = batch_topLevel[i];
-		}
-	}
-
-	count = 0;
-	*inserted = 0;
-	while (count < k)
-	{
-		bool found = mthis->findLockFreeNode(data[count], preds, succs);
-		if (found)
-		{
-			/* if one element is already in the SkipList, we ignore it */
-			count++;
-		}
-		else
-		{
-			/* we want to compute the number of elements that have to be inserted in this position
-			 * i.e. their key < succ->key
-			 * if succ[0] is the nullptr, all elements have to be inserted, because I am at the end
-			 * we store this number in "n" variable
-			 */
-			if (succs[0] != nullptr)
-			{
-				n = count;
-				while (n < k && mthis->comp(data[n], succs[0]->data))
-				{
-					n++;
-				}
-				n -= count;
-			}
-			else
-			{
-				n = k - count;
-			}
-
-			LockFreeNode<T> **nnode = reinterpret_cast <LockFreeNode<T> **> (scalable_malloc(n * sizeof(LockFreeNode<T> *)));
-			for (int i = 0; i < n; i++)
-			{
-				nnode[i] = reinterpret_cast <LockFreeNode<T> *> (scalable_malloc(sizeof(LockFreeNode<T>)));
-			}
-
-			batch_maxLevel = 0;
-			for (int i = 0; i < n; i++)
-			{
-				nnode[i]->data = data[count + i];
-				nnode[i]->level = batch_topLevel[*inserted + i];
-
-				if (nnode[i]->level > batch_maxLevel)
-				{
-					batch_maxLevel = nnode[i]->level;
-				}
-			}
-
-			/* we link all the nodes */
-			for (int i = 0; i < n - 1; i++)
-			{
-				for (int level = bottomLevel; level <= nnode[i]->level; level++)
-				{
-					/* we have to look for the next node with the appropriate level */
-					next = i + 1;
-					while (next < n && nnode[next]->level < level)
-					{
-						next++;
-					}
-
-					LockFreeNode<T> *succ = (next == n) ? succs[level] : nnode[next];
-					nnode[i]->next[level].setRef(succ, false);
-				}
-			}
-
-			/* we link last of the "n" nodes to the succs */
-			for (int level = bottomLevel; level <= nnode[n - 1]->level; level++)
-			{
-				LockFreeNode<T>* succ = succs[level];
-				nnode[n - 1]->next[level].setRef(succ, false);
-			}
-
-			LockFreeNode<T> *pred = preds[bottomLevel];
-			LockFreeNode<T> *succ = succs[bottomLevel];
-
-			if (!(pred->next[bottomLevel].compareAndSet(succ, nnode[0], false, false)))
-			{
-				for (int i = 0; i < n; i++)
-				{
-					scalable_free(nnode[i]);
-				}
-
-				scalable_free(nnode);
-
-				continue;
-			}
-
-			/* we can now update the level of the SkipList, based ONLY on the level of the current batch */
-			if (batch_maxLevel > mthis->mLevel)
-			{
-				mthis->mLevel = batch_maxLevel;
-			}
-
-			for (int level = bottomLevel + 1; level <= batch_maxLevel; level++)
-			{
-				/* we have to look for the node with the appropiate level again
-				 * but not inside the next while loop
-				 */
-				next = 0;
-				while (next < n && nnode[next]->level < level)
-				{
-					next++;
-				}
-
-				while (true)
-				{
-					pred = preds[level];
-					succ = succs[level];
-					if (pred->next[level].compareAndSet(succ, nnode[next], false, false))
-					{
-						break;
-					}
-					mthis->findLockFreeNode(data[count], preds, succs);
-				}	
-			}
-
-			count += n;
-			*inserted += n;
-
-			scalable_free(nnode);
-		}
-	}
-
-	scalable_free(batch_topLevel);
-}
-
-template<class T, class Comparator>
 size_t SkipList<T,Comparator>::insert(T data[], int k)
 {
 	int bottomLevel = 0;
@@ -418,66 +261,6 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 	LockFreeNode<T>** preds = (LockFreeNode<T>**) preds_mem;
 	LockFreeNode<T>** succs = (LockFreeNode<T>**) succs_mem;
 	
-	/* sorting */
-	for (int i = 0; i < k - 1; i++)
-	{
-		for (int j = 0; j < k - 1 - i; j++)
-		{
-			if (comp(data[j + 1], data[j]))
-			{
-				T temp = data[j + 1];
-				data[j + 1] = data[j];
-				data[j] = temp;
-			}
-		}
-	}
-
-	/* duplicates elimination */
-/*
-	for (int i = 0; i < k - 1; i++)
-	{
-		while (i + 1 < k && !comp(data[i], data[i + 1]))
-		{
-			for (int j = 0; j < k - 2 - i; j++)
-			{
-				data[i + 1 + j] = data[i + 2 + j];
-			}
-
-			k--;
-		}
-	}
-
-	if (k > INSERT_THRESHOLD)
-	{
-		thread tid[INSERT_THREADS];
-		int inserted_nodes[INSERT_THREADS];
-
-		for (int j = 0; j < INSERT_THREADS - 1; j++)
-		{
-			tid[j] = thread(insert_aux_thread,
-							(SkipList<T,Comparator> *) this,
-							&(data[j * (k / INSERT_THREADS)]),
-							k / INSERT_THREADS,
-							&(inserted_nodes[j]));
-		}
-
-		tid[INSERT_THREADS - 1] = thread(insert_aux_thread,
-										(SkipList<T,Comparator> *) this,
-										&(data[(INSERT_THREADS - 1) * (k / INSERT_THREADS)]),
-										k / INSERT_THREADS + k % INSERT_THREADS,
-										&(inserted_nodes[INSERT_THREADS - 1]));
-
-		inserted = 0;
-		for (int j = 0; j < INSERT_THREADS; j++)
-		{
-			tid[j].join();
-			inserted += inserted_nodes[j];
-		}
-
-		mSize += inserted;
-		return (inserted);
-	}
-*/
 	int *batch_topLevel = reinterpret_cast <int *> (scalable_malloc(k * sizeof(int)));
 
 	batch_maxLevel = mLevel;
@@ -502,8 +285,7 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 		bool found = findLockFreeNode(data[count], preds, succs);
 		if (found)
 		{
-			/* if one element is already in the SkipList, we ignore it */
-			count++;
+			cerr << "push(k) does not support duplicates" << endl;
 		}
 		else
 		{
@@ -527,14 +309,11 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 			}
 
 			LockFreeNode<T> **nnode = reinterpret_cast <LockFreeNode<T> **> (scalable_malloc(n * sizeof(LockFreeNode<T> *)));
-			for (int i = 0; i < n; i++)
-			{
-				nnode[i] = reinterpret_cast <LockFreeNode<T> *> (scalable_malloc(sizeof(LockFreeNode<T>)));
-			}
 
 			batch_maxLevel = 0;
 			for (int i = 0; i < n; i++)
 			{
+				nnode[i] = allocate(batch_topLevel[inserted + i]);
 				nnode[i]->data = data[count + i];
 				nnode[i]->level = batch_topLevel[inserted + i];
 
@@ -604,6 +383,12 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 				{
 					pred = preds[level];
 					succ = succs[level];
+
+					if (pred == nullptr)
+					{
+						pred = head;
+					}
+
 					if (pred->next[level].compareAndSet(succ, nnode[next], false, false))
 					{
 						break;
