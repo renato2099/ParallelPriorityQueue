@@ -13,7 +13,7 @@ class ExtraBenchmark
 	static void push_pop_routine(T* pq, int numOperations, float push_prob);
 	void push_pop_benchmark(int numThreads, int numPush, int numOperations, float push_prob, bool verbose);
 	
-	static void batch_push_routine(T* pq, int numOperations, int k);
+	static void batch_push_routine(T* pq, int id, int numOperations, int k);
 	void batch_push_benchmark(int numThreads, int numPush, int numOperations, int k, bool verbose);
 
 	static void batch_pop_routine(T* pq, int numOperations, int k);
@@ -105,7 +105,7 @@ void ExtraBenchmark<T>::push_pop_benchmark(int numThreads, int numPush, int numO
 }
 
 template <class T>
-void ExtraBenchmark<T>::batch_push_routine(T* pq, int numOperations, int k)
+void ExtraBenchmark<T>::batch_push_routine(T* pq, int id, int numOperations, int k)
 {
 	int *value = new int[k];
 
@@ -123,7 +123,7 @@ void ExtraBenchmark<T>::batch_push_routine(T* pq, int numOperations, int k)
 	{
 		for (int j = 0; j < k; j++)
 		{
-			value[j] = rand_val(num_gen);
+			value[j] = id * numOperations + i * k + j;
 		}
 
 		pq->push(value, k);
@@ -157,15 +157,10 @@ void ExtraBenchmark<T>::batch_push_benchmark(int numThreads, int numPush, int nu
 	std::uniform_real<int> rand_val(0, std::numeric_limits<int>::max());
 #endif
 
-	for (int i = 0; i < numPush; i++)
-	{
-		pq->push(rand_val(num_gen));
-	}
-
 	clock::time_point t0 = clock::now();
 	for (int i = 0; i < numThreads; i++)
 	{
-		tids[i] = std::thread(batch_push_routine, pq, numOperations, k);
+		tids[i] = std::thread(batch_push_routine, pq, i, numOperations, k);
 	}
 
 	for (int i = 0; i < numThreads; i++)
