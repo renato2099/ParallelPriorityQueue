@@ -34,7 +34,6 @@ class SkipList
 	LockFreeNode<T> *head;
 
 	bool findLockFreeNode(const T& data, LockFreeNode<T>** preds, LockFreeNode<T>** succs);
-	static void insert_aux_thread(SkipList<T,Comparator> *mthis, T data[], int k, int *inserted);
 	//friend bool comparator_ <T,Comparator> (const T& t1, const T& t2);
 	bool comp(const T& t1, const T& t2) { return Comparator()(t1, t2); };
 	bool equal(const T& t1, const T& t2) { return (Comparator()(t1,t2) == Comparator()(t2,t1)); }; 
@@ -286,6 +285,7 @@ size_t SkipList<T,Comparator>::insert(T data[], int k)
 		if (found)
 		{
 			cerr << "push(k) does not support duplicates" << endl;
+			exit(1);
 		}
 		else
 		{
