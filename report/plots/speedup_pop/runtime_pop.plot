@@ -1,8 +1,9 @@
 set ylabel "Time [s]"
 set xlabel "# Threads"
-set title "Runtime on Xeon Phi - 10Mio. pops"
+set title "Runtime on Xeon Phi - 10Mio. pop operations"
 set yrange[0:300]
 set xrange[25:500]
+set logscale x 2
 set term post eps color
 set output 'runtime_pop.eps'
 func1(x) = x / 1000.0
