@@ -29,7 +29,7 @@ public:
 		return reinterpret_cast<NodeT*> (reinterpret_cast<intptr_t>
 												(std::atomic_load(&mPointer)) & (intptr_t) ptrMask);
 	}
-	inline bool compareAndSet2(NodeT*& pExpected, NodeT* pNew, bool pExpectedMark, bool pNewMark)
+	inline bool compareAndSet(NodeT*& pExpected, NodeT* pNew, bool pExpectedMark, bool pNewMark)
 	{
 		NodeT* lExpected = reinterpret_cast<NodeT*>((reinterpret_cast<intptr_t>(
 					pExpected) & (intptr_t) ptrMask) | (intptr_t) (pExpectedMark));
