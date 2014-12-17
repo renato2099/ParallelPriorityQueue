@@ -4,3 +4,11 @@
 #editor files
 *~
 *.swp
+*.swo
+
+*.pdf
+*.png
+
+
+#tex stuff
+*.aux

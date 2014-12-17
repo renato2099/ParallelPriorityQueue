@@ -33,7 +33,7 @@ template <class T, class Comparator = std::less<T> > class ppq_std
 		pq.push(data);
 		return true;
 	};
-	//size_t push(T data[], int k) { return pq.insert(data, k); };
+	size_t push(T data[], int k) { /*return pq.insert(data, k);*/ return 0; };
 	bool remove(const T& data)
 	{
 		std::lock_guard<std::mutex> guard(mtx);
@@ -55,7 +55,7 @@ template <class T, class Comparator = std::less<T> > class ppq_std
 		}
 		return false;
 	};
-	//size_t   pop_front(T data[], int k) { return pq.pop_front(data, k); };
+	size_t   pop_front(T data[], int k) { /*return pq.pop_front(data, k);*/ return 0; };
 	void print() { std::cout << "print() unsupported command." << std::endl; };
 };
 

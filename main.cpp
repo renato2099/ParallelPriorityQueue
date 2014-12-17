@@ -5,6 +5,7 @@
 #include "ppq_with_locks/ppq_lock.hpp"
 #include "ppq_lock_free_xp/PPQ.hpp"
 #include "inc/benchmark.hpp"
+#include "inc/ExtraBenchmark.hpp"
 #include "ppq_tbb/TBB_PPQ.hpp"
 
 using namespace std;
@@ -70,27 +71,36 @@ struct Arg: public option::Arg
   }
 };
 
-enum  optionIndex { UNKNOWN, HELP, BENCHMARK, POP, RM, THRDS, INSERTS, FIXED, VERBOSE, TEST_EN };
+enum  optionIndex { UNKNOWN, HELP, VERBOSE, THREADS, CODE, PUSH, OPERATIONS, PROBABILITY, BATCH_K, LIB, ITER };
 const option::Descriptor usage[] =
 {
-	{UNKNOWN, 0,"" , ""    , Arg::None, "USAGE: example [options]\n\n"
-		"Options:" },
-	{HELP,    0,"" , "help",Arg::None, "  --help  \tPrint usage and exit." },
-	{BENCHMARK,    0,"b", "benchmark",Arg::None, "  --benchmark, -b  \tRun benchmarks." },
-	{POP,    0,"p", "pop_front",Arg::None, "  --pop_front, -b  \tBenchmark pop_front method." },
-	{RM,    0,"r", "remove",Arg::None, "  --remove, -b  \tRun benchmarks." },
-	{THRDS,    0,"t", "threads",Arg::Numeric, "  -t <num>, \t--threads=<num> \tNumber of threads." },
-	{INSERTS,    0,"i", "inserts",Arg::Numeric, "  -i <num>, \t--inserts=<num> \tNumber of insert operations." },
-	{FIXED,    0,"f", "fixed",Arg::Required, "  -f <num>, \t--fixed=<num> \tPercentage of insert operations." },
-	{VERBOSE,    0,"v", "verbose",Arg::None, "  --verbose, -v  \tRun benchmarks." },
-	{TEST_EN,    0,"l", "test_en",Arg::None, "  --test_en, -l  \tRun benchmarks." },
-	{UNKNOWN, 0,"" ,  ""   ,Arg::None, "\nExamples:\n"
-		"  example --unknown -- --this_is_no_option\n"
-			"  example -unk --plus -ppp file1 file2\n" },
+	{UNKNOWN,		0,	"", 	"",		 		Arg::None, 		"USAGE: example [options]\n\n"
+																"Options:" },
+	{HELP,    		0,	"h", 	"help",			Arg::None, 		"  --help \t \t -h \t \t Print usage and exit." },
+	{VERBOSE,  		0,	"v", 	"verbose",		Arg::None, 		"  --verbose \t \t -v \t \t Print information about the benchmark." },
+	{THREADS,   	0,	"t", 	"threads",		Arg::Numeric, 	"  --threads <num> \t \t -t <num>\t \t Number of threads." },
+	{CODE,			0,	"c",	"code",			Arg::Numeric,	"  --code <num> \t \t -c <num> \t \t Benchmark code."
+																"\n    1: push [default]"
+																"\n    2: pop"
+																"\n    3: push-pop"
+																"\n    4: batch push"
+																"\n    5: batch pop"},
+	{PUSH,			0,	"p",	"push",			Arg::Numeric,	"  --push <num> \t \t -p <num> \t \t Number of fixed push operations."},
+	{OPERATIONS,	0,	"o",	"operations",	Arg::Numeric,	"  --operations <num> \t \t -o <num> \t \t Number of total operations."},
+	{PROBABILITY,	0,	"x",	"probability",	Arg::Required,	"  --probability <num> \t \t -x <num> \t \t Probability for push operations of"
+																"\n                                   benchmark 3 (push-pop) [default: 0.5]."},
+	{BATCH_K,		0,	"k",	"batch",		Arg::Numeric,	"  --batch <num> \t \t -k <num> \t \t Size of batch operation [default: 1]."},
+	{LIB,			0,	"l",	"lib",			Arg::Numeric,	"  --lib <num> \t \t -l <num> \t \t Library for benchmarking."
+																"\n    0: all [default]"
+																"\n    1: std"
+																"\n    2: tbb"
+																"\n    3: lock-based"
+																"\n    4: lock-free"},
+	{ITER,			0,	"i",	"iterations",	Arg::Numeric,	"  --iterations <num> \t \t -i <num> \t \t Number of benchmark iterations [default: 1]."},
 	{0,0,0,0,0,0}
 };
 
-int readCmdLine(int argc, char** argv, bool &benchEn, bool &pop, bool &rm, int &numThreads, int &numInserts, float &fixInserts, bool &verbose, bool& testEn)
+int readCmdLine(int argc, char** argv, int &numThreads, bool &verbose, int &code, int &numPush, int &numOperations, float &push_prob, int &k, int &lib, int &iter)
 {
 	// program options
 	// program options
@@ -107,7 +117,7 @@ int readCmdLine(int argc, char** argv, bool &benchEn, bool &pop, bool &rm, int &
 	{
 		int columns = getenv("COLUMNS")? atoi(getenv("COLUMNS")) : 80;
 		option::printUsage(fwrite, stdout, usage, columns);
-		return 0;
+		return 2;
 	}
 
 	for (int i = 0; i < parse.optionsCount(); ++i)
@@ -118,31 +128,33 @@ int readCmdLine(int argc, char** argv, bool &benchEn, bool &pop, bool &rm, int &
 			// UNKNOWN, HELP, BENCHMARK, POP, RM, THRDS, INSERTS, FIXED, VERBOSE, LOCK_FREE, CNC_TBB
 			case HELP:
 				// not possible, because handled further above and exits the program
-			case BENCHMARK:
-				benchEn = true;
-				break;
-			case TEST_EN:
-				testEn = true;
-				break;
-			case POP:
-				pop = true;
-				break;
-			case RM:
-				rm = true;
-				break;
 			case VERBOSE:
 				verbose = true;
 				break;
-			case THRDS:
+			case THREADS:
 				strValue << opt.arg;
 				strValue >> numThreads;
 				break;
-			case INSERTS:
-				strVal << opt.arg;
-				strVal >> numInserts;
+			case CODE:
+				code = std::stoi(opt.arg);
 				break;
-			case FIXED:
-				fixInserts = std::stof(opt.arg);
+			case PUSH:
+				numPush = std::stoi(opt.arg);
+				break;
+			case OPERATIONS:
+				numOperations = std::stoi(opt.arg);
+				break;
+			case PROBABILITY:
+				push_prob = std::stof(opt.arg);
+				break;
+			case BATCH_K:
+				k = std::stoi(opt.arg);
+				break;
+			case LIB:
+				lib = std::stoi(opt.arg);
+				break;
+			case ITER:
+				iter = std::stoi(opt.arg);
 				break;
 			case UNKNOWN:
 				// not possible because Arg::Unknown returns ARG_ILLEGAL
@@ -153,37 +165,144 @@ int readCmdLine(int argc, char** argv, bool &benchEn, bool &pop, bool &rm, int &
 	return 0;
 }
 
+int check_parameters(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, int lib, int iter)
+{
+	if (code < 1 || code > 5)
+	{
+		cerr << "Benchmark code has to be from 1 to 5." << endl;
+		return 1;
+	}
+
+	if (numThreads < 1)
+	{
+		cerr << "The number of threads has be a positive integer number." << endl;
+		return 1;
+	}
+
+	if ((code == 2 || code == 5) && numPush < 1)
+	{
+		cerr << "You cannot perform pop or batch pop operations with empty data structure." << endl;
+		return 1;
+	}
+
+	if (push_prob < 0.0 || push_prob > 1.0)
+	{
+		cerr << "The probability for the push operations has to be in the range [0.0, 1.0]." << endl;
+		return 1;
+	}
+
+	if (k < 1)
+	{
+		cerr << "The size for the batch operations has to be a positive integer number." << endl;
+		return 1;
+	}
+
+	if (lib < 0 || lib > 4)
+	{
+		cerr << "Lib code has to be from 0 to 4." << endl;
+		return 1;
+	}
+
+	if (iter < 1)
+	{
+		cerr << "The number of benchmark iterations has to be greater than 0." << endl;
+		return 1;
+	}
+
+	if (numPush > 0 && code == 4)
+	{
+		cerr << "You cannot set fixed push operations for the benchmark 4 (batch-push)." << endl;
+		return 1;
+	}
+
+	return 0;
+}
+
+void b_lockbased(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, int iter, bool verbose)
+{
+	ExtraBenchmark<ppq_lock<int>> elockBench;
+	if (code != 4 && code != 5)
+	{
+		std::cout << "Running Lock based: " << std::endl;
+		elockBench.run(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+	}
+}
+
+void b_std(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, int iter, bool verbose)
+{
+	ExtraBenchmark<ppq_std<int>> estdBench;
+	if (code != 4 && code != 5)
+	{
+		std::cout << "Running STD: " << std::endl;
+		estdBench.run(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+	}
+}
+
+void b_tbb(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, int iter, bool verbose)
+{
+	ExtraBenchmark<TBB_PPQ<int>> etbbBench;
+	if (code != 4 && code != 5)
+	{
+		std::cout << "Running TBB: " << std::endl;
+		etbbBench.run(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+	}
+}
+
+void b_lockfree(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, int iter, bool verbose)
+{
+	ExtraBenchmark<PPQ<int>> elfBench;
+	std::cout << "Running Lock-free: " << std::endl;
+	elfBench.run(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+}
+
 int main(int argc, char** argv)
 {
-	bool benchEn = false, pop = false, rm = false, verbose = false, testEn = false;
-	int numThreads = 1, numInserts = 1;
-	float fixInserts;
-	Benchmark<PPQ<int>> lfBench;
-	Benchmark<ppq_lock<int>> lockBench;
-	Benchmark<ppq_std<int>> stdBench;
-	Benchmark<TBB_PPQ<int>> tbbBench;
+	bool verbose = false;
+	float push_prob = 0.5;
+	int lib = 0, k = 1,  code = 1, numThreads = 1, numPush = 0, numOperations = 0, iter = 1;
 
-	if (!readCmdLine(argc, argv, benchEn, pop, rm, numThreads, numInserts, fixInserts, verbose, testEn))
+	if (!readCmdLine(argc, argv, numThreads, verbose, code, numPush, numOperations, push_prob, k, lib, iter))
 	{
-		if (benchEn)
+		if (check_parameters(code, numThreads, numPush, numOperations, push_prob, k, lib, iter) == 1)
 		{
-			//cout << "Running only with " << THREADS << " threads " << endl;
-			//numThreads = THREADS;	
+			exit(1);
 		}
-		if (!pop & !rm)
+
+		//cout << "Code: " << code << ", Threads: " << numThreads << ", Push: " << numPush << ", Operations: " << numOperations
+		//	<< ", Probability: " << push_prob << ", k: " << k << ", Library: " << lib << endl;
+
+		switch (lib)
 		{
-			cout << "Choose a method to benchmark." << endl;
-			return 1;
+			case 0:
+			{
+				b_std(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				b_tbb(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				b_lockbased(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				b_lockfree(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				break;
+			}
+			case 1:
+			{
+				b_std(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				break;
+			}
+			case 2:
+			{
+				b_tbb(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				break;
+			}
+			case 3:
+			{
+				b_lockbased(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				break;
+			}
+			case 4:
+			{
+				b_lockfree(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				break;
+			}
 		}
-		std::cout << "Running STD: " << std::endl;
-		stdBench.run(pop, rm, numThreads, numInserts, fixInserts, verbose);
-		std::cout << "Running Lock based: " << std::endl;
-		lockBench.run(pop, rm, numThreads, numInserts, fixInserts, verbose);
-		std::cout << "Running TBB: skipped" << std::endl;
-		std::cout << "Running Lock-free: " << std::endl;
-		lfBench.run(pop, rm, numThreads, numInserts, fixInserts, verbose);
-		std::cout << "Running TBB: " << std::endl;
-		tbbBench.run(pop, rm, numThreads, numInserts, fixInserts, verbose);
-	}//IF-CMD-LINE
+	}
+
 	return 0;
 }

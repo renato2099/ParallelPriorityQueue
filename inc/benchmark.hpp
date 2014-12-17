@@ -14,6 +14,8 @@ class Benchmark
 private:
 	void basic_pop_routine(T* pq, int numInserts, float fixInserts, benchType type);
 
+	void pop_only_routine(T* pq, int numPops);
+
 	void pop_benchmark(int numThreads, int numInserts, float fixInserts, bool verbose);
 
 	void basic_rm_routine(T* pq, int id, int numInserts, float fixInserts, int numThreads);
@@ -62,6 +64,7 @@ void Benchmark<T>::basic_pop_routine(T* pq, int numInserts, float fixInserts, be
 	count = 0;
 	if (type == POP_ONLY || type == MIXED)
 	{
+std::cout << "mixd" << std::endl;
 		while (count < ran_i)
 		{
 			if (coin_flip(gen))	//push
@@ -89,6 +92,23 @@ void Benchmark<T>::basic_pop_routine(T* pq, int numInserts, float fixInserts, be
 }
 
 template <class T>
+void Benchmark<T>::pop_only_routine(T* pq, int numPops)
+{
+	int count = 0;
+	int value = 0;
+	int sum = 0;
+	while (count < numPops)
+	{
+		bool succ = pq->pop_front(value);
+		if (succ)
+			sum += value;
+		count++;
+	}
+
+	assert(sum != 0);
+}
+
+template <class T>
 void Benchmark<T>::pop_benchmark(int numThreads, int numInserts, float fixInserts, bool verbose)
 {
 	typedef std::chrono::high_resolution_clock clock;
@@ -107,13 +127,21 @@ void Benchmark<T>::pop_benchmark(int numThreads, int numInserts, float fixInsert
 	else if (fixInserts == 0.0)
 	{
 		type = POP_ONLY; //TODO this should be pop only
-		populate(pq, numInserts);
+		populate(pq, numInserts*numThreads);
 	}
 
 	clock::time_point t0 = clock::now();
 	for (int i = 0; i < numThreads; i++)
 	{
-		tids[i] = std::thread(&Benchmark<T>::basic_pop_routine, this, std::ref(pq), numInserts, fixInserts, type);	
+		if (type == POP_ONLY)
+		{
+			tids[i] = std::thread(&Benchmark<T>::pop_only_routine, this, std::ref(pq), numInserts);
+		}
+		else
+		{
+		
+			tids[i] = std::thread(&Benchmark<T>::basic_pop_routine, this, std::ref(pq), numInserts, fixInserts, type);	
+		}
 	}
 
 	for (int i = 0; i < numThreads; i++)
@@ -193,6 +221,7 @@ void Benchmark<T>::populate(T* pq, int numInserts)
 		pq->push(value);
 		count++;
 	}
+std::cout << "populated with " << count << " elements " << std::endl;
 }
 
 template <class T>

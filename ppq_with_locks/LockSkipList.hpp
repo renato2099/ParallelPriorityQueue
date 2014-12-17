@@ -22,7 +22,7 @@ template <typename T>  struct Node
 	int level;
 
 	/* pointers to the next nodes */
-	Node *next[0];
+	Node<T> *next[0];
 };
 
 template <class T, class Comparator>
@@ -43,7 +43,7 @@ class LockSkipList
 	bool empty() const;
 	size_t size() const;
 	bool insert(const T& data);
-	bool insert(T *data[], int k);
+	bool insert(T data[], int k);
 	T find(const T& data);
 	bool remove(T& data);
 	bool pop_front(T& data);
@@ -62,6 +62,10 @@ LockSkipList<T,Comparator>::LockSkipList()
 	srand(SEED);
 	level = 0;
 	head = (Node<T> *) scalable_malloc(sizeof(Node<T>) + MAX_LEVEL * sizeof(Node<T> *));
+	for (int i = 0; i < MAX_LEVEL; i++)
+	{
+		head->next[i] = NULL;
+	}
 }
 
 template<class T, class Comparator>
@@ -155,7 +159,7 @@ bool LockSkipList<T,Comparator>::insert(const T& data)
 }
 
 template<class T, class Comparator>
-bool LockSkipList<T,Comparator>::insert(T *data[], int k)
+bool LockSkipList<T,Comparator>::insert(T data[], int k)
 {
 	for (int i = 0; i < k; i++)
 	{
