@@ -87,7 +87,8 @@ const option::Descriptor usage[] =
 																"\n    5: batch pop"},
 	{PUSH,			0,	"p",	"push",			Arg::Numeric,	"  --push <num> \t \t -p <num> \t \t Number of fixed push operations."},
 	{OPERATIONS,	0,	"o",	"operations",	Arg::Numeric,	"  --operations <num> \t \t -o <num> \t \t Number of total operations."},
-	{PROBABILITY,	0,	"x",	"probability",	Arg::Required,	"  --probability <num> \t \t -x <num> \t \t Probability for push operations."},
+	{PROBABILITY,	0,	"x",	"probability",	Arg::Required,	"  --probability <num> \t \t -x <num> \t \t Probability for push operations of"
+																"\n                                   benchmark 3 (push-pop) [default: 0.5]."},
 	{BATCH_K,		0,	"k",	"batch",		Arg::Numeric,	"  --batch <num> \t \t -k <num> \t \t Size of batch operation [default: 1]."},
 	{LIB,			0,	"l",	"lib",			Arg::Numeric,	"  --lib <num> \t \t -l <num> \t \t Library for benchmarking."
 																"\n    0: all [default]"
@@ -257,7 +258,7 @@ void b_lockfree(int code, int numThreads, int numPush, int numOperations, float 
 int main(int argc, char** argv)
 {
 	bool verbose = false;
-	float push_prob = 1.0;
+	float push_prob = 0.5;
 	int lib = 0, k = 1,  code = 1, numThreads = 1, numPush = 0, numOperations = 0, iter = 1;
 
 	if (!readCmdLine(argc, argv, numThreads, verbose, code, numPush, numOperations, push_prob, k, lib, iter))
