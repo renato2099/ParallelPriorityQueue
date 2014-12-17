@@ -22,7 +22,7 @@ template <typename T>  struct Node
 	int level;
 
 	/* pointers to the next nodes */
-	Node *next[0];
+	Node<T> *next[0];
 };
 
 template <class T, class Comparator>
@@ -62,6 +62,10 @@ LockSkipList<T,Comparator>::LockSkipList()
 	srand(SEED);
 	level = 0;
 	head = (Node<T> *) scalable_malloc(sizeof(Node<T>) + MAX_LEVEL * sizeof(Node<T> *));
+	for (int i = 0; i < MAX_LEVEL; i++)
+	{
+		head->next[i] = NULL;
+	}
 }
 
 template<class T, class Comparator>

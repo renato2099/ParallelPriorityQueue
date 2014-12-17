@@ -79,6 +79,10 @@ SkipList<T,Comparator>::SkipList()
 
 	head = allocate(MAX_LEVEL);
 	head->level = MAX_LEVEL - 1;
+	for (int i = 0; i < MAX_LEVEL; i++)
+	{
+		head->next[i].setRef(nullptr, false);
+	}
 }
 
 template<class T, class Comparator>

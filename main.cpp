@@ -71,7 +71,7 @@ struct Arg: public option::Arg
   }
 };
 
-enum  optionIndex { UNKNOWN, HELP, VERBOSE, THREADS, CODE, PUSH, OPERATIONS, PROBABILITY, BATCH_K, LIB };
+enum  optionIndex { UNKNOWN, HELP, VERBOSE, THREADS, CODE, PUSH, OPERATIONS, PROBABILITY, BATCH_K, LIB, ITER };
 const option::Descriptor usage[] =
 {
 	{UNKNOWN,		0,	"", 	"",		 		Arg::None, 		"USAGE: example [options]\n\n"
@@ -88,16 +88,18 @@ const option::Descriptor usage[] =
 	{PUSH,			0,	"p",	"push",			Arg::Numeric,	"  --push <num> \t \t -p <num> \t \t Number of fixed push operations."},
 	{OPERATIONS,	0,	"o",	"operations",	Arg::Numeric,	"  --operations <num> \t \t -o <num> \t \t Number of total operations."},
 	{PROBABILITY,	0,	"x",	"probability",	Arg::Required,	"  --probability <num> \t \t -x <num> \t \t Probability for push operations."},
-	{BATCH_K,		0,	"k",	"batch",		Arg::Numeric,	"  --batch <num> \t \t -k <num> \t \t Size of batch operation [default: k= 1]."},
+	{BATCH_K,		0,	"k",	"batch",		Arg::Numeric,	"  --batch <num> \t \t -k <num> \t \t Size of batch operation [default: 1]."},
 	{LIB,			0,	"l",	"lib",			Arg::Numeric,	"  --lib <num> \t \t -l <num> \t \t Library for benchmarking."
+																"\n    0: all [default]"
 																"\n    1: std"
 																"\n    2: tbb"
 																"\n    3: lock-based"
-																"\n    4: lock-free [default]"},
+																"\n    4: lock-free"},
+	{ITER,			0,	"i",	"iterations",	Arg::Numeric,	"  --iterations <num> \t \t -i <num> \t \t Number of benchmark iterations [default: 1]."},
 	{0,0,0,0,0,0}
 };
 
-int readCmdLine(int argc, char** argv, int &numThreads, bool &verbose, int &code, int &numPush, int &numOperations, float &push_prob, int &k, int &lib)
+int readCmdLine(int argc, char** argv, int &numThreads, bool &verbose, int &code, int &numPush, int &numOperations, float &push_prob, int &k, int &lib, int &iter)
 {
 	// program options
 	// program options
@@ -150,6 +152,9 @@ int readCmdLine(int argc, char** argv, int &numThreads, bool &verbose, int &code
 			case LIB:
 				lib = std::stoi(opt.arg);
 				break;
+			case ITER:
+				iter = std::stoi(opt.arg);
+				break;
 			case UNKNOWN:
 				// not possible because Arg::Unknown returns ARG_ILLEGAL
 				// which aborts the parse with an error
@@ -159,7 +164,7 @@ int readCmdLine(int argc, char** argv, int &numThreads, bool &verbose, int &code
 	return 0;
 }
 
-int check_parameters(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, int lib)
+int check_parameters(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, int lib, int iter)
 {
 	if (code < 1 || code > 5)
 	{
@@ -191,73 +196,73 @@ int check_parameters(int code, int numThreads, int numPush, int numOperations, f
 		return 1;
 	}
 
-	if (lib < 1 || lib > 4)
+	if (lib < 0 || lib > 4)
 	{
-		cerr << "Lib code has to be from 1 to 4." << endl;
+		cerr << "Lib code has to be from 0 to 4." << endl;
 		return 1;
 	}
 
-	if (code == 1 && push_prob != 1.0)
+	if (iter < 1)
 	{
-		cerr << "You cannot set push probability to lower than 1.0 for the benchmark 1 (push)." << endl;
+		cerr << "The number of benchmark iterations has to be greater than 0." << endl;
 		return 1;
 	}
 
-	if (code == 2 && push_prob != 0.0)
+	if (numPush > 0 && code == 4)
 	{
-		cerr << "You cannot set push probability to greater than 0.0 for the benchmark 2 (pop)." << endl;
+		cerr << "You cannot set fixed push operations for the benchmark 4 (batch-push)." << endl;
 		return 1;
 	}
 
 	return 0;
 }
 
-void b_lockbased(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, bool verbose)
+void b_lockbased(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, int iter, bool verbose)
 {
 	ExtraBenchmark<ppq_lock<int>> elockBench;
 	if (code != 4 && code != 5)
 	{
 		std::cout << "Running Lock based: " << std::endl;
-		elockBench.run(code, numThreads, numPush, numOperations, push_prob, k, verbose);
+		elockBench.run(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
 	}
 }
 
-void b_std(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, bool verbose)
+void b_std(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, int iter, bool verbose)
 {
 	ExtraBenchmark<ppq_std<int>> estdBench;
 	if (code != 4 && code != 5)
 	{
 		std::cout << "Running STD: " << std::endl;
-		estdBench.run(code, numThreads, numPush, numOperations, push_prob, k, verbose);
+		estdBench.run(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
 	}
 }
 
-void b_tbb(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, bool verbose)
+void b_tbb(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, int iter, bool verbose)
 {
 	ExtraBenchmark<TBB_PPQ<int>> etbbBench;
 	if (code != 4 && code != 5)
 	{
 		std::cout << "Running TBB: " << std::endl;
-		etbbBench.run(code, numThreads, numPush, numOperations, push_prob, k, verbose);
+		etbbBench.run(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
 	}
 }
 
-void b_lockfree(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, bool verbose)
+void b_lockfree(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, int iter, bool verbose)
 {
 	ExtraBenchmark<PPQ<int>> elfBench;
 	std::cout << "Running Lock-free: " << std::endl;
-	elfBench.run(code, numThreads, numPush, numOperations, push_prob, k, verbose);
+	elfBench.run(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
 }
 
 int main(int argc, char** argv)
 {
-	bool verbose;
+	bool verbose = false;
 	float push_prob = 1.0;
-	int lib = 4, k = 1,  code = 1, numThreads = 1, numPush = 0, numOperations = 0;
+	int lib = 0, k = 1,  code = 1, numThreads = 1, numPush = 0, numOperations = 0, iter = 1;
 
-	if (!readCmdLine(argc, argv, numThreads, verbose, code, numPush, numOperations, push_prob, k, lib))
+	if (!readCmdLine(argc, argv, numThreads, verbose, code, numPush, numOperations, push_prob, k, lib, iter))
 	{
-		if (check_parameters(code, numThreads, numPush, numOperations, push_prob, k, lib) == 1)
+		if (check_parameters(code, numThreads, numPush, numOperations, push_prob, k, lib, iter) == 1)
 		{
 			exit(1);
 		}
@@ -267,18 +272,34 @@ int main(int argc, char** argv)
 
 		switch (lib)
 		{
+			case 0:
+			{
+				b_std(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				b_tbb(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				b_lockbased(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				b_lockfree(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				break;
+			}
 			case 1:
-			b_std(code, numThreads, numPush, numOperations, push_prob, k, verbose);
-			break;
+			{
+				b_std(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				break;
+			}
 			case 2:
-			b_tbb(code, numThreads, numPush, numOperations, push_prob, k, verbose);
-			break;
+			{
+				b_tbb(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				break;
+			}
 			case 3:
-			b_lockbased(code, numThreads, numPush, numOperations, push_prob, k, verbose);
-			break;
+			{
+				b_lockbased(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				break;
+			}
 			case 4:
-			b_lockfree(code, numThreads, numPush, numOperations, push_prob, k, verbose);
-			break;
+			{
+				b_lockfree(code, numThreads, numPush, numOperations, push_prob, k, iter, verbose);
+				break;
+			}
 		}
 	}
 
