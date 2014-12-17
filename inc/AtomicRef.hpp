@@ -19,33 +19,27 @@ public:
 		std::atomic_store(&mPointer, (NodeT*) (reinterpret_cast<intptr_t>(pPointer) | (intptr_t) pMarked)); //init not working
 	}
 	~AtomicRef() {}
-	void setRef(const NodeT* pPointer, bool pMarked = false)
+	inline void setRef(const NodeT* pPointer, bool pMarked = false)
 	{
 		std::atomic_store(&mPointer, (NodeT*) (reinterpret_cast<intptr_t>(pPointer) |
 								(intptr_t) pMarked));
 	}
-	NodeT* getRef()
+	inline NodeT* getRef()
 	{
 		return reinterpret_cast<NodeT*> (reinterpret_cast<intptr_t>
 												(std::atomic_load(&mPointer)) & (intptr_t) ptrMask);
 	}
-	/*bool compareAndSwap(const AtomicRef& pExpected, const AtomicRef& pNew)
-	{
-		NodeT* lExpected = std::atomic_load(&pExpected.mPointer);
-		NodeT* lNew = std::atomic_load(&pNew.mPointer);
-		return mPointer.compare_exchange_weak(lExpected, lNew);//maybe strong
-	}*/
-	bool compareAndSet(const AtomicRef& pExpected, const AtomicRef& pNew, bool pExpectedMark, bool pNewMark)
+	inline bool compareAndSet2(NodeT*& pExpected, NodeT* pNew, bool pExpectedMark, bool pNewMark)
 	{
 		NodeT* lExpected = reinterpret_cast<NodeT*>((reinterpret_cast<intptr_t>(
-																	std::atomic_load(&pExpected.mPointer)) & (intptr_t) ptrMask) | (intptr_t) (pExpectedMark));
+					pExpected) & (intptr_t) ptrMask) | (intptr_t) (pExpectedMark));
 		// here the ptrMask might be obsolete
 		NodeT* lNew = reinterpret_cast<NodeT*>((reinterpret_cast<intptr_t>(
-																	std::atomic_load(&pNew.mPointer)) & (intptr_t) ptrMask) | (intptr_t) (pNewMark));
-		return mPointer.compare_exchange_weak(lExpected, lNew);//maybe strong
+					pNew) & (intptr_t) ptrMask) | (intptr_t) (pNewMark));
+		return mPointer.compare_exchange_weak(lExpected, lNew);// strong is worse
 
 	}
-	bool getMarked() const
+	inline bool getMarked() const
 	{
 		return (reinterpret_cast<intptr_t>(std::atomic_load(&mPointer)) & dMask);
 	}
