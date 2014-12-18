@@ -43,7 +43,7 @@ public:
 	}
 	inline bool getMarkAndRef(NodeT*& pRef) const
 	{
-		NodeT* temp = std::atomic_load(&mPointer);
+		NodeT* temp = reinterpret_cast<NodeT*> ((std::atomic_load(&mPointer));
 		pRef = reinterpret_cast<NodeT*> (reinterpret_cast<intptr_t>(temp) & (intptr_t) ptrMask);
 		return (reinterpret_cast<intptr_t>(temp) & dMask);
 	}
