@@ -37,11 +37,15 @@ public:
 		NodeT* lNew = reinterpret_cast<NodeT*>((reinterpret_cast<intptr_t>(
 					pNew) & (intptr_t) ptrMask) | (intptr_t) (pNewMark));
 		return mPointer.compare_exchange_weak(lExpected, lNew);// strong is worse
-
+		//bool succ = mPointer.compare_exchange_weak(lExpected, lNew);
+		//pExpected = lExpected;
+		//return succ;
 	}
-	inline bool getMarked() const
+	inline bool getMarkAndRef(NodeT*& pRef) const
 	{
-		return (reinterpret_cast<intptr_t>(std::atomic_load(&mPointer)) & dMask);
+		NodeT* temp = std::atomic_load(&mPointer);
+		pRef = reinterpret_cast<NodeT*> (reinterpret_cast<intptr_t>(temp) & (intptr_t) ptrMask);
+		return (reinterpret_cast<intptr_t>(temp) & dMask);
 	}
 	bool setMark(NodeT* exp)
 	{

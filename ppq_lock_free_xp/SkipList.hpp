@@ -5,6 +5,7 @@
 #include "../inc/AtomicRef.hpp"
 
 #include <tbb/scalable_allocator.h>
+#include <assert.h>
 //#include <tbb/cache_aligned_allocator.h>
 
 #ifndef SKIPLIST_HPP
@@ -125,10 +126,10 @@ bool SkipList<T, Comparator>::findLockFreeNode(const T& data, LockFreeNode<T>** 
 				if (curr == nullptr)
 					break;
 				//TODO this should also be an atomic operation
-				marked = curr->next[level].getMarked();
-				succ = curr->next[level].getRef();
+				marked = curr->next[level].getMarkAndRef(succ);
 				// check if the node is marked
-				while (marked)
+				//while (marked)
+				if (marked)
 				{
 					snip = pred->next[level].compareAndSet(curr, succ, false, false);
 					if (!snip) 
@@ -136,8 +137,8 @@ bool SkipList<T, Comparator>::findLockFreeNode(const T& data, LockFreeNode<T>** 
 						goto retry;
 					}
 
-					curr = pred->next[level].getRef();
-					marked = pred->next[level].getMarked();
+					curr = succ; //pred->next[level].getRef();
+					//marked = pred->next[level].getMarked();
 					if (curr != nullptr)
 					{
 						succ = curr->next[level].getRef();
@@ -163,7 +164,7 @@ bool SkipList<T, Comparator>::findLockFreeNode(const T& data, LockFreeNode<T>** 
 			succs[level] = curr;
 		}
 
-		if (curr != NULL)
+		if (curr != nullptr)
 			return (equal(curr->data, data));
 		else 
 			return false;
@@ -439,21 +440,18 @@ bool SkipList<T,Comparator>::remove(const T& data)
 				bool iMarkedIt = node2rm->next[bottomLevel].compareAndSet(succ, succ, false, true);
 				//bool iMarkedIt = node2rm->next[bottomLevel].setMark(succ);
 
-				marked = succs[bottomLevel]->next[bottomLevel].getMarked();
-				succ = succs[bottomLevel]->next[bottomLevel].getRef();
+				marked = succs[bottomLevel]->next[bottomLevel].getMarkAndRef(succ);
 				if (iMarkedIt)
 				{
 					// Now mark upper levels
 					for (int level = node2rm->level; level >= bottomLevel+1; level--)
 					{
-					marked = node2rm->next[level].getMarked();
-					succ = node2rm->next[level].getRef();
+					marked = node2rm->next[level].getMarkAndRef(succ);
 				
 						while (!marked)
 						{
 							node2rm->next[level].setMark(succ); //TODO this should simply return success
-							marked = node2rm->next[level].getMarked();
-							succ = node2rm->next[level].getRef();
+							marked = node2rm->next[level].getMarkAndRef(succ);
 						}
 				
 					}
@@ -465,8 +463,7 @@ bool SkipList<T,Comparator>::remove(const T& data)
 				{
 					return false;
 				}
-				marked = node2rm->next[bottomLevel].getMarked();
-				succ = node2rm->next[bottomLevel].getRef();
+				marked = node2rm->next[bottomLevel].getMarkAndRef(succ);
 			}
 		}
 	}
@@ -484,8 +481,7 @@ bool SkipList<T,Comparator>::pop_front(T& data)
 	while (curr != nullptr)
 	{
 		// try to delete/mark curr
-		marked = curr->next[bottomLevel].getMarked();
-		succ = curr->next[bottomLevel].getRef();
+		marked = curr->next[bottomLevel].getMarkAndRef(succ);
 		// if already deleted we continue
 		while (!marked)
 		{
@@ -498,14 +494,12 @@ bool SkipList<T,Comparator>::pop_front(T& data)
 				//Now mark upper levels
 				for (int level = curr->level; level >= bottomLevel+1; level--)
 				{
-					marked = curr->next[level].getMarked();
-					succ = curr->next[level].getRef();
+					marked = curr->next[level].getMarkAndRef(succ);
 				
 					while (!marked)
 					{
 						curr->next[level].setMark(succ); //TODO this should simply return success
-						marked = curr->next[level].getMarked();
-						succ = curr->next[level].getRef();
+						marked = curr->next[level].getMarkAndRef(succ);
 					}
 				
 				}
@@ -514,8 +508,7 @@ bool SkipList<T,Comparator>::pop_front(T& data)
 				mSize--;
 				return true;
 			} // if iMarkedIt
-			marked = curr->next[bottomLevel].getMarked();
-			succ = curr->next[bottomLevel].getRef();
+			marked = curr->next[bottomLevel].getMarkAndRef(succ);
 
 		} // !marked
 		// if it is already marked we try to repoint header
@@ -544,8 +537,7 @@ size_t SkipList<T,Comparator>::pop_front(T data[], int k)
 	while (curr != nullptr)
 	{
 		// try to delete/mark curr
-		marked = curr->next[bottomLevel].getMarked();
-		succ = curr->next[bottomLevel].getRef();
+		marked = curr->next[bottomLevel].getMarkAndRef(succ);
 //		std::cout << curr->data << "\t\t" << marked << std::endl;
 		// if already deleted we continue
 		while (!marked)
@@ -559,14 +551,12 @@ size_t SkipList<T,Comparator>::pop_front(T data[], int k)
 				//Now mark upper levels
 				for (int level = curr->level; level >= bottomLevel+1; level--)
 				{
-					marked = curr->next[level].getMarked();
-					succ = curr->next[level].getRef();
+					marked = curr->next[level].getMarkAndRef(succ);
 				
 					while (!marked)
 					{
 						curr->next[level].setMark(succ); //TODO this should simply return success
-						marked = curr->next[level].getMarked();
-						succ = curr->next[level].getRef();
+						marked = curr->next[level].getMarkAndRef(succ);
 					}
 				}
 
@@ -577,8 +567,7 @@ size_t SkipList<T,Comparator>::pop_front(T data[], int k)
 				if (count == k)
 					 return k;
 			} //if iMarkedIt
-			marked = curr->next[bottomLevel].getMarked();
-			succ = curr->next[bottomLevel].getRef();
+			marked = curr->next[bottomLevel].getMarkAndRef(succ);
 
 		} // !marked
 		// if it is already marked we try to repoint header
@@ -599,8 +588,7 @@ void SkipList<T,Comparator>::print()
 	p = this->head->next[0].getRef();
 	while (p != nullptr)
 	{
-		std::cout << "value: " << p->data << "\t\t" << p->level << "\t\t" << p->next[0].getMarked() << std::endl;
-		p = p->next[0].getRef();
+		std::cout << "value: " << p->data << "\t\t" << p->level << "\t\t" << p->next[0].getMarkAndRef(p) << std::endl;
 	}
 	std::cout << "---------------END-----------------------" << std::endl;
 }

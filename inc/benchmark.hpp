@@ -64,7 +64,6 @@ void Benchmark<T>::basic_pop_routine(T* pq, int numInserts, float fixInserts, be
 	count = 0;
 	if (type == POP_ONLY || type == MIXED)
 	{
-std::cout << "mixd" << std::endl;
 		while (count < ran_i)
 		{
 			if (coin_flip(gen))	//push
