@@ -128,8 +128,7 @@ bool SkipList<T, Comparator>::findLockFreeNode(const T& data, LockFreeNode<T>** 
 				//TODO this should also be an atomic operation
 				marked = curr->next[level].getMarkAndRef(succ);
 				// check if the node is marked
-				//while (marked)
-				if (marked)
+				while (marked)
 				{
 					snip = pred->next[level].compareAndSet(curr, succ, false, false);
 					if (!snip) 
@@ -137,11 +136,10 @@ bool SkipList<T, Comparator>::findLockFreeNode(const T& data, LockFreeNode<T>** 
 						goto retry;
 					}
 
-					curr = succ; //pred->next[level].getRef();
-					//marked = pred->next[level].getMarked();
+					curr = pred->next[level].getRef(); //=succ;
 					if (curr != nullptr)
 					{
-						succ = curr->next[level].getRef();
+						marked = curr->next[level].getMarkAndRef(succ);
 					}
 					else 
 					{
