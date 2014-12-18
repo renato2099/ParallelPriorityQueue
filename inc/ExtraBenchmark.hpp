@@ -25,9 +25,88 @@ class ExtraBenchmark
 	static void batch_pop_routine(T* pq, int numOperations, int k);
 	void batch_pop_benchmark(int numThreads, int numPush, int numOperations, int k, int iter, bool verbose);
 
+	static void contains_routine(T* pq, int numOperations, int k);
+	void contains_benchmark(int numThreads, int numPush, int numOperations, int k, int iter, bool verbose);
+
 	public:
 	void run(int bench_code, int numThreads, int numPush, int numOperations, float push_prob, int k, int iter, bool verbose);
 };
+
+template <class T>
+void ExtraBenchmark<T>::contains_routine(T* pq, int numOperations)
+{
+	// Random values
+	std::random_device rd;
+	std::mt19937 num_gen(rd());
+#if __GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || (__GNUC_MINOR__ == 4 && __GNUC_PATCHLEVEL__ > 7)))
+	std::uniform_int_distribution<int> rand_val(0, std::numeric_limits<int>::max());
+#else
+	std::uniform_real<int> rand_val(0, std::numeric_limits<int>::max());
+#endif
+	int value;
+
+	for (int i = 0; i < numOperations; i++)
+	{
+		pq->contains(rand_val(num_gen));
+	}
+}
+template <class T>
+void ExtraBenchmark<T>::contains_benchmark(int numThreads, int numPush, int numOperations, int iter, bool verbose)
+{
+	typedef std::chrono::high_resolution_clock clock;
+	typedef std::chrono::milliseconds milliseconds;
+
+	if (verbose)
+	{
+		std::cout << "[Contains Benchmark]: Threads: " << numThreads << ", Fixed Push: " << numPush
+					<< ", Operations: " << numOperations << ", Iterations: " << iter << std::endl;
+	}
+
+	// Random values
+	std::random_device rd;
+	std::mt19937 num_gen(rd());
+
+#if __GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || (__GNUC_MINOR__ == 4 && __GNUC_PATCHLEVEL__ > 7)))
+	std::uniform_int_distribution<int> rand_val(0, std::numeric_limits<int>::max());
+#else
+	std::uniform_real<int> rand_val(0, std::numeric_limits<int>::max());
+#endif
+
+    long total_time = 0;
+    std::thread* tids = new std::thread[numThreads];
+
+    for (int t = 0; t < iter; t++)
+    {
+		T* pq = new T();
+
+		for (int i = 0; i < numPush; i++)
+		{
+			pq->push(rand_val(num_gen));
+		}
+
+		clock::time_point t0 = clock::now();
+		for (int i = 0; i < numThreads; i++)
+		{
+			tids[i] = std::thread(contains_routine, pq, numOperations);
+		}
+
+		for (int i = 0; i < numThreads; i++)
+		{
+			tids[i].join();
+		}
+		clock::time_point t1 = clock::now();
+
+		delete pq;
+
+		milliseconds total_ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
+        total_time += total_ms.count();
+	}
+
+	delete [] tids;
+
+	total_time /= iter;
+	std::cout << "Average Elapsed[ms] of  " << iter << " iterations: " << total_time << std::endl;
+}
 
 template <class T>
 void ExtraBenchmark<T>::push_routine(T* pq, int numOperations)
@@ -435,6 +514,11 @@ void ExtraBenchmark<T>::run(int bench_code, int numThreads, int numPush, int num
 		case 5:
 		{
 			batch_pop_benchmark(numThreads, numPush, numOperations, k, iter, verbose);
+			break;
+		}
+		case 6:
+		{
+			contains_benchmark(numThreads, numPush, numOperations, k, iter, verbose);
 			break;
 		}
 	}

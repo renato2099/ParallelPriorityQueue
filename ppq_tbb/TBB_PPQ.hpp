@@ -28,6 +28,14 @@ class TBB_PPQ
 	// compatibility with TBB
 	bool    try_pop(T& data) { return _ppq->try_pop(data); };
 	void print() { /*slist->print();*/ };
+	bool contains(T data) { 
+		typedef concurrent_priority_queue<T>::const_iterator iter;
+		for(iter i(_ppq.unsafe_begin()); i!=_ppq.unsafe_end(); ++i ) {
+    		if (data == *i)
+    			 return true;
+		}
+		return false;
+	}
 };
 
 #endif
