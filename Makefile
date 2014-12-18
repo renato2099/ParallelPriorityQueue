@@ -1,7 +1,7 @@
 # Makefile for GNU make
 
-LDLIBS = -pthread -lboost_program_options -ltbb -ltbbmalloc
-CC = g++
+LDLIBS = -pthread -ltbb -ltbbmalloc
+CC = icc
 
 # For compiling in OSX
 #UNAME_S := $(shell uname -s)
