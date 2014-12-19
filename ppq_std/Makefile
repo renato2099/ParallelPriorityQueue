@@ -1,6 +1,6 @@
 # Makefile for GNU make
 
-LDLIBS = -pthread -lboost_program_options
+LDLIBS = -pthread 
 CC = g++
 
 # For compiling in OSX
