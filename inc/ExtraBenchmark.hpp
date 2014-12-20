@@ -25,8 +25,8 @@ class ExtraBenchmark
 	static void batch_pop_routine(T* pq, int numOperations, int k);
 	void batch_pop_benchmark(int numThreads, int numPush, int numOperations, int k, int iter, bool verbose);
 
-	static void contains_routine(T* pq, int numOperations, int k);
-	void contains_benchmark(int numThreads, int numPush, int numOperations, int k, int iter, bool verbose);
+	static void contains_routine(T* pq, int numOperations);
+	void contains_benchmark(int numThreads, int numPush, int numOperations, int iter, bool verbose);
 
 	public:
 	void run(int bench_code, int numThreads, int numPush, int numOperations, float push_prob, int k, int iter, bool verbose);
@@ -518,7 +518,7 @@ void ExtraBenchmark<T>::run(int bench_code, int numThreads, int numPush, int num
 		}
 		case 6:
 		{
-			contains_benchmark(numThreads, numPush, numOperations, k, iter, verbose);
+			contains_benchmark(numThreads, numPush, numOperations, iter, verbose);
 			break;
 		}
 	}
