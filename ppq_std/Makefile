@@ -1,7 +1,7 @@
 # Makefile for GNU make
 
 LDLIBS = -pthread 
-CC = g++
+CC = icpc
 
 # For compiling in OSX
 UNAME_S := $(shell uname -s)
