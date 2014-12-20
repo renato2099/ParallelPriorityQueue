@@ -48,7 +48,7 @@ CXX0XFLAGS+=-std=c++11
 all:    release
 
 release: *.cpp
-	$(CXX) -O2 -DNDEBUG $(CXXFLAGS) -o $(PROG) $^ -ltbb $(LIBS) $(CXX0XFLAGS) 
+	$(CXX) -O2 -DNDEBUG $(CXXFLAGS) -o $(PROG) $^ -ltbb -ltbbmalloc $(LIBS) $(CXX0XFLAGS) 
 
 debug: *.cpp
 	$(CXX) -O0 -g -DTBB_USE_DEBUG $(CXXFLAGS) -o $(PROG) $^ -ltbb_debug $(LIBS) $(CXX0XFLAGS) 
