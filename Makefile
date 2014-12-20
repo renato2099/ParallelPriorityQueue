@@ -1,6 +1,6 @@
 # Makefile for GNU make
 
-LDLIBS = -pthread -lboost_program_options -ltbb -ltbbmalloc -lrt -D_TBB_CPP0X 
+LDLIBS = -pthread -ltbb -ltbbmalloc -lrt -D_TBB_CPP0X 
 CC = icpc
 
 # For compiling in OSX

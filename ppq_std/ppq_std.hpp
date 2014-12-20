@@ -60,11 +60,14 @@ template <class T, class Comparator = std::less<T> > class ppq_std
 		std::lock_guard<std::mutex> guard(mtx);
 		if (pq.size() > 1)
 		{
-
-			//for(std::vector<int>::iterator p = pq.begin(); p != pq.end(); p++)
-			//for(std::vector<T>::iterator p=std::priority_queue<T, std::vector<T>, Comparator>c.begin(); p!=std::priority_queue<T, std::vector<T>, Comparator>c.end(); p++)
-			//	if (data == *p)
+			std::vector<T> *queue_vector;
+		        //recast the priority queue to vector
+		        queue_vector = reinterpret_cast<std::vector<T> *>(&pq);
+        		for(typename std::vector<T>::iterator it = (*queue_vector).begin(); it != (*queue_vector).end(); it++) 
+			{
+				if (data == *it)
 					return true;
+			}
 		}
 		return false;
 	}
