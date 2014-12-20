@@ -62,6 +62,8 @@ int readCmdLine(int argc, char** argv, bool &benchEn, bool &pop, bool &rm, int &
 
 int main(int argc, char** argv)
 {
+	Benchmark<ppq_std<int>> bench;
+	ppq_std<int> *ppq = new ppq_std<int>();
 	/*bool benchEn = false, pop = false, rm = false, verbose = false;
 	int numThreads = 1, numInserts = 1;
 	float fixInserts;

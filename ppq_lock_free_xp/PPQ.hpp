@@ -23,6 +23,7 @@ template <class T, class Comparator = std::less<T> > class PPQ
 	size_t   pop_front(T data[], int k) { return slist->pop_front(data, k); };
 	// compatibility with TBB
 	bool    try_pop(T& data) { return slist->pop_front(data); };
+	bool contains(T data) { return slist->contains(data); };
 	void print() { slist->print(); };
 	//void printLevel(int l) { slist->printLevel(l); };
 };
