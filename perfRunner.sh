@@ -7,7 +7,7 @@ while [  $IMPL -lt 5 ]; do
 		let OPS=$(awk "BEGIN{print 10 ** $COUNTER}")
 		CNT=0
 		while [ $CNT -lt 5 ]; do
-			perf stat -B -e cache-misses -e instructions -e branch-misses ./main -t1 -c1 -p0 -o${OPS} -l${IMPL} -i1 &> ${IMPL}.out
+			perf stat -B -e cache-misses -e instructions -e branch-misses ./main -t1 -c1 -p0 -o${OPS} -l${IMPL} -i1 &>> ${IMPL}.out
 			let CNT=CNT+1
 		done
 		let COUNTER=COUNTER+1
