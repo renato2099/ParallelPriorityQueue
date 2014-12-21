@@ -1,10 +1,10 @@
-#include "boost/program_options.hpp"
+//#include "boost/program_options.hpp"
 #include "ppq_std.hpp"
 
 #include "../inc/benchmark.hpp"
 
 using namespace std;
-namespace po = boost::program_options;
+//namespace po = boost::program_options;
 
 #define THREADS 2
 #define N 1000000
@@ -28,7 +28,7 @@ struct ComparePoints
 int readCmdLine(int argc, char** argv, bool &benchEn, bool &pop, bool &rm, int &numThreads, int &numInserts, float &fixInserts, bool &verbose)
 {
 	// program options
-	po::options_description desc;
+/*	po::options_description desc;
 	desc.add_options()
 		("help,h", "produce help message")
 		("benchmark,b", po::bool_switch(&benchEn)->default_value(false), "run benchmarks")
@@ -57,12 +57,14 @@ int readCmdLine(int argc, char** argv, bool &benchEn, bool &pop, bool &rm, int &
 		cerr << desc << endl;
 		return 1;
 	}
-	return 0;
+	*/return 0;
 }
 
 int main(int argc, char** argv)
 {
-	bool benchEn = false, pop = false, rm = false, verbose = false;
+	Benchmark<ppq_std<int>> bench;
+	ppq_std<int> *ppq = new ppq_std<int>();
+	/*bool benchEn = false, pop = false, rm = false, verbose = false;
 	int numThreads = 1, numInserts = 1;
 	float fixInserts;
 	Benchmark<ppq_std<int>> bench;
@@ -80,6 +82,6 @@ int main(int argc, char** argv)
 			return 1;
 		}
 		bench.run(pop, rm, numThreads, numInserts, fixInserts, verbose);
-	}//IF-CMD-LINE
+	}*///IF-CMD-LINE
 	return 0;
 }

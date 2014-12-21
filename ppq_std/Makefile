@@ -1,7 +1,7 @@
 # Makefile for GNU make
 
-LDLIBS = -pthread -lboost_program_options
-CC = g++
+LDLIBS = -pthread 
+CC = icpc
 
 # For compiling in OSX
 UNAME_S := $(shell uname -s)

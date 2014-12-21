@@ -8,7 +8,7 @@
 #include "common/utility/utility.h"
 #include "common/utility/fast_random.h"
 
-#include "PPQ.hpp"
+#include "../ppq_lock_free_xp/PPQ.hpp"
 
 using namespace std;
 using namespace tbb;

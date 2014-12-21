@@ -22,6 +22,7 @@ template <class T, class Comparator = std::less<T> > class ppq_lock
 	bool pop_front(T& data) { return slist->pop_front(data); };
 	size_t pop_front(T data[], int k) { /*return slist->pop_front(data, k);*/ return 0; };
 	void print() { slist->print(); };
+	bool contains(T data) { return ( slist->find(data) == data )? true:false; };
 	void printLevel(int l) { slist->printLevel(l); };
 };
 

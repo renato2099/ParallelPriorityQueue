@@ -55,6 +55,22 @@ template <class T, class Comparator = std::less<T> > class ppq_std
 		}
 		return false;
 	};
+	bool contains(T data) 
+	{
+		std::lock_guard<std::mutex> guard(mtx);
+		if (pq.size() > 1)
+		{
+			std::vector<T> *queue_vector;
+		        //recast the priority queue to vector
+		        queue_vector = reinterpret_cast<std::vector<T> *>(&pq);
+        		for(typename std::vector<T>::iterator it = (*queue_vector).begin(); it != (*queue_vector).end(); it++) 
+			{
+				if (data == *it)
+					return true;
+			}
+		}
+		return false;
+	}
 	size_t   pop_front(T data[], int k) { /*return pq.pop_front(data, k);*/ return 0; };
 	void print() { std::cout << "print() unsupported command." << std::endl; };
 };

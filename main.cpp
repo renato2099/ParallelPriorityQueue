@@ -84,7 +84,8 @@ const option::Descriptor usage[] =
 																"\n    2: pop"
 																"\n    3: push-pop"
 																"\n    4: batch push"
-																"\n    5: batch pop"},
+																"\n    5: batch pop"
+																"\n    6: contains"},
 	{PUSH,			0,	"p",	"push",			Arg::Numeric,	"  --push <num> \t \t -p <num> \t \t Number of fixed push operations."},
 	{OPERATIONS,	0,	"o",	"operations",	Arg::Numeric,	"  --operations <num> \t \t -o <num> \t \t Number of total operations."},
 	{PROBABILITY,	0,	"x",	"probability",	Arg::Required,	"  --probability <num> \t \t -x <num> \t \t Probability for push operations of"
@@ -167,7 +168,7 @@ int readCmdLine(int argc, char** argv, int &numThreads, bool &verbose, int &code
 
 int check_parameters(int code, int numThreads, int numPush, int numOperations, float push_prob, int k, int lib, int iter)
 {
-	if (code < 1 || code > 5)
+	if (code < 1 || code > 6)
 	{
 		cerr << "Benchmark code has to be from 1 to 5." << endl;
 		return 1;

@@ -2,6 +2,8 @@
 #include <stdint.h>
 
 #include "tbb/concurrent_priority_queue.h"
+#include "tbb/concurrent_queue.h"
+#include "tbb/concurrent_vector.h"
 
 using namespace tbb;
 
@@ -28,6 +30,20 @@ class TBB_PPQ
 	// compatibility with TBB
 	bool    try_pop(T& data) { return _ppq->try_pop(data); };
 	void print() { /*slist->print();*/ };
+	bool contains(T data) { 
+		concurrent_queue<T> *queue2;
+		// this cast is wrong, we can't get inner data out
+		queue2 = reinterpret_cast<concurrent_queue<T> *>(_ppq);
+    		typedef typename concurrent_queue<T>::iterator iter;
+    		//for( iter i(queue2->unsafe_begin()); i!=queue2->unsafe_end(); ++i )
+		//{
+    			//if (data == *i)
+			//{
+    			//	return true;
+			//}
+		//}
+		return false;
+	}
 };
 
 #endif

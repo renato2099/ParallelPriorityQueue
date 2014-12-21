@@ -61,6 +61,7 @@ class SkipList
 	bool pop_front(T& data);
 	size_t pop_front(T data[], int k);
 	void print();
+	bool contains(T data);
 	//void printLevel(int l);
 };
 
@@ -102,6 +103,47 @@ SkipList<T,Comparator>::~SkipList()
 	deallocate(head);
 }
 
+template<class T, class Comparator>
+bool SkipList<T, Comparator>::contains(T data)
+{
+	int bottomLevel = 0;
+	bool mark ;
+	LockFreeNode<T>* pred = this->head;
+	LockFreeNode<T>* curr = nullptr;
+	LockFreeNode<T>* succ = nullptr;
+
+	for (int level = mLevel; level >= bottomLevel; level--)
+	{
+		curr = pred->next[level].getRef();
+		while(true)
+		{
+			//If there is not a successor then stop
+			if (curr == nullptr)
+				break;
+
+			mark = curr->next[level].getMarkAndRef(succ);
+
+			while(mark)
+			{
+				curr = pred->next[level].getRef();
+				mark = curr->next[level].getMarkAndRef(succ);
+			}
+			if (curr->data < data)
+			{
+				pred = curr;
+				curr = succ;
+			}
+			else {
+				break;
+			}
+		}
+	}
+	if (curr != nullptr)
+		return (equal(curr->data, data));
+	else 
+		return false;
+}
+
 //TODO have to clean up
 template<class T, class Comparator>
 bool SkipList<T, Comparator>::findLockFreeNode(const T& data, LockFreeNode<T>** preds, LockFreeNode<T>** succs)
@@ -125,7 +167,6 @@ bool SkipList<T, Comparator>::findLockFreeNode(const T& data, LockFreeNode<T>** 
 				//If there is not a successor then stop
 				if (curr == nullptr)
 					break;
-				//TODO this should also be an atomic operation
 				marked = curr->next[level].getMarkAndRef(succ);
 				// check if the node is marked
 				while (marked)
