@@ -43,12 +43,14 @@ void ExtraBenchmark<T>::contains_routine(T* pq, int numOperations)
 #else
 	std::uniform_real<int> rand_val(0, std::numeric_limits<int>::max());
 #endif
-	int value;
+	int value = 0;
 
 	for (int i = 0; i < numOperations; i++)
 	{
-		pq->contains(rand_val(num_gen));
+		if ( pq->contains(rand_val(num_gen)) )
+			value++ ;
 	}
+	std::cout<<"Found "<<value<<" elements."<<std::endl;
 }
 template <class T>
 void ExtraBenchmark<T>::contains_benchmark(int numThreads, int numPush, int numOperations, int iter, bool verbose)
