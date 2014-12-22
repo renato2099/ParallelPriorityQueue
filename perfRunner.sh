@@ -3,7 +3,7 @@ OPS=1
 IMPL=1
 while [  $IMPL -lt 5 ]; do
 	COUNTER=0
-	while [  $COUNTER -lt 5 ]; do
+	while [  $COUNTER -lt 7 ]; do
 		let OPS=$(awk "BEGIN{print 10 ** $COUNTER}")
 		CNT=0
 		while [ $CNT -lt 5 ]; do
