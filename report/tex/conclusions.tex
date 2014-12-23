@@ -9,3 +9,15 @@ such as high-level statements (e.g., we believe that .... is the right
 approach to .... Even though we only considered the DFT, the
 .... technique should be applicable ....) You can also formulate next
 steps if you want. Be brief
+
+
+------------------
+In spite of the fact that our implementation is lock-free, it may not be starvation-free. 
+This is because there could be a thread A that when going through the lowest level 
+of the SkipList searching for the next un-marked node (i.e. logically undeleted) is always 
+outrun by some other thread B. This means that thread A can fail repeatedly if the others
+threads always succeed.
+Thread contention may happen if many threads try to logically delete a node (i.e. mark
+a node). Only one thread will succeed and all the other unsuccessful ones will race to mark 
+the next available node. Another problem could arise when some node physically deletes a
+node that other threads are still using. This will lead into repeated \it{compareAndSet} failures.
