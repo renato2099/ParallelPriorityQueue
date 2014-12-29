@@ -21,3 +21,8 @@ Thread contention may happen if many threads try to logically delete a node (i.e
 a node). Only one thread will succeed and all the other unsuccessful ones will race to mark 
 the next available node. Another problem could arise when some node physically deletes a
 node that other threads are still using. This will lead into repeated \it{compareAndSet} failures.
+
+The SkipList is a multilevel linked-list. The XeonPhi uses tag-directory caches with explicit updates. 
+In our project this means that every every time a thread updates a node, the operation will also be copied 
+into the remote caches. In spite of the fact that all CPUs can be updated at once, multiple writes
+cause more traffic. And this is, of course, a more expensive operation on the XeonPhi.
