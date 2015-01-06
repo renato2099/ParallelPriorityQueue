@@ -355,7 +355,7 @@ void ExtraBenchmark<T>::batch_push_routine(T* pq, int id, int numOperations, int
 	{
 		for (int j = 0; j < k; j++)
 		{
-			value[j] = id * numOperations + i * k + j;
+			value[j] = id * k * numOperations + i * k + j;
 		}
 
 		pq->push(value, k);
