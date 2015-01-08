@@ -28,6 +28,8 @@ class ExtraBenchmark
 	static void contains_routine(T* pq, int numOperations);
 	void contains_benchmark(int numThreads, int numPush, int numOperations, int iter, bool verbose);
 
+	void printResults(long tt, long* times, int iter);
+
 	public:
 	void run(int bench_code, int numThreads, int numPush, int numOperations, float push_prob, int k, int iter, bool verbose);
 };
@@ -76,6 +78,7 @@ void ExtraBenchmark<T>::contains_benchmark(int numThreads, int numPush, int numO
 
     long total_time = 0;
     std::thread* tids = new std::thread[numThreads];
+	 long* times = new long[iter];
 
     for (int t = 0; t < iter; t++)
     {
@@ -101,13 +104,14 @@ void ExtraBenchmark<T>::contains_benchmark(int numThreads, int numPush, int numO
 		delete pq;
 
 		milliseconds total_ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
-        total_time += total_ms.count();
+		times[t] = total_ms.count();
+      total_time += total_ms.count();
 	}
 
 	delete [] tids;
 
-	total_time /= iter;
-	std::cout << "Average Elapsed[ms] of  " << iter << " iterations: " << total_time << std::endl;
+	printResults(total_time, times, iter);
+	delete times;
 }
 
 template <class T>
@@ -153,6 +157,7 @@ void ExtraBenchmark<T>::push_benchmark(int numThreads, int numPush, int numOpera
 
 	long total_time = 0;
 	std::thread* tids = new std::thread[numThreads];
+	long* times = new long[iter];
 
 	for (int t = 0; t < iter; t++)
 	{
@@ -178,13 +183,14 @@ void ExtraBenchmark<T>::push_benchmark(int numThreads, int numPush, int numOpera
 		delete pq;
 
 		milliseconds total_ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
+		times[t] = total_ms.count();
 		total_time += total_ms.count();
 	}
 
 	delete [] tids;
 
-	total_time /= iter;
-	std::cout << "Average Elapsed[ms] of  " << iter << " iterations: " << total_time << std::endl;
+	printResults(total_time, times, iter);
+	delete times;
 }
 
 template <class T>
@@ -222,6 +228,7 @@ void ExtraBenchmark<T>::pop_benchmark(int numThreads, int numPush, int numOperat
 
     long total_time = 0;
     std::thread* tids = new std::thread[numThreads];
+	 long* times = new long[iter];
 
     for (int t = 0; t < iter; t++)
     {
@@ -247,13 +254,15 @@ void ExtraBenchmark<T>::pop_benchmark(int numThreads, int numPush, int numOperat
 		delete pq;
 
 		milliseconds total_ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
-        total_time += total_ms.count();
+		times[t] = total_ms.count();
+      total_time += total_ms.count();
 	}
 
 	delete [] tids;
 
-	total_time /= iter;
-	std::cout << "Average Elapsed[ms] of  " << iter << " iterations: " << total_time << std::endl;
+	printResults(total_time, times, iter);
+	delete times;
+
 }
 
 template <class T>
@@ -312,6 +321,7 @@ void ExtraBenchmark<T>::push_pop_benchmark(int numThreads, int numPush, int numO
 
     long total_time = 0;
     std::thread* tids = new std::thread[numThreads];
+	 long * times = new long[iter];
 
     for (int t = 0; t < iter; t++)
     {
@@ -337,13 +347,14 @@ void ExtraBenchmark<T>::push_pop_benchmark(int numThreads, int numPush, int numO
 		delete pq;
 
 		milliseconds total_ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
-        total_time += total_ms.count();
+		times[t] = total_ms.count();
+      total_time += total_ms.count();
 	}
 
 	delete [] tids;
 
-	total_time /= iter;
-	std::cout << "Average Elapsed[ms] of  " << iter << " iterations: " << total_time << std::endl;
+	printResults(total_time, times, iter);
+	delete times;
 }
 
 template <class T>
@@ -388,6 +399,7 @@ void ExtraBenchmark<T>::batch_push_benchmark(int numThreads, int numOperations, 
 
     long total_time = 0;
     std::thread* tids = new std::thread[numThreads];
+	 long * times = new long[iter];
 
     for (int t = 0; t < iter; t++)
     {
@@ -408,13 +420,14 @@ void ExtraBenchmark<T>::batch_push_benchmark(int numThreads, int numOperations, 
 		delete pq;
 
 		milliseconds total_ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
-        total_time += total_ms.count();
+		times[t] = total_ms.count();
+      total_time += total_ms.count();
 	}
 
 	delete [] tids;
-
-	total_time /= iter;
-	std::cout << "Average Elapsed[ms] of  " << iter << " iterations: " << total_time << std::endl;
+	
+	printResults(total_time, times, iter);
+	delete[]  times;
 }
 
 template <class T>
@@ -454,6 +467,7 @@ void ExtraBenchmark<T>::batch_pop_benchmark(int numThreads, int numPush, int num
 
     long total_time = 0;
     std::thread* tids = new std::thread[numThreads];
+	 long* times = new long[iter];
 
     for (int t = 0; t < iter; t++)
     {
@@ -479,13 +493,32 @@ void ExtraBenchmark<T>::batch_pop_benchmark(int numThreads, int numPush, int num
 		delete pq;
 
 		milliseconds total_ms = std::chrono::duration_cast<milliseconds>(t1 - t0);
-        total_time += total_ms.count();
+		times[t] = total_ms.count();
+      total_time += total_ms.count();
 	}
 
 	delete [] tids;
+	
+	printResults(total_time, times, iter);
+	delete[] times;
+}
 
-	total_time /= iter;
-	std::cout << "Average Elapsed[ms] of  " << iter << " iterations: " << total_time << std::endl;
+template <class T>
+void ExtraBenchmark<T>::printResults(long total_time, long* times, int iter)
+{
+	double average = ((double) total_time) / ((double) iter);
+	std::cout << "Iterations: " << iter << std::endl;
+	std::cout << "Total elapsed time: " << total_time << std::endl;
+	std::cout << "Average time[ms]: " << average << std::endl;
+	double stddev = 0.0;
+	for (int i = 0; i < iter; i++)
+	{
+		std::cout << "Run[" << i << "]: " << times[i] << std::endl;
+		stddev += pow(((double) times[i]) - average, 2);
+	}
+	stddev /= ((double) (iter-1));
+	stddev = sqrt(stddev);
+	std::cout << "STD: " << stddev << std::endl;
 }
 
 template <class T>
