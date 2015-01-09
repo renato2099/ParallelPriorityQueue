@@ -1,5 +1,41 @@
 \section{Introduction}\label{sec:intro}
 
+% complexity
+% lock-free
+% operations
+% implementantions O(k)...
+% data locality
+% other implementations, tbb lock-based, complexity data locality
+
+A priority queue is a data structure similar to a queue, where each element is associated with a priority key.
+Thus, each element has a pair of value and key.
+An element with high priority is served before an element with low priority.
+The \textit{insert} and \textit{deleteMin} are the two basic operations.
+A priority queue can be implemented, by using various data structures.
+Different data structures provide different time and space complexity.
+The most common data structure for the implementation of a priority queue is a heap.
+It requires $\mathcal{O}(\log{}n)$ time complexity for both operations, and $\mathcal{O}(n)$ space complexity.
+
+% kapoia paradeigmata efarmogon pou exoun priority queue
+%Then explain that fast implementations are very hard and expensive to get (memory hierarchy, vector, parallel). 
+
+The trend of processors technology has moved from single-core to multi-core.
+Therefore, multiple threads may access the same priority queue at the same time in multithreading applications.
+The consistency of a concurrent priority queue can be achieved using mutual exclusion.
+However, the use of locks causes blocking and deadlocks, and limits scalability.
+
+In this paper, we present a lock-free concurrent priority queue.
+The underlying data structure is a skip list, which provides probabilistic balancing based on multiple levels.
+The bottom level is an ordinary ordered linked list, and each of the other levels acts as a subset of the elements of the lower levels which assist in faster operations.
+Each element of a level \textit{i} appears on the level \textit{i+1} with probability 0.5.
+Therefore, the first level contains all the elements, the second one contains 50\% of them, the third one 25\% and so on.
+
+A skip list requires more memory than other data structures (e.g a heap which is implemented using an array), since every node has multiple pointers to the next node.
+However, it supports the \textit{deleteMin} operation in $\Theta(1)$, since the elements are ordered and the element with the maximum priority is located in the beginning.
+The time complexity for the \textit{insert} is $\mathcal{O}(\log{}n)$.
+
+%RELATED WORK
+
 %Do not start the introduction with the abstract or a slightly modified version. It follows a possible structure of the introduction.  Note that the structure can be modified, but the content should be the same. Introduction and abstract should fill at most the first page, better less.
 
 %\mypar{Motivation} The first task is to motivate what you do.  You can start general and zoom in one the specific problem you consider.  In the process you should have explained to the reader: what you are doing, why you are doing, why it is important (order is usually reversed).
