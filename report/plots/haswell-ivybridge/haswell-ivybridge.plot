@@ -5,8 +5,8 @@ set title "Operational Intensity - Intel Haswell vs Intel IvyBridge"
 set decimal locale
 set format x "%'g"
 set log x
-set term post eps color
-set output 'haswell_ivybridge.eps'
+set term postscript color
+set output '| ps2pdf - haswell_ivybridge.pdf'
 plot "haswell_ivybridge.dat" using 1:2 title '16Thrs-Haswell' with errorlines, \
 "haswell_ivybridge.dat" using 1:3 title '32Thrs-Haswell' with errorlines, \
 "haswell_ivybridge.dat" using 1:4 title '16Thrs-IvyBridge' with errorlines, \
