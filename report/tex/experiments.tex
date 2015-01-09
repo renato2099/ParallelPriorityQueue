@@ -17,6 +17,29 @@
 	\item Explanation on why we are not fast
 \end{itemize}
 
+%we should change this subsection title
+\subsection{Understanding our results}
+After our results, we decided to microbenchmark cache-specific issues in order to try to improve (and fully understand) them. We first revised the memory allocation process in the XeonPhi and then we tried our data structure on a different processor microarchitecture, Intel Haswell, because of its cache-related enhancements.
+
+\mypar{Memory allocation}
+\begin{itemize}
+	\item Explain memory allocation improvement
+		\begin{itemize}
+			\item Node size by creating nodes only for the levels needed
+			\item Cache aligning. Mention that this is even more critical on the XeonPhi machine.
+		\end{itemize}
+	\item Graph about memory allocation improvement
+\end{itemize}
+
+% explain data + graph 
+\begin{figure}
+	\centering
+  	\includegraphics[scale=0.3]{../plots/mem_alloc/mem_alloc.pdf}
+	\caption{Memory allocation runtime among a regular allocation, using compiler hints, and using sequential allocation with compiler hints}
+	\label{fig:mem_alloc}
+\end{figure}
+
+
 \mypar{Operational intensity}
 % recap of operational intensity
 Operational intensity is defined as the ratio of the number of instructions executed to the number of memory accesses(look for citation?). If there exist many instructions per memory access, then the program is considered to have a high computational intensity i.e. compute bounded. On the other hand, if there are a small number of instructions are executed per memory access, then the program is considered to have a low computational intensity i.e. memory bounded.
@@ -51,7 +74,7 @@ While running our priority queue benchmark on these two different architectures,
 
 % explain data + graph + core architecture
 \begin{figure}\centering
-  	\includegraphics[scale=0.3]{../plots/haswell-ivybridge/haswell_ivybridge}
+  	\includegraphics[scale=0.3]{../plots/haswell-ivybridge/haswell_ivybridge.pdf}
 	\caption{Op. Intensity in Intel Haswell and Intel IvyBridge microarchitectures}
 	\label{fig:haswell_ivybridge}
 \end{figure}
