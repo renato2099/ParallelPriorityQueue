@@ -1,4 +1,4 @@
-\section{Experimental Results}
+\section{Evaluation of Implementation Characteristics}
 \label{sec:exp}
 
 \begin{itemize}
@@ -39,9 +39,8 @@ After our results, we decided to microbenchmark cache-specific issues in order t
 	\label{fig:mem_alloc}
 \end{figure}
 
-
 \subsection{Evaluation on Core i7}
-\begin{figure*}
+\begin{figure*}[t]
 	\centering
 	\begin{subfigure}[b]{0.3\textwidth}
 		\centering
@@ -66,9 +65,9 @@ After our results, we decided to microbenchmark cache-specific issues in order t
 	\caption{Evaluation on Core i7-3820}
 	\label{fig:eval_i7}
 \end{figure*}
-\figurename
+\figurename~\ref{fig:eval_i7} shows the range of experiments. For each experiment the number of threads was increased from 1 to 240 in steps of 20 while the workload per thread is always fixed. For a perfectly parallelizeable implementation and system, this would lead to a constant runtime independent on the number of threads.
 \subsection{Evaluation on Xeon Phi}
-\begin{figure*}
+\begin{figure*}[t]
 	\centering
 	\begin{subfigure}[b]{0.3\textwidth}
 		\centering
@@ -96,14 +95,14 @@ After our results, we decided to microbenchmark cache-specific issues in order t
 
 
 \subsection{Comparison}
-\begin{figure}
+\begin{figure}[t]
 	\centering
 	\includegraphics[width=0.9\columnwidth]{../plots/comp_contains/runtime_contains}
 	\caption{Comparison memory bandwidth}
 	\label{fig:comp_contains}
 \end{figure}
 
-\subsection{Operational intensity in different microarchitecture}
+\subsection{Operational intensity in different microarchitectures}
 % recap of operational intensity
 Operational intensity is defined as the ratio of the number of instructions executed to the number of memory accesses(look for citation?). If there exist many instructions per memory access, then the program is considered to have a high computational intensity i.e. compute bounded. On the other hand, if there are a small number of instructions are executed per memory access, then the program is considered to have a low computational intensity i.e. memory bounded.
 
@@ -146,3 +145,6 @@ While running our priority queue benchmark on these two different architectures,
 \end{figure}
 
 Figure~\ref{fig:haswell_ivybridge} shows how operational intensity behaves when running different amounts of insert operations over such microarchitectures. It can be noted that when performing a small number of operations, our data structure is CPU bounded on an Sandy BridgeE processor, but memory bounded on a Haswell processor. This is because in the former we have a small number of cache-misses against a really high number of instructions whether in the latter we observed a low operational intensity because we need less number of instructions for performing such tasks. When we increase the number of operations, the Sandy BridgeE processor gets many more cache-misses compared to the Haswell one. Thus, in the former one our data structure becomes memory bounded and in the latter one CPU bounded.
+=======
+The previous experiments show that the same workload performs on a x86 CPU roughly a magnitutde better than on the Xeon Phi architecture. There are multiple reasons for these, ...\\ %cache coherence, memory allocation is more expensive, ....
+The Xeon Phi does not only offer computational power but also has a very high memory bandwidth, similar to GPUs, based on GDDR5 which should outperform typical DDR3 main memory. To compare memory bandwidth, we implented a contains function which is querying for elements and checks if they exist. The sturcture of the priority queue is unchanged during this operation, such that dirty cache-lines are omitted. \figurename~\ref{fig:comp_contains} show the lock-free priority queue running on an Intel Core i7-3820 and the Xeon Phi. For all runs the queue was prepopulated with 10\,Mio. elements, each threads executed 100'000 \textit{contains} operations. As can be seen in the graph the runtime on the Xeon Phi only increases slightly with the number of threads, in contrast on the Intel Core i7-3820 it increases roughly linearly. This means that on the x86 architecture the \textit{contains} operation is memory bound already with a single thread. The Xeon Phi seems to guarantee a fixed bandwidth for each of its hardware cores, such that we can scale the number of threads up without being limited by the memory bandwidth.\\
