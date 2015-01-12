@@ -82,39 +82,59 @@ While running our priority queue benchmark on these two different architectures,
 
 Figure~\ref{fig:haswell_ivybridge} shows how operational intensity behaves when running different amounts of insert operations over such microarchitectures. It can be noted that when performing a small number of operations, our data structure is CPU bounded on an IvyBridge processor, but memory bounded on a Haswell processor. This is because in the former we have a small number of cache-misses against a really high number of instructions whether in the latter we observed a low operational intensity because we need less number of instructions for performing such tasks. When we increase the number of operations, the IvyBridge processor gets many more cache-misses compared to the Haswell one. Thus, in the former one our data structure becomes memory bounded and in the latter one CPU bounded.
 
-\subsection{Evaluation on Xeon Phi}
-\begin{figure}
+\subsection{Evaluation on Core i7}
+\begin{figure*}
 	\centering
-	\begin{subfigure}[b]{0.475\columnwidth}
+	\begin{subfigure}[b]{0.3\textwidth}
 		\centering
-		\includegraphics[width=\textwidth]{../plots/xp_push/runtime_push}
+		\includegraphics[width=\textwidth]{../plots/i7_mixed/runtime_mixed_i7}
+		\caption{Mixed Workload}
+		\label{fig:i7_mixed}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.3\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{../plots/i7_push/runtime_push_i7}
 		\caption{PUSH}
-		\label{fig:xp_push}
+		\label{fig:i7_push}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[b]{0.475\columnwidth}
+	\begin{subfigure}[b]{0.3\textwidth}
 		\centering
-		\includegraphics[width=\textwidth]{../plots/xp_pop/runtime_pop}
+		\includegraphics[width=\textwidth]{../plots/i7_pop/runtime_pop_i7}
 		\caption{POP}
-		\label{fig:xp_pop}
+		\label{fig:i7_pop}
 	\end{subfigure}
-	\hfill
-	\begin{subfigure}[b]{0.475\columnwidth}
+	\caption{Evaluation on Core i7-3820}
+	\label{fig:eval_i7}
+\end{figure*}
+\figurename
+\subsection{Evaluation on Xeon Phi}
+\begin{figure*}
+	\centering
+	\begin{subfigure}[b]{0.3\textwidth}
 		\centering
 		\includegraphics[width=\textwidth]{../plots/xp_mixed/runtime_mixed}
 		\caption{Mixed Workload}
 		\label{fig:xp_mixed}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[b]{0.475\columnwidth}
+	\begin{subfigure}[b]{0.3\textwidth}
 		\centering
-		%\includegraphics[width=\textwidth]{../plots/xp_contains/runtime_contains}
-		\caption{Contains}
-		\label{fig:xp_contains}
+		\includegraphics[width=\textwidth]{../plots/xp_push/runtime_push}
+		\caption{PUSH}
+		\label{fig:xp_push}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.3\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{../plots/xp_pop/runtime_pop}
+		\caption{POP}
+		\label{fig:xp_pop}
 	\end{subfigure}
 	\caption{Evaluation on Xeon Phi}
-	\label{fig:three graphs}
-\end{figure}
+	\label{fig:eval_xp}
+\end{figure*}
 
 
 \subsection{Comparison}
