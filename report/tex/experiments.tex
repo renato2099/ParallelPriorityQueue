@@ -85,11 +85,10 @@ While running our priority queue benchmark on these two different architectures,
 
 Figure~\ref{fig:haswell_ivybridge} shows how operational intensity behaves when running different amounts of insert operations over such microarchitectures. It can be noted that when performing a small number of operations, our data structure is CPU bounded on an Sandy BridgeE processor, but memory bounded on a Haswell processor. This is because in the former we have a small number of cache-misses against a really high number of instructions whether in the latter we observed a low operational intensity because we need less number of instructions for performing such tasks. When we increase the number of operations, the Sandy BridgeE processor gets many more cache-misses compared to the Haswell one. Thus, in the former one our data structure becomes memory bounded and in the latter one CPU bounded.
 
-\section{Experimental Results}
+\section{Experiments on Workloads}
 COMPILER on Einstein sucks\\
-The experiments were conducted on two different platforms a x86 Intel Core i7-3820 and a Xeon Phi XXXX. To allow comparison the parameters used were the same on both platforms. For each experiment five iterations were averaged and their standard deviation was computed. In the first part we evaluated our implementation on a Core i7, in the second part the same experiments are presented on the Xeon Phi and finally we do a comparison of the two platforms in some key experiments.\\
-Intel Compileer 15 on Xeon Phi\\
-which compiler for x86??
+The experiments were conducted on two different systems. First a CPU-based system equipped with an Intel Xeon E3-1245 running 4 Coreas at 3.4\,Ghz, second a MIC, the Intel Xeon Phi 7XXX. To allow comparison the experiment parameters used were the same on both platforms. For each experiment five iterations were averaged and their standard deviation was computed.\\
+Three types of workload were executed, \textit{mixed}, \textit{push} and \textit{pop}. For the mixed and pop the priority queue was prepopulated with 1000$\times$threads in the former and 10\,Mio. elements in the latter. Prepopulation was not included in the measured runtime. The \textit{mixed} workload chooses for each operation with probability of 50\% either a push or pop operation. The number of threads is varied from 1 to 240 in steps of 20 while the number of operations per threads stays constant.
 
 \subsection{Evaluation on Core i7}
 \begin{figure*}[t]
@@ -114,10 +113,12 @@ which compiler for x86??
 		\caption{POP}
 		\label{fig:i7_pop}
 	\end{subfigure}
-	\caption{Evaluation on Core i7-3820}
+	\caption{Evaluation on Intel Core E3-1245}
 	\label{fig:eval_i7}
 \end{figure*}
-\figurename~\ref{fig:eval_i7} shows the range of experiments. For each experiment the number of threads was increased from 1 to 240 in steps of 20 while the workload per thread is always fixed. For a perfectly parallelizeable implementation and system, this would lead to a constant runtime independent on the number of threads.
+\figurename~\ref{fig:eval_i7} shows the run-times for executing the three workloads on a Xeon Haswell system. All variants are performing and behaving similar in the mixed and push workload except for the lock-based implementation which struggles more to scale with the number of threads. Our lock-free implementation is very close to the baseline implementations and shows similar behavior when adding more threads. In the pop workload all four data structures behave very similar, this time the our lock-free implementation with a pop operation in O(1) and lazy-deletion shows the best runtime by a small margin.
+
+
 \subsection{Evaluation on Xeon Phi}
 \begin{figure*}[t]
 	\centering
@@ -144,6 +145,9 @@ which compiler for x86??
 	\caption{Evaluation on Xeon Phi}
 	\label{fig:eval_xp}
 \end{figure*}
+The same three worklaods were also run on the Xeon Phi, the measured run-times are plotted in \figurename~\ref{fig:eval_xp}. In the mixed workload the tbb and the lock-free priority queue behave similarly well. The other two implementations behave worse. From the push rsp. pop workload we see that the longer runtime in the lock-based implementation originates from bad performance for the push operation while for the std::priority\_queue the pop operation is the case for the long runtime. The tbb::concurrent\_queue behaves well in all three workloads, our lock-free implementation shows almost the same behavior with a slightly increased runtime.\\
+
+Comparing the two platforms against each other we can see that in general the same work is about one magnitude quicker on the CPU.
 
 
 \subsection{Comparison}
