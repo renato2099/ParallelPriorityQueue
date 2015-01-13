@@ -33,4 +33,53 @@ template <class T, class Comp> class PPQ
 };
 \end{lstlisting}
 
-What about correctness verification...
+\mypar{Correcteness verification}
+Write about huffman coding and graph test
+
+\subsection{Memory allocation micro-benchmark}
+We performed a microbenchmark to evaluate the memory allocation process in the XeonPhi. We did three different types of mememory allocation: First, we used the primites offered by the programming language, then we used compiler hints offered by the Intel Thread Building Blocks to use its scalable allocator implementation, and finally we allocated the memory needed sequentially using compiler hints too. These options are described below.
+
+\mypar{C++ memory allocation primitives}
+These are optimized for sequential case. They were designed with two main objectives: use efficiently memory space and minimize CPU overhead. However, these objectives do not target achieving good parallel performance. Modern hardware provides larger memory sizes, but also a bigger gap between CPU and memory speed. Thus, cache locality and avoidance of false sharing play a more important role.
+
+\mypar{Intel TBB scalable allocator}
+It uses \textit{thread-private heaps} to reduce the amount of code that needs synchronization and also false sharing. Each thread allocates its own copy of heap structures and accesses it via thread-specific data (TSD) using corresponding system APIs.
+The allocator gets 1MB chunks from the operating system and divides them into 16K-byte aligned blocks. Then, it places these blocks initially in a global heap of free blocks. Memory requested is not returned to the operating system (but only in large allocation cases). Thus, it can make sure that memory is reused. Additional blocks are requested if a thread does not find free objects in the blocks of its own heap and there are no available blocks in the global heap~\cite{_thefoundations,Hudson:2006:MST:1133956.1133967}.
+To use the scalable allocator offered by Intel TBB we had to link two libraries:
+\begin{description}
+	\item[-ltbb] To use the Intel TBB library.
+	\item[-ltbbmalloc] To use the scalable allocator offered by the Intel TBB library.
+\end{description}
+ 
+\mypar{Sequential allocation with compiler hints}
+Every node in our skip list contains an array of pointers to the next nodes depending on the level each node belongs to. This means that parts of this array might fall into different cache lines. Thus, our data structure can suffer more from cache misses and false sharing. We designed each skip list node to contain an empty array and allocating only the pointers that it will actually need (listing~\ref{lst:freenode}). In addition to that, the usage of Intel TBB allocator helps us ensuring that these nodes will be cache-aligned (listing~\ref{lst:fn_alloc}).
+
+\begin{lstlisting}[language=C++,basicstyle=\tt\footnotesize,captionpos=b,caption=Lock free node structure,label=lst:freenode,morekeywords={*, size_t}]
+template <typename T>  struct LockFreeNode
+{	
+	T data;
+	int	level;
+	AtomicRef<LockFreeNode>	next[0];
+};
+\end{lstlisting}
+
+\begin{lstlisting}[language=C++,basicstyle=\tt\footnotesize,captionpos=b,caption=Memory allocation instruction for array of atomic references,label=lst:fn_alloc, morekeywords={*, size_t}]
+
+scalable_malloc(
+sizeof(LockFreeNode) 
++ 
+((arrayLength + 1) * sizeof(AtomicRef<LockFreeNode>))
+)
+\end{lstlisting}
+
+\mypar{Memory allocation microbenchmnark}
+We designed our microbenchmark to allocate ten million skip list nodes while using 240 threads. We measured the time it takes to complete the allocation task on the XeonPhi. When using the regular memory allocation method, we experienced really high latency but when we used Intel TBB scalable allocator we obtained a 24, and 38 times improvemente for using TBB library, and a sequential allocation with Intel TBB allocator respectively. The results are displayed on figure~\ref{fig:mem_alloc}.
+
+
+% explain data + graph 
+\begin{figure}
+	\centering
+  	\includegraphics[scale=0.35]{../plots/mem_alloc/mem_alloc.pdf}
+	\caption{Memory allocation runtime among a regular allocation, using compiler hints, and using sequential allocation with compiler hints}
+	\label{fig:mem_alloc}
+\end{figure}
