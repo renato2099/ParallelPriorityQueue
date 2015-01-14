@@ -1,13 +1,5 @@
 \section{Proposed Approach}\label{sec:approach}
 
-
-\begin{itemize}
-	\item Lock-based implementation
-	\item Lock-free implementation
-	\item Correctness tests with applications
-	\item Explain advantages vs disadvantages of approach
-\end{itemize}
-
 We decided to base the implementation of our concurrent priority queue on a lockfree Skiplist. A lockfree Skiplist is a good choice for a concurrent datastructure since the atomic operations are very local to 2-3 nodes and thereby the probabilty of conflicts between threads is minimized. Since our final goal was a port on to the Xeon Phi which comes with 60 cores this would be a good fit.\\
 The Skiplist was implemented using C++ atomics and its {\em comapre\_and\_exchange} operation.\\
 In Figure XX we have an illustration of Skiplist which essentially is a linked list with a hierarchial tree-like index structure. The index creation is probabilistic but should asymptotically lead to a structure which enables traversing to any node in $O(\log n)$.\\
