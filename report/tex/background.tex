@@ -1,37 +1,18 @@
-\section{Background: Whatever the Background is}\label{sec:background}
+\section{Background}\label{sec:background}
 
 A priority queue is an abstract data structure which can be implemented using various data structures.
 An efficient implementation can be achieved with a heap which is based on an array.
-It requires $\mathcal{O}(\log{}n)$ time complexity for both operations, \textit{insert} and \textit{deleteMin}, and $\mathcal{O}(n)$ space complexity.
-Nevertheless, other implementations may provide faster operations thanks to time complexity, space complexity and data locality.
+It requires $\mathcal{O}(\log{}n)$ time complexity for both operations, \textit{push} and \textit{pop}, and $\mathcal{O}(n)$ space complexity.
+The TBB implementation that we use in this paper, is based on an array.
+We also use the C++ standard libary (STD) implementation which is based on an array, but it is not thread safe.
+The consistency of it, is achieved manually using mutual exclusion.
+Other implementations of a concurrent priority queue may provide faster operations thanks to time and space complexity, and data locality.
 
-Our lock-free implementation is based on a skip list which provides probabilistic balancing.
+Our lock-free implementation is based on a skip list \cite{Pugh:1990:SLP:78973.78977}  which provides probabilistic balancing.
 The bottom level is an ordinary ordered linked list, and each of the other levels acts as a subset of the elements of the lower levels which assist in faster operations.
 Each element of a level \textit{i} appears on the level \textit{i+1} with probability 0.5.
 Therefore, the first level contains all the elements, the second one contains 50\% of them, the third one 25\% and so on.
 
 A skip list requires more memory than other data structures (e.g a heap which is implemented using an array), since every node has multiple pointers to the next node.
-However, it supports the \textit{deleteMin} operation in $\Theta(1)$, since the elements are ordered and the element with the maximum priority is located always in the beginning.
-The time complexity for the \textit{insert} is $\mathcal{O}(\log{}n)$.
-
-
-%Give a short, self-contained summary of necessary background information. For example, assume you present an implementation of FFT algorithms. You could organize into DFT definition, FFTs considered, and cost analysis. The goal of the background section is to make the paper self-contained for an audience as large as possible. As in every section you start with a very brief overview of the section. Here it could be as follows: In this section we formally define the discrete Fourier transform, introduce the algorithms we use and perform a cost analysis.
-
-%\mypar{Discrete Fourier Transform}
-%Precisely define the transform so I understand it even if I have never seen it before.
-
-%\mypar{Fast Fourier Transforms}
-%Explain the algorithm you use.
-
-%\mypar{Cost Analysis}
-%First define you cost measure (what you count) and then compute the cost. Ideally precisely, at least asymptotically. In the latter case you will need to instrument your code to count the operations so you can create a performance plot.
-
-%Also state what is known about the complexity (asymptotic usually) about your problem (including citations).
-%Don't talk about "the complexity of the algorithm.'' It's incorrect, remember (Lecture 2)?
-
-%\begin{itemize}
-%	\item Priority queue theory/use cases.
-%	\item Existing research on priority queues.
-%	\item Do complexity analysis for underlying data structures.
-%	\item Lock-free data structures for ppq
-%\end{itemize}
+However, it supports the \textit{pop} operation in $\Theta(1)$, since the elements are ordered and the element with the maximum priority is always located in the beginning.
+The time complexity for the \textit{push} operation is $\mathcal{O}(\log{}n)$.

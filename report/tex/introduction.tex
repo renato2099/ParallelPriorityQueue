@@ -3,7 +3,7 @@
 A priority queue is a data structure similar to a queue, where each element is associated with a priority key.
 Thus, each element has a pair of value and key.
 An element with high priority is served before an element with low priority.
-The \textit{insert} and \textit{deleteMin} are the two basic operations.
+The \textit{push} and \textit{pop} are the two basic operations.
 A number of well known applications e.g. Dijkstra's algorithm, and Huffman coding are based on a priority queue.
 In addition, a priority queue is also used in system level applications that are related to scheduling.
 Hence, many different single-threaded implementations have been proposed.
@@ -15,23 +15,19 @@ Consequently, the constistency of a priority queue has to be ensured explicitly.
 Mutual exclusion, using locks, semaphores and etc., is a simple, but not an efficient solution to that problem, since it causes blocking, deadlocks, and limits scalability.
 Atomic synchronization primitives that are available on every common CPU is an alternative way to implement an efficient concurrent priority queue.
 
-In this paper, we present a lock-free concurrent priority queue, which supports fast \textit{deleteMin} operation, by exploiting the underlying data structure.
-It is based on a skip list, which provides probabilistic balancing using multiple levels, and maintains an ordered list of keys.
+In this paper, we present a lock-free concurrent priority queue, which supports fast \textit{pop} operation, by exploiting the underlying data structure.
+It is based on a skip list \cite{Pugh:1990:SLP:78973.78977}, which provides probabilistic balancing using multiple levels, and maintains an ordered list of keys.
 
-% TODO add RELATED WORK
+A concurrent priority queue which is based on a heap and is suitable for CUDA's data parallel SIMT architecture is presented in \cite{DBLP:conf/hipc/HeAP12}.
+Wide heap nodes are used in order thousands of push and pop operations to be supported at the same time.
+A lock-free concurrent priority queue which uses a skip list, as the underlying data structure, is presented in \cite{Sundell:2005:FLC:1073765.1073770}.
+Our lock-free implementation is also based on a skip list, but the algorithm that is used is different, and the comparison is not limited to lock-based implementations. 
 
+% TODO Xeon CPU or i7?
 The rest of this, is organized as follows.
 In the next section we give a brief, yet sufficient description of priority queues and skip lists. 
 A detailed description of our implementation can be found in section \ref{sec:approach}.
-Section \ref{sec:exp} presents experimental results collected from a Xeon CPU and Xeon Phi, by comparing the lock-free implementation with the TBB concurrent priority queue, and two different implementations using mutual exclusion.
+Section \ref{sec:exp} presents experimental results collected from a Xeon CPU and Xeon Phi, by comparing the lock-free implementation with the Threading Building Blocks (TBB) concurrent priority queue, and two different implementations using mutual exclusion.
 Finally, we draw some conlusions, summarizing this work.
-
-%Do not start the introduction with the abstract or a slightly modified version. It follows a possible structure of the introduction.  Note that the structure can be modified, but the content should be the same. Introduction and abstract should fill at most the first page, better less.
-
-%\mypar{Motivation} The first task is to motivate what you do.  You can start general and zoom in one the specific problem you consider.  In the process you should have explained to the reader: what you are doing, why you are doing, why it is important (order is usually reversed).
-
-%For example, if my result is the fastest DFT implementation ever, one could roughly go as follows. First explain why the DFT is important (used everywhere with a few examples) and why performance matters (large datasets, realtime). Then explain that fast implementations are very hard and expensive to get (memory hierarchy, vector, parallel). 
-
-%Now you state what you do in this paper. In our example: presenting a DFT implementation that is faster for some sizes as all the other ones.
 
 %\mypar{Related work} Next, you have to give a brief overview of related work. For a paper like this, anywhere between 2 and 8 references. Briefly explain what they do. In the end contrast to what you do to make now precisely clear what your contribution is.
