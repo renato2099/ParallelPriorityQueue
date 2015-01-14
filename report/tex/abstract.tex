@@ -1,14 +1,16 @@
 \begin{abstract}
 
 A priority queue appears in various multithreading applications.
+%TODO . Being a challenge in practice has nothing to with mutual exclusion strategies
 However, an efficient implementation for a concurrent priority queue is challenging in practice, since already proposed mutual exclusion strategies cause blocking and have bad scalability.
 
-We present a lock-free implementation for a concurrent priority queue which is based on a single atomic synchronization primitive that is available on every common CPU.
-The underlying data structure is a skip list and supports the \textit{pop} operation in $\Theta(1)$ time.
+We present a lock-free implementation for a concurrent priority queue which is based on a single atomic synchronization primitive available on every common CPU.
+The underlying data structure is a skip list enabling the \textit{pop} operation to be performed in $\Theta(1)$ time.
 
 %TODO Xeon CPU or i7?
 
-We conducted experiments on Xeon CPU and Xeon Phi, by comparing the lock-free implementation with the TBB concurrent priority queue, and two different implementations using mutual exclusion.
-The experimental results show that the \textit{pop} operation of our implementation is faster than that of the other implementations thanks to better time complexity.
+We conducted experiments on Xeon CPU and Xeon Phi, by comparing our lock-free implementation with Intel TBB concurrent priority queue, and two different implementations using mutual exclusion.
+The experimental results show that our lock-free implementation is competitive against other implemenentations due to a better time complexity in the \textit{pop} operation and its non-blocking design.
+%The experimental results show that the \textit{pop} operation of our implementation is faster than that of the other implementations thanks to better time complexity.
 
 \end{abstract}
