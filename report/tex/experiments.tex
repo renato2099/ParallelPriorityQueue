@@ -128,3 +128,499 @@ While running our priority queue benchmark on these two different architectures,
 \end{figure}
 
 Figure~\ref{fig:haswell_ivybridge} shows how operational intensity behaves when running different amounts of insert operations over such microarchitectures. It can be noted that when performing a small number of operations, our data structure is CPU bounded on an Sandy BridgeE processor, but memory bounded on a Haswell processor. This is because in the former we have a small number of cache-misses against a really high number of instructions whether in the latter we observed a low operational intensity because we need less number of instructions for performing such tasks. When we increase the number of operations, the Sandy BridgeE processor gets many more cache-misses compared to the Haswell one. Thus, in the former one our data structure becomes memory bounded and in the latter one CPU bounded.
+
+
+\begin{figure}[!ht]
+	\centering
+	\begin{tikzpicture}[scale=0.53]
+%	\pgfplotsset{every axis legend/.append style={at={(0.16,0.10)},anchor=south}}
+	\pgfplotsset{every axis legend/.append style={at={(0.5,-0.25)},anchor=north},legend columns=-1}
+	\begin{axis}
+	[
+		xlabel=\textbf{threads},
+		ylabel=\textbf{{execution time}},
+		xtick = data,
+%		xmin=0,
+%		xmax=2000,
+%		ymin=0,
+%		ymax=70,
+		width=0.90\textwidth,
+		height=0.60\textwidth,
+	]
+
+		\addplot[smooth,color=o_blue,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 211)
+			(2, 1182)
+			(3, 1376)
+			(4, 1799)
+			(5, 1803)
+			(6, 1701)
+			(7, 1929)
+			(8, 1825)
+			(9, 1799)
+			(10, 1824)
+			(11, 1817)
+			(12, 1752)
+			(13, 1773)
+			(14, 1731)
+			(15, 2082)
+			(16, 1984)
+		};
+		\addlegendentry{\Large{STD}}
+
+		\addplot[smooth,color=black,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 259)
+			(2, 613)
+			(3, 733)
+			(4, 711)
+			(5, 680)
+			(6, 674)
+			(7, 670)
+			(8, 661)
+			(9, 714)
+			(10, 771)
+			(11, 784)
+			(12, 803)
+			(13, 829)
+			(14, 848)
+			(15, 852)
+			(16, 826)
+		};
+		\addlegendentry{\Large{TBB}}
+
+		\addplot[smooth,color=red,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 6633)
+			(2, 27619)
+			(3, 24484)
+			(4, 28447)
+			(5, 29374)
+			(6, 29112)
+			(7, 29868)
+			(8, 29939)
+			(9, 26909)
+			(10, 24046)
+			(11, 21540)
+			(12, 18817)
+			(13, 18930)
+			(14, 17979)
+			(15, 16552)
+			(16, 16801)
+		};
+		\addlegendentry{\Large{Lock-based}}
+
+		\addplot[smooth,color=magenta,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 6615)
+			(2, 4107)
+			(3, 3272)
+			(4, 3098)
+			(5, 2975)
+			(6, 3047)
+			(7, 3145)
+			(8, 3200)
+			(9, 3204)
+			(10, 3289)
+			(11, 3297)
+			(12, 3312)
+			(13, 3361)
+			(14, 3345)
+			(15, 3306)
+			(16, 3326)
+		};
+		\addlegendentry{\Large{Lock-free}}
+
+	\end{axis}
+	\end{tikzpicture}
+	\caption{Execution time for 7.207.200 push operations, varying the number of threads and keeping stable the number of the total operations.}
+\label{pusha}
+\end{figure}
+
+
+\begin{figure}[!ht]
+	\centering
+	\begin{tikzpicture}[scale=0.53]
+%	\pgfplotsset{every axis legend/.append style={at={(0.16,0.10)},anchor=south}}
+	\pgfplotsset{every axis legend/.append style={at={(0.5,-0.25)},anchor=north},legend columns=-1}
+	\begin{axis}
+	[
+		xlabel=\textbf{threads},
+		ylabel=\textbf{{execution time}},
+		xtick = data,
+%		xmin=0,
+%		xmax=2000,
+%		ymin=0,
+%		ymax=70,
+		width=0.90\textwidth,
+		height=0.60\textwidth,
+	]
+
+		\addplot[smooth,color=o_blue,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 1073)
+			(2, 7779)
+			(3, 5494)
+			(4, 6291)
+			(5, 4178)
+			(6, 4767)
+			(7, 5005)
+			(8, 4810)
+			(9, 4815)
+			(10, 4851)
+			(11, 4887)
+			(12, 4933)
+			(13, 4856)
+			(14, 4816)
+			(15, 4964)
+			(16, 4894)
+		};
+		\addlegendentry{\Large{STD}}
+
+		\addplot[smooth,color=black,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 1329)
+			(2, 2096)
+			(3, 2091)
+			(4, 2044)
+			(5, 2124)
+			(6, 2155)
+			(7, 2209)
+			(8, 2228)
+			(9, 2378)
+			(10, 2382)
+			(11, 2400)
+			(12, 2361)
+			(13, 2364)
+			(14, 2340)
+			(15, 2334)
+			(16, 2269)
+		};
+		\addlegendentry{\Large{TBB}}
+
+		\addplot[smooth,color=red,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 775)
+			(2, 4358)
+			(3, 6996)
+			(4, 7261)
+			(5, 4736)
+			(6, 4782)
+			(7, 4872)
+			(8, 4099)
+			(9, 4171)
+			(10, 4324)
+			(11, 4252)
+			(12, 4157)
+			(13, 4296)
+			(14, 4223)
+			(15, 4213)
+			(16, 4130)
+		};
+		\addlegendentry{\Large{Lock-based}}
+
+		\addplot[smooth,color=magenta,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 831)
+			(2, 1339)
+			(3, 1471)
+			(4, 1566)
+			(5, 1551)
+			(6, 1526)
+			(7, 1483)
+			(8, 1448)
+			(9, 1529)
+			(10, 1491)
+			(11, 1474)
+			(12, 1395)
+			(13, 1475)
+			(14, 1524)
+			(15, 1470)
+			(16, 1522)
+		};
+		\addlegendentry{\Large{Lock-free}}
+
+	\end{axis}
+	\end{tikzpicture}
+	\caption{Execution time for 7.207.200 pop operations using prepopulation of 7.207.200 push operations, varying the number of threads and keeping stable the number of the total operations.}
+\label{popa}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	\begin{tikzpicture}[scale=0.53]
+%	\pgfplotsset{every axis legend/.append style={at={(0.16,0.10)},anchor=south}}
+	\pgfplotsset{every axis legend/.append style={at={(0.5,-0.25)},anchor=north},legend columns=-1}
+	\begin{axis}
+	[
+		xlabel=\textbf{threads},
+		ylabel=\textbf{{execution time}},
+		xtick = data,
+%		xmin=0,
+%		xmax=2000,
+%		ymin=0,
+%		ymax=70,
+		width=0.90\textwidth,
+		height=0.60\textwidth,
+	]
+
+		\addplot[smooth,color=o_blue,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 767)
+			(2, 2634)
+			(3, 3239)
+			(4, 3404)
+			(5, 3219)
+			(6, 3453)
+			(7, 3886)
+			(8, 3740)
+			(9, 3797)
+			(10, 3816)
+			(11, 4007)
+			(12, 3946)
+			(13, 3912)
+			(14, 3858)
+			(15, 4071)
+			(16, 4158)
+		};
+		\addlegendentry{\Large{STD}}
+
+		\addplot[smooth,color=black,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 873)
+			(2, 1423)
+			(3, 1429)
+			(4, 1332)
+			(5, 1344)
+			(6, 1360)
+			(7, 1346)
+			(8, 1353)
+			(9, 1453)
+			(10, 1486)
+			(11, 1530)
+			(12, 1526)
+			(13, 1549)
+			(14, 1532)
+			(15, 1525)
+			(16, 1523)
+		};
+		\addlegendentry{\Large{TBB}}
+
+		\addplot[smooth,color=red,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 4170)
+			(2, 16288)
+			(3, 14686)
+			(4, 17835)
+			(5, 18450)
+			(6, 19094)
+			(7, 19838)
+			(8, 20808)
+			(9, 18299)
+			(10, 18758)
+			(11, 17790)
+			(12, 17147)
+			(13, 15810)
+			(14, 15902)
+			(15, 13746)
+			(16, 12489)
+		};
+		\addlegendentry{\Large{Lock-based}}
+
+		\addplot[smooth,color=magenta,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 4350)
+			(2, 2571)
+			(3, 1973)
+			(4, 1749)
+			(5, 1615)
+			(6, 1574)
+			(7, 1575)
+			(8, 1607)
+			(9, 1615)
+			(10, 1641)
+			(11, 1643)
+			(12, 1670)
+			(13, 1645)
+			(14, 1684)
+			(15, 1665)
+			(16, 1714)
+		};
+		\addlegendentry{\Large{Lock-free}}
+
+	\end{axis}
+	\end{tikzpicture}
+	\caption{Execution time for 7.207.200 mixed (push-pop) operations using prepopulation of 7.207.200 push operations, varying the number of threads and keeping stable the number of the total operations.}
+\label{pushpopa}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	\begin{tikzpicture}[scale=0.53]
+%	\pgfplotsset{every axis legend/.append style={at={(0.16,0.10)},anchor=south}}
+	\pgfplotsset{every axis legend/.append style={at={(0.5,-0.25)},anchor=north},legend columns=-1}
+	\begin{axis}
+	[
+		xlabel=\textbf{threads},
+		ylabel=\textbf{{execution time}},
+		xtick = data,
+%		xmin=0,
+%		xmax=2000,
+%		ymin=0,
+%		ymax=70,
+		width=0.90\textwidth,
+		height=0.60\textwidth,
+	]
+
+		\addplot[smooth,color=o_blue,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 19182)
+			(2, 21403)
+			(3, 28818)
+			(4, 31377)
+			(5, 32366)
+			(6, 34587)
+			(7, 33351)
+			(8, 33011)
+			(9, 33438)
+			(10, 33578)
+			(11, 33131)
+			(12, 33324)
+			(13, 33255)
+			(14, 33265)
+			(15, 33248)
+			(16, 33080)
+		};
+		\addlegendentry{\Large{k=1}}
+
+		\addplot[smooth,color=black,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 7050)
+			(2, 13873)
+			(3, 25142)
+			(4, 26930)
+			(5, 24491)
+			(6, 24297)
+			(7, 25175)
+			(8, 24949)
+			(9, 25191)
+			(10, 25726)
+			(11, 26468)
+			(12, 26403)
+			(13, 25620)
+			(14, 25948)
+			(15, 26617)
+			(16, 27317)
+		};
+		\addlegendentry{\Large{k=10}}
+
+%		\addplot[smooth,color=red,mark=*,mark options={fill=white}]
+%		plot coordinates
+%		{
+%			(1, 6339)
+%			(2, 13594)
+%			(3, 23977)
+%			(4, 24789)
+%			(5, 24976)
+%			(6, 27306)
+%			(7, 26844)
+%			(8, 27506)
+%			(9, 29518)
+%			(10, 28264)
+%			(11, 29963)
+%			(12, 29667)
+%			(13, 29340)
+%			(14, 29768)
+%			(15, 29397)
+%			(16, 29291)
+%		};
+%		\addlegendentry{\Large{k=20}}
+
+	\end{axis}
+	\end{tikzpicture}
+	\caption{Execution time for 72.072.000 batch push operations, varying the batch size (k) and keeping stable the number of the total operations.}
+\label{batchpush}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	\begin{tikzpicture}[scale=0.53]
+%	\pgfplotsset{every axis legend/.append style={at={(0.16,0.10)},anchor=south}}
+	\pgfplotsset{every axis legend/.append style={at={(0.5,-0.25)},anchor=north},legend columns=-1}
+	\begin{axis}
+	[
+		xlabel=\textbf{threads},
+		ylabel=\textbf{{execution time}},
+		xtick = data,
+%		xmin=0,
+%		xmax=2000,
+%		ymin=0,
+%		ymax=70,
+		width=0.90\textwidth,
+		height=0.60\textwidth,
+	]
+
+		\addplot[smooth,color=o_blue,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 869)
+			(2, 1361)
+			(3, 1525)
+			(4, 1617)
+			(5, 1575)
+			(6, 1583)
+			(7, 1382)
+			(8, 1388)
+			(9, 1467)
+			(10, 1543)
+			(11, 1535)
+			(12, 1462)
+			(13, 1455)
+			(14, 1476)
+			(15, 1346)
+			(16, 1366)
+		};
+		\addlegendentry{\Large{k=1}}
+
+		\addplot[smooth,color=black,mark=*,mark options={fill=white}]
+		plot coordinates
+		{
+			(1, 866)
+			(2, 1328)
+			(3, 1548)
+			(4, 1675)
+			(5, 1634)
+			(6, 1579)
+			(7, 1431)
+			(8, 1445)
+			(9, 1544)
+			(10, 1525)
+			(11, 1519)
+			(12, 1545)
+			(13, 1517)
+			(14, 1544)
+			(15, 1434)
+			(16, 1407)
+		};
+		\addlegendentry{\Large{k=10}}
+
+	\end{axis}
+	\end{tikzpicture}
+	\caption{Execution time for 7.207.200 batch push operations using prepopulation of 7.207.200 push operations, varying the batch size (k) and keeping stable the number of the total operations.}
+\label{batchpop}
+\end{figure}
