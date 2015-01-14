@@ -33,8 +33,13 @@ template <class T, class Comp> class PPQ
 };
 \end{lstlisting}
 
-\mypar{Correcteness verification}
-Write about huffman coding and graph test
+\subsection{Correcteness verification}
+\label{subsec:corr_ver}
+We used two different applications for verifying the correctness of our algorithm, a loseless data compression algorithm and an algorithm to find the shortest path in a graph. 
+%\mypar{Huffman coding algorithm}
+We implemented the Huffman coding algorithm as an initial correcteness test for our data structure implementation. This algorithm consists in two main steps. The first step is to initialize a data structure which keeps all the items sorted by their frequency. Then in a second step, it iterates until the data structure has a single element. Every iteration consists of picking the two nodes with the lowest frequency/probability, creating a parent node out of them with the sum of the children's frequencies/probabilities, inserting this new node into the data structure and assigning code zero, or one to the children, and delete them from the data structure. We compared the output of a Huffman coding algorithm using a min-heap with an implementation using our priority queue. We only compared correctness between this two implementations as this loseless compression algorithm is based on iterating linearly through the elements of the underlying data structure and no concurrent access is done.
+%\mypar{Shortest path algorithm}
+A shortest path algorithm performs searches over a graph to determine the a path with the least number of hops between two nodes. Thus, we tested the correctness of our application against the shortest path algorithm implementation provided by Intel TBB. This implementation uses Intel TBB concurrent priority queue by default, and we adapted to also use our priority queue. We verified the correctness of both outputs. We didn't measure any performance over these algorithms as this might have implied some specific tuning for each of them. This falls out of the scope of this project. In section~\ref{sec:exp}, we do performance evaluation against Intel TBB concurrent priority queue with specific workloads.
 
 \subsection{Memory allocation micro-benchmark}
 We performed a microbenchmark to evaluate the memory allocation process in the XeonPhi. We did three different types of mememory allocation: First, we used the primites offered by the programming language, then we used compiler hints offered by the Intel Thread Building Blocks to use its scalable allocator implementation, and finally we allocated the memory needed sequentially using compiler hints too. These options are described below.
