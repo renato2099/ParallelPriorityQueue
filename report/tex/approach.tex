@@ -40,12 +40,11 @@ A second correctness test was based on a shortest path algorithm which is part o
 
 \subsection{Memory allocation micro-benchmark}
 Early measurements indicated that memory allocation on the Xeon Phi might represent a significant part of the runtime. Therefore we performed a memory allocation benchmark on the Xeon Phi. Three different allocators were considered: the default C++ allocator, the default TBB allocator and the TBB scalable allocator. 
-Intel TBB scalable allocator is worth describing as many external applications can benefit from it. This allocator makes each thread uses its own memory heap for reducing the amount of code that needs synchronization and for avoiding false sharing problems. Then, each thread accesses its own heap structure through thread-specific data (TSD) using corresponding system APIs. The allocator gets 1\,MB chunks from the operating system and divides them into 16\,Kbyte aligned blocks. Then, it initially places these blocks in a global heap of free blocks. Memory request from the applicator can be served from this heap, if the thread private heap does not hold any more free blocks. Furthermore, the global heap re-uses memory blocks by adding freed ones to it instead of returning them directly to the operating system. In case a thread a thread does not find free objects in within its own heap and there are no available blocks in the global heap, additional blocks are requested to the OS~\cite{_thefoundations,Hudson:2006:MST:1133956.1133967}. %In order to use the scalable allocator offered by Intel TBB, the TBB and its allocator library were linked to our benchmarks.
+Intel TBB scalable allocator is worth describing as many external applications can benefit from it. This allocator makes each thread uses its own memory heap for reducing the amount of code that needs synchronization and for avoiding false sharing problems. Then, each thread accesses its own heap structure through thread-specific data (TSD) using corresponding system APIs. The allocator gets 1\,MB chunks from the operating system and divides them into 16\,Kbyte aligned blocks. Then, it initially places these blocks in a global heap of free blocks. Memory request from the applicator can be served from this heap, if the thread private heap does not hold any more free blocks. Furthermore, the global heap re-uses memory blocks by adding freed ones to it instead of returning them directly to the operating system. In case a thread a thread does not find free objects in within its own heap and there are no available blocks in the global heap, additional blocks are requested to the OS~\cite{_thefoundations,Hudson:2006:MST:1133956.1133967}.  %In order to use the scalable allocator offered by Intel TBB, the TBB and its allocator library were linked to our benchmarks.
 
 
-\begin{lstlisting}[language=C++,basicstyle=\tt\scriptsize,captionpos=b,caption=Lock free node structure,label=lst:freenode,morekeywords={*, size_t}]
-template <typename T>  struct LockFreeNode
-{	
+\begin{lstlisting}[language=C++,basicstyle=\tt\scriptsize,captionpos=b,caption=Lock free node structure,label=lst:freenode,morekeywords={*, size_t},aboveskip={0.7\baselineskip},belowskip={0.3\baselineskip}]
+template <typename T> struct LockFreeNode {
 	T data;
 	int	level;
 	AtomicRef<LockFreeNode>	next[0];
@@ -53,13 +52,11 @@ template <typename T>  struct LockFreeNode
 \end{lstlisting}
 
 Furthermore, we performed dynamic allocation of the {\em next} pointer array in order to ensure that each skip list node can be cache-aligned. Listings~\ref{lst:freenode} and~\ref{lst:fn_alloc} show code snippets of how this was accomplished.
-\begin{lstlisting}[language=C++,basicstyle=\tt\scriptsize,captionpos=b,caption=Memory allocation instruction for array of atomic references,label=lst:fn_alloc, morekeywords={*, size_t}]
+\begin{lstlisting}[language=C++,basicstyle=\tt\scriptsize,captionpos=b,caption=Memory allocation instruction for array of atomic references,label=lst:fn_alloc, morekeywords={*, size_t},aboveskip={0.3\baselineskip},belowskip={0.3\baselineskip}]
 
-scalable_malloc(
-sizeof(LockFreeNode) 
-+ 
-((arrayLength + 1) * sizeof(AtomicRef<LockFreeNode>))
-)
+scalable_malloc(sizeof(LockFreeNode) + 
+		((arrayLength + 1) * 
+		sizeof(AtomicRef<LockFreeNode>)))
 \end{lstlisting}
 
 Our micro-benchmark consists of allocating ten million skip list nodes with 240 threads and measuring the time it takes to accomplish such task on the Xeon Phi. As expected the C++ default allocator has a much higher runtime than the two TBB allocators. These two allocators obtained a 24 and 38 times improvement respectively over the C++ default allocator. The results are displayed in figure~\ref{fig:mem_alloc}.
