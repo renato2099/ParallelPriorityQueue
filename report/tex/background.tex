@@ -5,7 +5,7 @@ The implementation of a priority queue can be achieved using different underlyin
 A common implementation is a binary-heap which is based on an array. It requires $\mathcal{O}(\log{}n)$ time complexity for \textit{push} and \textit{pop} operations, and has a space complexity of $\mathcal{O}(n)$ .
 
 Two baseline implementations are used for comparison with our work.
-The \textit{priority\_queue} from the C++ standard library (STD)[REF] and the \textit{concurrent\_priotiy\_queue} implemented in the Intel TBB library[REF].
+The \textit{priority\_queue} from the C++ standard library (STD) and the \textit{concurrent\_priotiy\_queue} implemented in the Intel Threading Building Blocks (TBB) library.
 The TBB implementation is based on concurrent vectors while the STD implementation uses vectors (by default) as the underlying data structure.
 For the experimental evaluation presented in section \ref{sec:exp}, the STD implementation was made thread-safe, by adding a single mutex which serializes every access to the data structure.
 
