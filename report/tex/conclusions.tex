@@ -1,7 +1,4 @@
 \section{Conclusions}
 \label{sec:con}
 %TODO review and add more things
-%Implementing a truly concurrent data structure is a challenging task for many reasons. For instance, even though our implementation is lock-free, it may not be starvation-free. There could be a thread A that when going through the lowest level of the skip list searching for the next un-marked node (i.e. logically undeleted) gets always outrun by some other thread B. This means that thread A can fail repeatedly if the others threads always succeed. Moreover, thread contention may happen if many threads try to logically delete a node (i.e. mark a node). Only one thread will succeed and all the other unsuccessful ones will race to mark  the next available node. 
-%Another problem could arise when some node physically deletes a node that other threads are still using. This will lead into repeated \textit{compareAndSet} failures.
-
 We presented lock-free concurrent priority queue based on a skip list. The implementation was evaluated on a common x86 CPU and especially on a Xeon Phi MIC. The results showed that our implementation is competitive but suffers many cache-invalidations. This is a characteristic of a lock-free implementation since they guarantee progress but as a trade-off threads.
