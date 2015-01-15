@@ -1,12 +1,19 @@
 \section{Proposed Approach}\label{sec:approach}
-A high-level description of the skip list has been already introduced in the previous section. This section provides implementation details about the proposed lock-free skip list using C++11 and its atomic operations.\\
-Like most lock-free data structures, we had to deal with the problem that a predecessor node can be deleted by another concurrent operation which would lead into incorrect behavior. This is known as the {\em predecessor-deletion} problem, and it is graphically described in figure XX.\\%[FIND BETTER WORD, see paper]. 
-A common approach is adding a delete flag to each node and performing a lazy deletion. However, this implies doing an imperative Compare-and-Swap (CAS) operation on the {\em next} pointer and the delete flag simultaneously. Multiple implementation alternatives are possible: {\em Atomic Markable Reference}, double CAS, double-width CAS, Transactional-Memory. For our data structure we implemented an {\em Atomic Markable Reference} type by using the least significant bit as a deletion flag. Thereby we are able to use the C++11 {\em compare\_and\_exchange} operation.
-There are not expected issues when using the least significant bit as a deletion flag as long as the deletion flag is marked out before dereferencing the pointer.\\
-In addition to the common skip list methods (e.g. empty, size, find, remove, insert), we added a \textit{pop} method, which is required for a priority queue, and also batch processing methods for inserting or removing \textit{k} elements. The interface of our implementation is shown in [].\\
+A high-level description of a skip list has already been introduced in the previous section.
+This section provides implementation details about the proposed lock-free skip list, using C++11 and its atomic operations.
 
+Like most lock-free data structures, we had to deal with the problem that a predecessor node can be deleted by another concurrent operation, which would lead into incorrect behavior. This is known as the {\em predecessor-deletion} problem, and it is graphically described in figure XX.%[FIND BETTER WORD, see paper]. 
 
-\begin{lstlisting}[language=C++,basicstyle=\tt\footnotesize,captionpos=b,caption=PPQ interface,morekeywords={*, size_t}]
+A common approach is adding a delete flag to each node and performing a lazy deletion. However, this implies doing an imperative Compare-and-Swap (CAS) operation on the {\em next} pointer and the delete flag simultaneously.
+Multiple implementation alternatives are possible: {\em Atomic Markable Reference}, double CAS, double-width CAS, and Transactional-Memory.
+
+For our data structure we implemented an {\em Atomic Markable Reference} type, by using the least significant bit as a deletion flag. Thereby we are able to use the C++11 {\em compare\_and\_exchange} operation.
+There are not expected issues when using the least significant bit as a deletion flag, as long as the deletion flag is marked out before dereferencing the pointer.
+
+In addition to the common skip list methods (e.g. empty, size, find, remove, insert), we added a \textit{pop} method, which is required for a priority queue, and also batch processing methods for pushing or poping \textit{k} elements.
+The interface of our implementation is shown in Listing \ref{lst:ppq-interface}.
+
+\begin{lstlisting}[language=C++,basicstyle=\tt\footnotesize,captionpos=b,caption=PPQ interface,morekeywords={*, size_t},label=lst:ppq-interface]
 template <class T, class Comp> class PPQ
 {
 	bool empty() const;
@@ -21,6 +28,7 @@ template <class T, class Comp> class PPQ
 };
 \end{lstlisting}
 
+
 \subsection{Correctness verification}
 \label{subsec:corr_ver}
 We used two different applications for verifying the correctness of our data structure, a lossless data compression algorithm and a shortest path algorithm. 
@@ -33,6 +41,7 @@ A second correctness test was based on a shortest path algorithm which is part o
 \subsection{Memory allocation micro-benchmark}
 Early measurements indicated that memory allocation on the Xeon Phi might represent a significant part of the runtime. Therefore we performed a memory allocation benchmark on the Xeon Phi. Three different allocators were considered: the default C++ allocator, the default TBB allocator and the TBB scalable allocator. 
 Intel TBB scalable allocator is worth describing as many external applications can benefit from it. This allocator makes each thread uses its own memory heap for reducing the amount of code that needs synchronization and for avoiding false sharing problems. Then, each thread accesses its own heap structure through thread-specific data (TSD) using corresponding system APIs. The allocator gets 1\,MB chunks from the operating system and divides them into 16\,Kbyte aligned blocks. Then, it initially places these blocks in a global heap of free blocks. Memory request from the applicator can be served from this heap, if the thread private heap does not hold any more free blocks. Furthermore, the global heap re-uses memory blocks by adding freed ones to it instead of returning them directly to the operating system. In case a thread a thread does not find free objects in within its own heap and there are no available blocks in the global heap, additional blocks are requested to the OS~\cite{_thefoundations,Hudson:2006:MST:1133956.1133967}. %In order to use the scalable allocator offered by Intel TBB, the TBB and its allocator library were linked to our benchmarks.
+
 
 \begin{lstlisting}[language=C++,basicstyle=\tt\scriptsize,captionpos=b,caption=Lock free node structure,label=lst:freenode,morekeywords={*, size_t}]
 template <typename T>  struct LockFreeNode
