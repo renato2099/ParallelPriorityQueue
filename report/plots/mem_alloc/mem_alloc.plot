@@ -30,7 +30,7 @@ set style fill solid
 set boxwidth 0.45
 
 plot "mem_alloc.dat" every ::0::0 using 1:3:xtic(2) title "Regular alloc." with boxes ls 1, \
-     "mem_alloc.dat" every ::1::1 using 1:3:xtic(2) title "Compiler hints alloc." with boxes ls 2, \
-     "mem_alloc.dat" every ::2::2 using 1:3:xtic(2) title "Sequential+Compiler hints alloc." with boxes ls 3
+     "mem_alloc.dat" every ::1::1 using 1:3:xtic(2) title "TBB alloc." with boxes ls 2, \
+     "mem_alloc.dat" every ::2::2 using 1:3:xtic(2) title "TBB scalable alloc." with boxes ls 3
 
 
