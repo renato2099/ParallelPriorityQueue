@@ -10,7 +10,7 @@ Multiple implementation alternatives are possible: {\em Atomic Markable Referenc
 For our concurrent priority queue, we implemented an {\em Atomic Markable Reference} type, by using the least significant bit as a deletion flag. Thereby we are able to use the C++11 {\em compare\_and\_exchange} operation.
 There are not expected issues when using the least significant bit as a deletion flag, as long as the deletion flag is marked out before dereferencing the pointer.
 
-In addition to the common skip list methods (e.g. empty, size, find, remove, insert), we added a \textit{pop} method, which is required for a priority queue, and also batch processing methods for pushing or poping \textit{k} elements.
+In addition to the common skip list methods (e.g. empty, size, find, remove, insert), we added a \textit{pop} method, which is required for a priority queue~\cite{Herlihy:2008:AMP:1734069}, and also batch processing methods for pushing or poping \textit{k} elements.
 %The interface of our implementation is shown in Listing \ref{lst:ppq-interface}.
 
 %\begin{lstlisting}[language=C++,basicstyle=\tt\footnotesize,captionpos=b,caption=PPQ interface,morekeywords={*, size_t},label=lst:ppq-interface]
