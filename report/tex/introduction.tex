@@ -1,15 +1,37 @@
 \section{Introduction}\label{sec:intro}
 
+A priority queue is an abstract data structure, where all the elements in it are associated with a priority key.
+Therefore, there is an order between all elements which is determined by this key. % THIS IS TOO DETAIL ... a default or custom comparator function.
+Priority queues have two main operations: \textit{push} to insert elements and \textit{pop} to dequeue the element with the highest priority.
+The priority queue guarantees that the element dequeued by a \textit{pop} operation has the highest priority.
+Elements of equal priority are usually allowed and do not pose a problem.
+A number of well known applications (e.g. job scheduling, constraint systems, Dijkstra's algorithm, encoding algorithms) use a priority queue.
+Hence, many different single-threaded implementations have been proposed.
 
-A priority queue is an abstract data structure in which all the elements in it are associated with a priority. This means there is an order between all elements which is determined by a default or custom comparator function. Priority queues have two main operations: \textit{push} to insert elements and \textit{pop} to dequeue the element with the lowest priority. The priority queue guarantees that the element dequeued by a \textit{pop} operation has the lowest priority and no other element remaining in the data structure has a lower one. Elements of equal priority are usually allowed and don't pose a problem.\\
-A number of well known applications (e.g. job scheduling, constraint systems, Dijkstra's algorithm, encoding algorithms) use on a priority queue.Hence, many different single-threaded implementations have been proposed.\\
-In recent years CPU architectures have moved from single core to multi core systems. Therefore, the research community has focused on parallelization of single-threaded applications and the implementation of efficient concurrent data structures.
-In a concurrent application multiple threads might access a priority queue simultaneously to guarantee consistency of the data structure, it has to be thread-safe. One way to achieve thread-safety is mutual exclusion through structures like, locks, semaphores or other primitives. All this methods cause blocking and only a single thread, the one in the critical region, might make progress. Clearly this approach limits scalability. Another way to achieve thread-safety are lock-free data-structures which guarantee that no thread is blocked and at least one thread makes progress at any time. Apart from a high implementation complexity and challenging correctness verification, this approach is in theory superior to naive mutual exclusion. Atomic synchronization primitives which are necessary for a lock-free implementation are available on most modern x86 CPUs.\\
-In this paper, we present a lock-free concurrent priority queue, which supports fast \textit{pop} operations, by exploiting the characteristics of its underlying data structure. A skip list \cite{Pugh:1990:SLP:78973.78977} was chosen because it provides probabilistic balancing using multiple levels, and maintains an ordered list of keys.\\
-%There are other betters reasons for skiplist
-\mypar{Related work}
-A heap-based concurrent priority queue designed for CUDA's data parallel SIMT architecture is presented in \cite{DBLP:conf/hipc/HeAP12}.
+In recent years, CPU architecture have moved from single core to multi core systems.
+Therefore, the research community has focused on parallelization of single-threaded applications and the implementation of efficient concurrent data structures.
+In a multithreaded application, multiple threads might access a priority queue simultaneously.
+To guarantee consistency, the data structure has to be thread-safe.
+One way to achieve thread-safety is mutual exclusion through structures e.g. locks, semaphores and other primitives.
+All these methods cause blocking and only a single thread, the one in the critical region, might make progress.
+Consequently, this approach limits scalability.
+
+Another way to achieve thread-safety are lock-free data-structures which guarantee that no thread is blocked and at least one thread makes progress at any time.
+Apart from a high implementation complexity and challenging correctness verification, this approach is in theory superior to naive mutual exclusion.
+Atomic synchronization primitives which are necessary for a lock-free implementation are available on most modern x86 CPUs.
+
+In this paper, we present a lock-free concurrent priority queue which exploits the characteristics of the underlying data structure.
+A skip list \cite{Pugh:1990:SLP:78973.78977} is appropriate for a lock-free implementation thanks to its simplicty.
+It provides probabilistic balancing using multiple levels, maintaining an ordered list of keys which provides fast \textit{pop} operations.
+% TODO There are other better reasons for skiplist
+
+%\mypar{Related work}
+A heap-based concurrent priority queue which is designed for CUDA data parallel SIMT architecture is presented in \cite{DBLP:conf/hipc/HeAP12}.
 The authors use wide heap nodes in order to support thousands of push and pop operations at the same time.
 Sundell et al.~\cite{Sundell:2005:FLC:1073765.1073770} present a lock-free concurrent priority queue which uses a skip list, as the underlying data structure.
-Our lock-free implementation also uses a skip list, but different algorithms are used. Furthermore, our comparison is not limited to a lock-based implementations, but to other available ones.\\
-\mypar{Structure} This paper is structured as follows. section~\ref{sec:background} gives a description of priority queues and skip lists. Our implementation is presented in detail in section~\ref{sec:approach}. Section~\ref{sec:exp} describes experimental results collected from a Xeon CPU and Xeon Phi, by comparing the lock-free implementation with the Intel Threading Building Blocks (TBB) concurrent priority queue, and two different implementations using mutual exclusion. Finally, section~\ref{sec:con} concludes this work.
+Our lock-free implementation also uses a skip list, but different algorithms are used. Furthermore, our comparison is not limited to a lock-based implementations, but to other available ones.
+
+%\mypar{Structure}
+This paper is structured as follows.
+Section~\ref{sec:background} gives a description of priority queues and skip lists.
+Our implementation is presented in detail in section~\ref{sec:approach}. Section~\ref{sec:exp} describes experimental results collected from a Xeon CPU and Xeon Phi, by comparing the lock-free implementation with the Intel Threading Building Blocks (TBB) concurrent priority queue, and two different implementations using mutual exclusion. Finally, section~\ref{sec:con} concludes this work.
