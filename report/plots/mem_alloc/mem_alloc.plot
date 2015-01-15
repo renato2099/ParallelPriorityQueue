@@ -15,9 +15,10 @@ set style line 101 lt 1 lc rgb "gray" lw 1
 #set for [i=1:6] arrow from graph 0,graph i*dy to graph 1,graph i*dy nohead front ls 100
 
 
-set ylabel "Runtime (msecs)"
+set ylabel "Runtime (ms)"
 set xlabel "Memory allocation types"
-set title "Memory allocation runtime x10mio elements"
+#set title "Memory allocation runtime x10mio elements"
+unset title
 set term postscript color
 set output '| ps2pdf - mem_alloc.pdf'
 
@@ -29,7 +30,7 @@ set xrange [-1:3]
 set style fill solid
 set boxwidth 0.45
 
-plot "mem_alloc.dat" every ::0::0 using 1:3:xtic(2) title "Regular alloc." with boxes ls 1, \
+plot "mem_alloc.dat" every ::0::0 using 1:3:xtic(2) title "Default alloc." with boxes ls 1, \
      "mem_alloc.dat" every ::1::1 using 1:3:xtic(2) title "TBB alloc." with boxes ls 2, \
      "mem_alloc.dat" every ::2::2 using 1:3:xtic(2) title "TBB scalable alloc." with boxes ls 3
 

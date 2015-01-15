@@ -1,6 +1,6 @@
 \begin{tikzpicture}
 \begin{axis}[
-width=3in,
+width=2.7in,
 xlabel={Number of operations},
 ylabel={Operations Intensity},
 %xmin=-10,
@@ -14,19 +14,19 @@ scaled x ticks = false,
 scaled y ticks = false,
 legend style={at={(0.95,0.95)},anchor=north east, font=\tiny}]
 
-\addplot[mark=*,blue, mark size=1.5, smooth]
+\addplot[mark=*,blue, mark size=1.5]
 table[x=Ops,y=16t_has,col sep=comma] {../plots/haswell-ivybridge/haswell_ivybridge.csv}; 
 \addlegendentry{16\,Thrs Haswell}
 
-\addplot[color=red,mark=triangle*, mark size=2, smooth]
+\addplot[color=red,mark=triangle*, mark size=2]
 table[x=Ops,y=32t_has,col sep=comma] {../plots/haswell-ivybridge/haswell_ivybridge.csv}; 
 \addlegendentry{32\,Thrs Haswell}
 
-\addplot[color=orange,mark=square*, mark size=1.5, smooth]
+\addplot[color=orange,mark=square*, mark size=1.5]
 table[x=Ops,y=16t_ivy,col sep=comma] {../plots/haswell-ivybridge/haswell_ivybridge.csv}; 
 \addlegendentry{16\,Thrs Ivy}
 
-\addplot[color=darkgreen,mark=diamond*, mark size=1.5, smooth]
+\addplot[color=darkgreen,mark=diamond*, mark size=1.5]
 table[x=Ops,y=32t_ivy,col sep=comma] {../plots/haswell-ivybridge/haswell_ivybridge.csv}; 
 \addlegendentry{32\,Thrs Ivy}
 

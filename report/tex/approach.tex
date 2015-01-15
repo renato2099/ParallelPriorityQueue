@@ -41,26 +41,28 @@ To verify correctness, the outputs of the two variations were compared, for a va
 
 A second correctness test was based on a concurrent shortest path algorithm which is provided as an example application with the Intel TBB source code.
 It originally utilizes the TBB \textit{concurrent\_priority\_queue}, but we adapted the algorithm to also use our own lock-free implementation.
-The same approach was used for verifying correctness, by comparing the output of the algorithm for the two different concurrent priority queues, using different input graphs.
+In comparison to the previous test, this application accesses the priority queue concurrently.
+Again the outputs of the two versions were compared to verify correctness using different input graphs.
 
-Performance benchmarks for these algorithms were not conducted, since it might have implied tuning the algorithms themself.
+Performance benchmarks for these algorithms were not conducted, since it might have implied tuning the algorithms themselves.
 These optimizations are not in the scope of this project.
 In section~\ref{sec:exp}, performance evaluation against TBB \textit{concurrent\_priority\_queue} is presented for specific workloads.
 
 \subsection{Memory allocation micro-benchmark}
+\begin{figure}[t]
+	\centering
+	\includegraphics[scale=0.3]{../plots/mem_alloc/mem_alloc.pdf}
+	\caption{Runtime allocating 10\,Mio elements using C++ default, TBB default and TBB scalable allocator.}
+	\label{fig:mem_alloc}
+\end{figure}
+
 Early measurements indicated that memory allocation on the Xeon Phi might represent a significant part of the runtime.
 Therefore, we performed a memory allocation benchmark on the Xeon Phi.
 Three different allocators were considered: the default C++ allocator, the default TBB allocator and the TBB scalable allocator. 
 
-Intel TBB scalable allocator is worth describing as many external applications can benefit from it. This allocator makes each thread uses its own memory heap for reducing the amount of code that needs synchronization and for avoiding false sharing problems. Then, each thread accesses its own heap structure through thread-specific data (TSD) using corresponding system APIs. The allocator gets 1\,MB chunks from the operating system and divides them into 16\,Kbyte aligned blocks. Then, it initially places these blocks in a global heap of free blocks. Memory request from the applicator can be served from this heap, if the thread private heap does not hold any more free blocks. Furthermore, the global heap re-uses memory blocks by adding freed ones to it instead of returning them directly to the operating system.
-In case a thread does not find free objects within its own heap and there are no available blocks in the global heap, additional blocks are requested to the OS~\cite{_thefoundations,Hudson:2006:MST:1133956.1133967}.  %In order to use the scalable allocator offered by Intel TBB, the TBB and its allocator library were linked to our benchmarks.
+TBB's scalable allocator is worth describing as many external applications can benefit from it. This allocator uses a global memory heap and provides each thread its own memory heap in order to reduce the amount of code for synchronization and for avoiding false sharing problems. Then each thread accesses its own memory heap through thread-specific data using system APIs. The allocator gets 1\,MB chunks from the operating system and divides them into 16\,KB aligned blocks. Then, it initially places these blocks in a global heap of free blocks. Memory request from the application get served from this heap, if the thread private heap does not hold any more free blocks. In addition to that, the global heap re-uses memory blocks by adding freed ones from the application instead of returning them directly to the operating system.
+In case a thread does not find free objects within its own heap and there are no available blocks in the global heap, additional blocks are requested to the OS~\cite{_thefoundations,Hudson:2006:MST:1133956.1133967}. 
 
 Our micro-benchmark consists of allocating ten million skip list nodes with 240 threads and measuring the time it takes to accomplish such task on the Xeon Phi.
-As expected, the C++ default allocator has a much higher runtime than the two TBB allocators. These two allocators obtained a 24 and 38 times improvement respectively over the C++ default allocator. The results are displayed in figure~\ref{fig:mem_alloc}.
-
-\begin{figure}
-	\centering
-  	\includegraphics[scale=0.3]{../plots/mem_alloc/mem_alloc.pdf}
-	\caption{Memory allocation runtime for C++ default, TBB default and TBB scalable allocator.}
-	\label{fig:mem_alloc}
-\end{figure}
+As expected, the C++ default allocator has a much higher runtime than the two TBB allocators. These two allocators obtained a 24 and 38 times improvement respectively over the C++ default allocator. The results are displayed in figure~\ref{fig:mem_alloc}.\\
+While running these micro-benchmark we observed that the Core hosting the operating system had a hight utilization which means that if many cores want to allocate memory they are actually bound by the single core hosting the operating system.

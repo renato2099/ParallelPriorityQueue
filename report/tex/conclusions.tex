@@ -1,4 +1,3 @@
 \section{Conclusions}
 \label{sec:con}
-%TODO review and add more things
-We presented lock-free concurrent priority queue based on a skip list. The implementation was evaluated on a common x86 CPU and especially on a Xeon Phi MIC. The results showed that our implementation is competitive but suffers many cache-invalidations. This is a characteristic of a lock-free implementation since they guarantee progress but as a trade-off threads.
+We presented lock-free concurrent priority queue based on a skip list. The implementation was evaluated on a common x86 CPU and more importantly on a Xeon Phi MIC. The results show that our implementation is competitive in comparison to asses baseline implementations. On the MIC architecture all tested implementations are below our expectations and are unable to take advantage of the hardware. Our lock-free implementation suffers mostly from the overhead due to the cache-consistency protocol.
