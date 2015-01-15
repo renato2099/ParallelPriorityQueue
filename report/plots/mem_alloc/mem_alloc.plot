@@ -3,16 +3,16 @@ set style line 101 lt 1 lc rgb "gray" lw 1
 
 # first draw the minor tics
 #set xrange [0:1]
-set mxtics 10
+#set mxtics 10
 #set yrange [0:1]
-set mytics 5
-set grid mxtics mytics ls 101
+#set mytics 5
+#set grid mxtics mytics ls 101
 
 # then the main tics
-dx=0.25  #grid spacing in x
-set for [i=1:3] arrow from graph i*dx,graph 0 to graph i*dx,graph 1 nohead front ls 100
-dy=0.1425  #grid spacing in y
-set for [i=1:6] arrow from graph 0,graph i*dy to graph 1,graph i*dy nohead front ls 100
+#dx=0.25  #grid spacing in x
+#set for [i=1:3] arrow from graph i*dx,graph 0 to graph i*dx,graph 1 nohead front ls 100
+#dy=0.1425  #grid spacing in y
+#set for [i=1:6] arrow from graph 0,graph i*dy to graph 1,graph i*dy nohead front ls 100
 
 
 set ylabel "Runtime (msecs)"
