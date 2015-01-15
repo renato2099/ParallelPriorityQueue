@@ -1,0 +1,22 @@
+\begin{tikzpicture}
+\begin{axis}[
+    ybar,
+%    enlargelimits=0.15,
+	width=2.5in,
+	bar width=20pt,
+    legend style={at={(1.05,0.95)},
+      anchor=north west},
+    ylabel={Time [ms]},
+   % symbolic x coords={Mem},
+    xticklabels={Regular,Compiler,},
+    ymin=0,
+    scaled y ticks = false,
+    nodes near coords,
+    nodes near coords align={vertical},
+    ]
+\addplot coordinates {(0,31119)};
+\addplot coordinates {(0,1261) };
+\addplot coordinates {(0,800)};
+\legend{Regular, Compiler hints, Sequential+Compiler hints}
+\end{axis}
+\end{tikzpicture}

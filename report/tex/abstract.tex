@@ -2,15 +2,10 @@
 
 A priority queue appears in various multithreading applications.
 %TODO . Being a challenge in practice has nothing to with mutual exclusion strategies
-However, an efficient implementation for a concurrent priority queue is challenging in practice, since already proposed mutual exclusion strategies cause blocking and have bad scalability.
-
-We present a lock-free implementation for a concurrent priority queue which is based on a single atomic synchronization primitive available on every common CPU.
-The underlying data structure is a skip list enabling the \textit{pop} operation to be performed in $\Theta(1)$ time.
-
-%TODO Xeon CPU or i7?
-
-We conducted experiments on Xeon CPU and Xeon Phi, by comparing our lock-free implementation with Intel TBB concurrent priority queue, and two different implementations using mutual exclusion.
-The experimental results show that our lock-free implementation is competitive against other implemenentations due to a better time complexity in the \textit{pop} operation and its non-blocking design.
-%The experimental results show that the \textit{pop} operation of our implementation is faster than that of the other implementations thanks to better time complexity.
+However, an efficient implementation for a concurrent priority queue is challenging in practice, since already proposed mutual exclusion strategies cause blocking and have bad scalability.\\
+We present a lock-free implementation of a concurrent priority queue which only makes use of atomic operations which are present in most modern x86 CPUs.
+The underlying data structure is a skip list enabling lookups in $\Theta(\log(n))$ and \textit{pop} operations in $\Theta(1)$ time complexity.\\
+Experiments were conducted on a Xeon CPU and a Xeon Phi, we evaluated the difference between those platforms and also in comparison to different baseline implementations, e.g. Intel TBB priority queue [REF].
+The experimental results show that our lock-free implementation is competitive against other implementations and even surpasses the baseline implementations in certain operations.
 
 \end{abstract}

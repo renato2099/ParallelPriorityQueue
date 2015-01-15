@@ -1,0 +1,30 @@
+\begin{tikzpicture}
+\begin{axis}[
+width=3in,
+xlabel={\#Threads},
+ylabel={Time [s]},
+xmin=-10,
+xmax=250,
+xtick={0,80,...,240},
+ytick={0,2000, 4000, 6000, 8000, 10000},
+yticklabels={0, 2, 4, 6, 8, 10},
+ymin=0,
+ymax=10000,
+scaled x ticks = false,
+scaled y ticks = false,
+legend style={at={(0.05,0.95)},anchor=north west, font=\tiny}]
+
+\addplot[mark=*,blue, mark size=1.5]
+table[x=Threads,y=lf_xeon,col sep=comma] {../plots/comp_contains/comp_contains.csv}; 
+\addlegendentry{Xeon E-1245}
+
+\addplot[color=red,mark=triangle*, mark size=2]
+table[x=Threads,y=lf_i7,col sep=comma] {../plots/comp_contains/comp_contains.csv}; 
+\addlegendentry{Core i7-3820}
+
+\addplot[color=darkgreen,mark=square*, mark size=1.5]
+table[x=Threads,y=lf_xp,col sep=comma] {../plots/comp_contains/comp_contains.csv}; 
+\addlegendentry{Xeon Phi}
+
+\end{axis}
+\end{tikzpicture}

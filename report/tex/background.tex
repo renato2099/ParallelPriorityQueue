@@ -1,18 +1,10 @@
-\section{Background}\label{sec:background}
+\section{Background}
+\label{sec:background}
 
-A priority queue is an abstract data structure which can be implemented using various data structures.
-An efficient implementation can be achieved with a heap which is based on an array.
-It requires $\mathcal{O}(\log{}n)$ time complexity for both operations, \textit{push} and \textit{pop}, and $\mathcal{O}(n)$ space complexity.
-The TBB implementation that we use in this paper, is based on an array.
-We also use the C++ standard libary (STD) implementation which is based on an array, but it is not thread safe.
-The consistency of it, is achieved manually using mutual exclusion.
-Other implementations of a concurrent priority queue may provide faster operations thanks to time and space complexity, and data locality.
-
-Our lock-free implementation is based on a skip list \cite{Pugh:1990:SLP:78973.78977}  which provides probabilistic balancing.
-The bottom level is an ordinary ordered linked list, and each of the other levels acts as a subset of the elements of the lower levels which assist in faster operations.
-Each element of a level \textit{i} appears on the level \textit{i+1} with probability 0.5.
-Therefore, the first level contains all the elements, the second one contains 50\% of them, the third one 25\% and so on.
-
-A skip list requires more memory than other data structures (e.g a heap which is implemented using an array), since every node has multiple pointers to the next node.
-However, it supports the \textit{pop} operation in $\Theta(1)$, since the elements are ordered and the element with the maximum priority is always located in the beginning.
-The time complexity for the \textit{push} operation is $\mathcal{O}(\log{}n)$.
+When implementing a priority queue different underlying data structures can be used.
+A common implementation a binary-heap which is based on an array. It requires $\mathcal{O}(\log{}n)$ time complexity for \textit{push} and \textit{pop} operations, and has a space complexity of $\mathcal{O}(n)$ .\\
+Two baseline implementations are used to compare with our work. The \textit{priority\_queue} from the C++ standard library (STD)[REF] and the \textit{concurrent\_priotiy\_queue} implemented in the Intel TBB library[REF].
+The TBB implementation is based on concurrent vectors while the STD implementation uses by default vectors as the underlying data structure. For our experimental evaluation the STD implementation was mad thread-safe by adding a single mutex wich serializes any access to the data structure.\\
+Our lock-free implementation is based on a skip list \cite{Pugh:1990:SLP:78973.78977}. As shown in figure XYZ a skip list is a multi-level list where the bottom list is equal to single-linked list. The upper level lists have less elements, in other words are skipping some elements, thereby reducing the time to traverse them. Over how many levels a certain element spawns is determined upon insertion. Every element is inserted into the bottom level and reaches the next level with a probability of 0.5, this means it occurs in level 2 with probability 0.5 and in level 3 with probability 0.25 and so on. This leads to an index which asymptotically is equal to a binary tree, therefor any element on the bottom level can be accessed in $\mathcal{O}(\log{}n)$. Since the elment are sorted at the bottom level dequeuing the smallest element only takes $\mathcal{O}(1)$.\\
+On average any node has two pointers to other nodes and thereby the same size as a node in a binary tree or heap. This means the memory consumption of a skip list is comparable.\\
+A lockfree Skiplist is a good choice for a concurrent datastructure since the atomic operations are very local to 2-3 nodes and thereby the probabilty of conflicts between threads is minimized. Since our final goal was a port on to the Xeon Phi which comes with 60 cores this would be a good fit.\\
