@@ -7,40 +7,53 @@ Like most lock-free data structures, we had to deal with the problem that a pred
 A common approach is adding a delete flag to each node and performing a lazy deletion. However, this implies doing an imperative Compare-and-Swap (CAS) operation on the {\em next} pointer and the delete flag simultaneously.
 Multiple implementation alternatives are possible: {\em Atomic Markable Reference}, double CAS, double-width CAS, and Transactional-Memory.
 
-For our data structure we implemented an {\em Atomic Markable Reference} type, by using the least significant bit as a deletion flag. Thereby we are able to use the C++11 {\em compare\_and\_exchange} operation.
+For our concurrent priority queue, we implemented an {\em Atomic Markable Reference} type, by using the least significant bit as a deletion flag. Thereby we are able to use the C++11 {\em compare\_and\_exchange} operation.
 There are not expected issues when using the least significant bit as a deletion flag, as long as the deletion flag is marked out before dereferencing the pointer.
 
 In addition to the common skip list methods (e.g. empty, size, find, remove, insert), we added a \textit{pop} method, which is required for a priority queue, and also batch processing methods for pushing or poping \textit{k} elements.
-The interface of our implementation is shown in Listing \ref{lst:ppq-interface}.
+%The interface of our implementation is shown in Listing \ref{lst:ppq-interface}.
 
-\begin{lstlisting}[language=C++,basicstyle=\tt\footnotesize,captionpos=b,caption=PPQ interface,morekeywords={*, size_t},label=lst:ppq-interface]
-template <class T, class Comp> class PPQ
-{
-	bool empty() const;
-	size_t size() const;
-	bool push(const T& data);
-	size_t push(T data[], int k);
-	bool remove(const T& data);
-	bool pop_front(T& data);
-	size_t pop_front(T data[], int k);
-	bool contains(T data);
-	void print();
-};
-\end{lstlisting}
+%\begin{lstlisting}[language=C++,basicstyle=\tt\footnotesize,captionpos=b,caption=PPQ interface,morekeywords={*, size_t},label=lst:ppq-interface]
+%template <class T, class Comp> class PPQ
+%{
+%	bool empty() const;
+%	size_t size() const;
+%	bool push(const T& data);
+%	size_t push(T data[], int k);
+%	bool remove(const T& data);
+%	bool pop_front(T& data);
+%	size_t pop_front(T data[], int k);
+%	bool contains(T data);
+%	void print();
+%};
+%\end{lstlisting}
 
 
 \subsection{Correctness verification}
 \label{subsec:corr_ver}
-We used two different applications for verifying the correctness of our data structure, a lossless data compression algorithm and a shortest path algorithm. 
+Two different applications were used for verifying the correctness of our concurrent priority queue.
+A lossless data compression algorithm and a shortest path algorithm. 
 %\mypar{Huffman coding algorithm}
-The Huffman encoding algorithm was used first to test the correctness for a single threaded execution. The algorithm was implemented in a way that can use either an existing Min-heap implementation or our own priority queue implementation. For a variety of inputs the outputs of the two variations were compared to verify correctness.
+First, the Huffman encoding algorithm was used to test the correctness for a single-threaded execution. The algorithm was implemented in a way that can use either an existing min-heap implementation or our own priority queue implementation.
+To verify correctness, the outputs of the two variations were compared, for a variety of inputs.
 %We implemented the Huffman coding algorithm as an initial correcteness test for our data structure implementation. This algorithm consists in two main steps. The first step is to initialize a data structure which keeps all the items sorted by their frequency. Then in a second step, it iterates until the data structure has a single element. Every iteration consists of picking the two nodes with the lowest frequency/probability, creating a parent node out of them with the sum of the children's frequencies/probabilities, inserting this new node into the data structure and assigning code zero, or one to the children, and delete them from the data structure. We compared the output of a Huffman coding algorithm using a min-heap with an implementation using our priority queue. We only compared correctness between this two implementations as this loseless compression algorithm is based on iterating linearly through the elements of the underlying data structure and no concurrent access is done.
 %\mypar{Shortest path algorithm}
-A second correctness test was based on a shortest path algorithm which is part of Intel TBB source code. It originally utilizes the TBB \textit{concurrent\_priority\_queue}, but we adapted the algorithm to also use our own lock-free implementation. In contrast to the previous test, this algorithm accesses the priority queue concurrently. Like with the previous algorithm, the output of using the two different data structures were compared to verify correctness using different input graphs. Performance benchmarks for these algorithms were not conducted since it might have implied tuning the algorithms themself. These optimizations are not in the scope of this project. In section~\ref{sec:exp} performance evaluation against TBB's \textit{concurrent\_priority\_queue} is presented for specific workloads.
+
+A second correctness test was based on a concurrent shortest path algorithm which is provided as an example application with the Intel TBB source code.
+It originally utilizes the TBB \textit{concurrent\_priority\_queue}, but we adapted the algorithm to also use our own lock-free implementation.
+The same approach was used for verifying correctness, by comparing the output of the algorithm for the two different concurrent priority queues, using different input graphs.
+
+Performance benchmarks for these algorithms were not conducted, since it might have implied tuning the algorithms themself.
+These optimizations are not in the scope of this project.
+In section~\ref{sec:exp}, performance evaluation against TBB \textit{concurrent\_priority\_queue} is presented for specific workloads.
 
 \subsection{Memory allocation micro-benchmark}
-Early measurements indicated that memory allocation on the Xeon Phi might represent a significant part of the runtime. Therefore we performed a memory allocation benchmark on the Xeon Phi. Three different allocators were considered: the default C++ allocator, the default TBB allocator and the TBB scalable allocator. 
-Intel TBB scalable allocator is worth describing as many external applications can benefit from it. This allocator makes each thread uses its own memory heap for reducing the amount of code that needs synchronization and for avoiding false sharing problems. Then, each thread accesses its own heap structure through thread-specific data (TSD) using corresponding system APIs. The allocator gets 1\,MB chunks from the operating system and divides them into 16\,Kbyte aligned blocks. Then, it initially places these blocks in a global heap of free blocks. Memory request from the applicator can be served from this heap, if the thread private heap does not hold any more free blocks. Furthermore, the global heap re-uses memory blocks by adding freed ones to it instead of returning them directly to the operating system. In case a thread a thread does not find free objects in within its own heap and there are no available blocks in the global heap, additional blocks are requested to the OS~\cite{_thefoundations,Hudson:2006:MST:1133956.1133967}.  %In order to use the scalable allocator offered by Intel TBB, the TBB and its allocator library were linked to our benchmarks.
+Early measurements indicated that memory allocation on the Xeon Phi might represent a significant part of the runtime.
+Therefore, we performed a memory allocation benchmark on the Xeon Phi.
+Three different allocators were considered: the default C++ allocator, the default TBB allocator and the TBB scalable allocator. 
+
+Intel TBB scalable allocator is worth describing as many external applications can benefit from it. This allocator makes each thread uses its own memory heap for reducing the amount of code that needs synchronization and for avoiding false sharing problems. Then, each thread accesses its own heap structure through thread-specific data (TSD) using corresponding system APIs. The allocator gets 1\,MB chunks from the operating system and divides them into 16\,Kbyte aligned blocks. Then, it initially places these blocks in a global heap of free blocks. Memory request from the applicator can be served from this heap, if the thread private heap does not hold any more free blocks. Furthermore, the global heap re-uses memory blocks by adding freed ones to it instead of returning them directly to the operating system.
+In case a thread does not find free objects within its own heap and there are no available blocks in the global heap, additional blocks are requested to the OS~\cite{_thefoundations,Hudson:2006:MST:1133956.1133967}.  %In order to use the scalable allocator offered by Intel TBB, the TBB and its allocator library were linked to our benchmarks.
 
 
 \begin{lstlisting}[language=C++,basicstyle=\tt\scriptsize,captionpos=b,caption=Lock free node structure,label=lst:freenode,morekeywords={*, size_t},aboveskip={0.7\baselineskip},belowskip={0.3\baselineskip}]
@@ -59,7 +72,8 @@ scalable_malloc(sizeof(LockFreeNode) +
 		sizeof(AtomicRef<LockFreeNode>)))
 \end{lstlisting}
 
-Our micro-benchmark consists of allocating ten million skip list nodes with 240 threads and measuring the time it takes to accomplish such task on the Xeon Phi. As expected the C++ default allocator has a much higher runtime than the two TBB allocators. These two allocators obtained a 24 and 38 times improvement respectively over the C++ default allocator. The results are displayed in figure~\ref{fig:mem_alloc}.
+Our micro-benchmark consists of allocating ten million skip list nodes with 240 threads and measuring the time it takes to accomplish such task on the Xeon Phi.
+As expected, the C++ default allocator has a much higher runtime than the two TBB allocators. These two allocators obtained a 24 and 38 times improvement respectively over the C++ default allocator. The results are displayed in figure~\ref{fig:mem_alloc}.
 
 \begin{figure}
 	\centering
