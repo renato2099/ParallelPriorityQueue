@@ -10,7 +10,7 @@ The TBB implementation is based on concurrent vectors while the STD implementati
 For the experimental evaluation presented in section \ref{sec:exp}, the STD implementation was made thread-safe, by adding a single mutex which serializes every access to the data structure.
 
 Our lock-free implementation is based on a skip list \cite{Pugh:1990:SLP:78973.78977}.
-As shown in figure XYZ, a skip list is a multi-level list where the list on the bottom level is equal to a single-linked list.
+A skip list is a multi-level list where the list on the bottom level is equal to a single-linked list.
 The upper level lists have fewer nodes, in the sense that some nodes are skipped, thereby reducing the time to traverse them.
 % TODO Over how many levels a certain element spawns is determined upon insertion.
 Every node is pushed into the bottom level and reaches the next level with a probability of 0.5.

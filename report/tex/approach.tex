@@ -1,15 +1,6 @@
 \section{Proposed Approach}\label{sec:approach}
-A high-level description of a skip list has already been introduced in the previous section.
-This section provides implementation details about the proposed lock-free skip list, using C++11 and its atomic operations.
-
-Like most lock-free data structures, we had to deal with the problem that a predecessor node can be deleted by another concurrent operation, which would lead into incorrect behavior. This is known as the {\em predecessor-deletion} problem, and it is graphically described in figure XX.%[FIND BETTER WORD, see paper]. 
-
-A common approach is adding a delete flag to each node and performing a lazy deletion. However, this implies doing an imperative Compare-and-Swap (CAS) operation on the {\em next} pointer and the delete flag simultaneously.
-Multiple implementation alternatives are possible: {\em Atomic Markable Reference}, double CAS, double-width CAS, and Transactional-Memory.
-
-For our concurrent priority queue, we implemented an {\em Atomic Markable Reference} type, by using the least significant bit as a deletion flag. Thereby we are able to use the C++11 {\em compare\_and\_exchange} operation.
-There are not expected issues when using the least significant bit as a deletion flag, as long as the deletion flag is marked out before dereferencing the pointer.
-
+A high-level description of a skip list has already been introduced in the previous section. The implemented skip list is similar to the ones proposed by\cite{Herlihy:2008:AMP:1734069, Sundell:2005:FLC:1073765.1073770}. While \cite{Herlihy:2008:AMP:1734069} used Java and its \textit{AtomicMarkableReference}, we used C++11 and its atomic operations. Since C++11 does not provide an atomic markable reference, we implemented our own, such that we can check a change of the reference or the mark in a single Compare-and-Swap (CAS) operation. To get such a reference, multiple implementation alternatives are possible: using a bit of the pointer as a mark, double CAS, double-width CAS, and Transactional-Memory.\\
+For our concurrent priority queue, we implemented an \textit{AtomicMarkableReference} type, by using the least significant bit as a mark. Thereby we are able to use the C++11 {\em compare\_and\_exchange} operation and are not relying on double CAS or Transactional-Memory which are less common hardware features. In general using the least significant bit as a mark does not lead to any issues since most 64\,bit processors only allow read or write from addresses which are a multiple of 8\,bytes. This means the leas significant bit is zero and unused.\\
 In addition to the common skip list methods (e.g. empty, size, find, remove, insert), we added a \textit{pop} method, which is required for a priority queue~\cite{Herlihy:2008:AMP:1734069}, and also batch processing methods for pushing or poping \textit{k} elements.
 %The interface of our implementation is shown in Listing \ref{lst:ppq-interface}.
 
