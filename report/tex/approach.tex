@@ -6,6 +6,13 @@ In general, using the least significant bit as a mark does not lead to any issue
 Consequently, the less significant bit is zero and unused.
 
 In addition to the common skip list methods (e.g. empty, size, find, remove, and insert), we added a \textit{pop} method, which is required for a priority queue~\cite{Herlihy:2008:AMP:1734069}, and also batch processing methods for pushing or poping \textit{k} elements.
+
+The implementation for \textit{pop} is straightforward in our concurrent priority queue, since the element with the highest priority is always located in the beginning of the skip list.
+Therefore, an efficient batch \textit{pop} operation is not possible.
+On the other hand, an efficient batch \textit{push} operation is achieved, by dividing a number of elements, that are inserted at the same place, into groups, by their key.
+The gain is due to the fewer atomic operations and lookups that are required in the skip list.
+The keys of the elements have to belong in a continuous range in order the batch operation to be exploited.
+
 %The interface of our implementation is shown in Listing \ref{lst:ppq-interface}.
 
 %\begin{lstlisting}[language=C++,basicstyle=\tt\footnotesize,captionpos=b,caption=PPQ interface,morekeywords={*, size_t},label=lst:ppq-interface]
