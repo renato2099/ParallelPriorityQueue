@@ -6,7 +6,7 @@ A common implementation is a binary-heap which is based on an array. It requires
 
 Two baseline implementations are used for comparison with our work.
 The \textit{priority\_queue} from the C++ standard library (STD) and the \textit{concurrent\_priotiy\_queue} implemented in the Intel Threading Building Blocks (TBB) library.
-The TBB implementation is based on concurrent vectors while the STD implementation uses vectors (by default) as the underlying data structure.
+The TBB implementation is based on concurrent vectors, while the STD implementation uses vectors (by default) as the underlying data structure.
 For the experimental evaluation presented in section \ref{sec:exp}, the STD implementation was made thread-safe, by adding a single mutex which serializes every access to the data structure.
 
 Our lock-free implementation is based on a skip list \cite{Pugh:1990:SLP:78973.78977}.
@@ -17,10 +17,10 @@ Every node is pushed into the bottom level and reaches the next level with a pro
 A node occurs in level 2 with probability 0.5, in level 3 with probability 0.25, and so on.
 This leads to an index which is asymptotically equal to a binary tree.
 Therefore, every node on the bottom level can be accessed in $\mathcal{O}(\log{}n)$.
-Since the nodes are sorted, the \textit{pop} operation which removes the node with the highest priority, takes only $\mathcal{O}(1)$.
+Since the nodes are sorted, the \textit{pop} operation which removes the node with the highest priority, takes only $\Theta(1)$.
 
 On average, every node has two pointers to other nodes, and the same size as a node in a binary tree or heap.
 Consequently, the memory consumption of a skip list is similar.
 
-A lock-free skip list is a good choice for a concurrent priority queue, since the atomic operations are very local to two, three nodes and the probabilty of conflicts between threads is minimized.
+A lock-free skip list is a good choice for a concurrent priority queue, since the atomic operations are very local to two-three nodes, and the probabilty of conflicts between threads is minimized.
 That helps porting onto Xeon Phi which has 60 cores, and is suitable for running tens of threads.
