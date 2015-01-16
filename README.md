@@ -1,2 +1,3 @@
-10
-Parallel priority queue implementation for DPHPC-2014
+
+Concurrent priority queue - DPHPC-2014
+===============================
