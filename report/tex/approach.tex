@@ -1,7 +1,11 @@
 \section{Proposed Approach}\label{sec:approach}
-A high-level description of a skip list has already been introduced in the previous section. The implemented skip list is similar to the ones proposed by\cite{Herlihy:2008:AMP:1734069, Sundell:2005:FLC:1073765.1073770}. While \cite{Herlihy:2008:AMP:1734069} used Java and its \textit{AtomicMarkableReference}, we used C++11 and its atomic operations. Since C++11 does not provide an atomic markable reference, we implemented our own, such that we can check a change of the reference or the mark in a single Compare-and-Swap (CAS) operation. To get such a reference, multiple implementation alternatives are possible: using a bit of the pointer as a mark, double CAS, double-width CAS, and Transactional-Memory.\\
-For our concurrent priority queue, we implemented an \textit{AtomicMarkableReference} type, by using the least significant bit as a mark. Thereby we are able to use the C++11 {\em compare\_and\_exchange} operation and are not relying on double CAS or Transactional-Memory which are less common hardware features. In general using the least significant bit as a mark does not lead to any issues since most 64\,bit processors only allow read or write from addresses which are a multiple of 8\,bytes. This means the leas significant bit is zero and unused.\\
-In addition to the common skip list methods (e.g. empty, size, find, remove, insert), we added a \textit{pop} method, which is required for a priority queue~\cite{Herlihy:2008:AMP:1734069}, and also batch processing methods for pushing or poping \textit{k} elements.
+A high-level description of a skip list has already been introduced in the previous section. The implemented skip list is similar to the ones proposed by \cite{Herlihy:2008:AMP:1734069, Sundell:2005:FLC:1073765.1073770}. While \cite{Herlihy:2008:AMP:1734069} uses Java and its \textit{AtomicMarkableReference}, we used C++11 and its atomic operations. Since C++11 does not provide an atomic markable reference, we implemented our own, such that we can check a change of the reference or the mark in a single Compare-and-Swap (CAS) operation. To get such a reference, multiple implementation alternatives are possible: using a bit of the pointer as a mark, double CAS, double-width CAS, and Transactional-Memory.
+
+For our concurrent priority queue, we implemented an \textit{AtomicMarkableReference} type, by using the least significant bit as a mark. Thereby we are able to use the C++11 {\em compare\_and\_exchange} operation and are not relying on double CAS or Transactional-Memory which are less common hardware features.
+In general, using the least significant bit as a mark does not lead to any issues since most 64\,bit processors only allow read or write from addresses which are a multiple of 8\,bytes.
+Consequently, the less significant bit is zero and unused.
+
+In addition to the common skip list methods (e.g. empty, size, find, remove, and insert), we added a \textit{pop} method, which is required for a priority queue~\cite{Herlihy:2008:AMP:1734069}, and also batch processing methods for pushing or poping \textit{k} elements.
 %The interface of our implementation is shown in Listing \ref{lst:ppq-interface}.
 
 %\begin{lstlisting}[language=C++,basicstyle=\tt\footnotesize,captionpos=b,caption=PPQ interface,morekeywords={*, size_t},label=lst:ppq-interface]
@@ -25,19 +29,19 @@ In addition to the common skip list methods (e.g. empty, size, find, remove, ins
 Two different applications were used for verifying the correctness of our concurrent priority queue.
 A lossless data compression algorithm and a shortest path algorithm. 
 %\mypar{Huffman coding algorithm}
-First, the Huffman encoding algorithm was used to test the correctness for a single-threaded execution. The algorithm was implemented in a way that can use either an existing min-heap implementation or our own priority queue implementation.
+First, the Huffman encoding algorithm was used to test the correctness for a single-threading execution. The algorithm was implemented in a way that can use either an existing min-heap implementation or our own priority queue implementation.
 To verify correctness, the outputs of the two variations were compared, for a variety of inputs.
 %We implemented the Huffman coding algorithm as an initial correcteness test for our data structure implementation. This algorithm consists in two main steps. The first step is to initialize a data structure which keeps all the items sorted by their frequency. Then in a second step, it iterates until the data structure has a single element. Every iteration consists of picking the two nodes with the lowest frequency/probability, creating a parent node out of them with the sum of the children's frequencies/probabilities, inserting this new node into the data structure and assigning code zero, or one to the children, and delete them from the data structure. We compared the output of a Huffman coding algorithm using a min-heap with an implementation using our priority queue. We only compared correctness between this two implementations as this loseless compression algorithm is based on iterating linearly through the elements of the underlying data structure and no concurrent access is done.
 %\mypar{Shortest path algorithm}
 
 A second correctness test was based on a concurrent shortest path algorithm which is provided as an example application with the Intel TBB source code.
-It originally utilizes the TBB \textit{concurrent\_priority\_queue}, but we adapted the algorithm to also use our own lock-free implementation.
+It originally utilizes the TBB concurrent priority queue, but we adapted the algorithm to also use our own lock-free implementation.
 In comparison to the previous test, this application accesses the priority queue concurrently.
-Again the outputs of the two versions were compared to verify correctness using different input graphs.
+Again the outputs of the two versions were compared to verify correctness, using different input graphs.
 
 Performance benchmarks for these algorithms were not conducted, since it might have implied tuning the algorithms themselves.
 These optimizations are not in the scope of this project.
-In section~\ref{sec:exp}, performance evaluation against TBB \textit{concurrent\_priority\_queue} is presented for specific workloads.
+In section~\ref{sec:exp}, performance evaluation against TBB concurrent priority queue, is presented for specific workloads.
 
 \subsection{Memory allocation micro-benchmark}
 \begin{figure}[t]
@@ -47,13 +51,16 @@ In section~\ref{sec:exp}, performance evaluation against TBB \textit{concurrent\
 	\label{fig:mem_alloc}
 \end{figure}
 
-Early measurements indicated that memory allocation on the Xeon Phi might represent a significant part of the runtime.
-Therefore, we performed a memory allocation benchmark on the Xeon Phi.
+Early measurements indicated that memory allocation on a Xeon Phi might represent a significant part of the runtime.
+Therefore, we performed a memory allocation benchmark on Xeon Phi.
 Three different allocators were considered: the default C++ allocator, the default TBB allocator and the TBB scalable allocator. 
 
-TBB's scalable allocator is worth describing as many external applications can benefit from it. This allocator uses a global memory heap and provides each thread its own memory heap in order to reduce the amount of code for synchronization and for avoiding false sharing problems. Then each thread accesses its own memory heap through thread-specific data using system APIs. The allocator gets 1\,MB chunks from the operating system and divides them into 16\,KB aligned blocks. Then, it initially places these blocks in a global heap of free blocks. Memory request from the application get served from this heap, if the thread private heap does not hold any more free blocks. In addition to that, the global heap re-uses memory blocks by adding freed ones from the application instead of returning them directly to the operating system.
+TBB's scalable allocator is worth describing as many external applications can benefit from it.
+This allocator uses a global memory heap, and provides each thread its own memory heap in order to reduce the amount of code for synchronization, and for avoiding false sharing problems. Then each thread accesses its own memory heap through thread-specific data, using system APIs. The allocator gets 1\,MB chunks from the operating system and divides them into 16\,KB aligned blocks. Then, it initially places these blocks in a global heap of free blocks. Memory request from the application get served from this heap, if the thread private heap does not hold any more free blocks.
+In addition to that, the global heap re-uses memory blocks, by adding freed ones from the application instead of returning them directly to the operating system.
 In case a thread does not find free objects within its own heap and there are no available blocks in the global heap, additional blocks are requested to the OS~\cite{_thefoundations,Hudson:2006:MST:1133956.1133967}. 
 
-Our micro-benchmark consists of allocating ten million skip list nodes with 240 threads and measuring the time it takes to accomplish such task on the Xeon Phi.
-As expected, the C++ default allocator has a much higher runtime than the two TBB allocators. These two allocators obtained a 24 and 38 times improvement respectively over the C++ default allocator. The results are displayed in figure~\ref{fig:mem_alloc}.\\
-While running these micro-benchmark we observed that the Core hosting the operating system had a hight utilization which means that if many cores want to allocate memory they are actually bound by the single core hosting the operating system.
+Our micro-benchmark consists of allocating ten million skip list nodes with 240 threads and measuring the time it takes to accomplish such task on Xeon Phi.
+As expected, the C++ default allocator has a much higher runtime than the two TBB allocators. These two allocators obtained a 24x and 38x improvement, respectively, over the C++ default allocator. The results are displayed in Fig.~\ref{fig:mem_alloc}.
+
+While running these micro-benchmark, we observed that the core hosting the operating system had a hight utilization which means that if many cores want to allocate memory they are actually bound by the single core hosting the operating system.

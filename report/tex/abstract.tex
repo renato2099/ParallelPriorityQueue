@@ -1,15 +1,15 @@
 \begin{abstract}
 
-A priority queue appears in various multithreading applications.
+A priority queue appears in various multi-threading applications.
 %TODO . Being a challenge in practice has nothing to with mutual exclusion strategies
 However, an efficient implementation for a concurrent priority queue is challenging in practice, since already proposed mutual exclusion strategies cause blocking and have bad scalability.
 
 % TODO I think lookups in O(logn) not Theta(logn) because it could be less than logn.
 We present a lock-free implementation of a concurrent priority queue which only makes use of atomic operations which are present in most modern x86 CPUs.
-The underlying data structure is a skip list, enabling lookups in $\mathcal{O}(\log(n))$ and \textit{pop} operations in $\Theta(1)$ time complexity.
+The underlying data structure is a skip list, enabling lookups in $\mathcal{O}(\log{}n)$ and \textit{pop} operations in $\Theta(1)$ time complexity.
 
 The experiments were conducted on a Xeon CPU and a Xeon Phi.
-We evaluated the difference between those platforms, and we also compared the lock-free implementation with different baseline implementations, e.g. Intel TBB priority queue.
+We evaluated the difference between those platforms, and we also compared the lock-free implementation with different baseline implementations, e.g. Intel TBB concurrent priority queue.
 The experimental results show that our lock-free implementation is competitive against the others, and it outperforms the baseline implementations in certain operations.
 
 \end{abstract}

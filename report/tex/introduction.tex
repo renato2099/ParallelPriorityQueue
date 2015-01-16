@@ -5,12 +5,12 @@ Therefore, there is an order between all elements which is determined by this ke
 Priority queues have two main operations: \textit{push} to insert elements and \textit{pop} to dequeue the element with the highest priority.
 The priority queue guarantees that the element dequeued by a \textit{pop} operation has the highest priority.
 Elements of equal priority are usually allowed and do not pose a problem.
-A number of well known applications (e.g. job scheduling, constraint systems, Dijkstra's algorithm, encoding algorithms) use a priority queue.
-Hence, many different single-threaded implementations have been proposed.
+A number of well known applications (e.g. job scheduling, constraint systems, Dijkstra's algorithm, and encoding algorithms) use a priority queue.
+Hence, many different single-threading implementations have been proposed.
 
 In recent years, CPU architecture have moved from single core to multi core systems.
-Therefore, the research community has focused on parallelization of single-threaded applications and the implementation of efficient concurrent data structures.
-In a multithreaded application, multiple threads might access a priority queue simultaneously.
+Therefore, the research community has focused on parallelization of single-threading applications and the implementation of efficient concurrent data structures.
+In a multi-threading application, multiple threads might access a priority queue simultaneously.
 To guarantee consistency, the data structure has to be thread-safe.
 One way to achieve thread-safety is mutual exclusion through structures e.g. locks, semaphores and other primitives.
 All these methods cause blocking and only a single thread, the one in the critical region, might make progress.
