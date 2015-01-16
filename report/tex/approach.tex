@@ -8,8 +8,7 @@ As consequence the less significant bit is zero and unused.
 In addition to the common skip list methods (e.g. empty, size, find, remove, and insert), we added a \textit{pop} method, which is required for a priority queue~\cite{Herlihy:2008:AMP:1734069}, and also batch processing methods for pushing or popping \textit{k} elements.
 
 The implementation for \textit{pop} is straightforward in our concurrent priority queue, since the element with the highest priority is always located in the beginning of the skip list.
-Therefore a batch \textit{pop} operation would not lead to any performance benefit.
- On the other hand, an efficient batch push operation is achieved (when the elements are already sorted), by inserting them in subgroups.
+Therefore a batch \textit{pop} operation has a complexity of $\Theta(k)$. This means no significant performance improvement can be achieved over the regular \textit{pop} operation. On the other hand a batch push operation can be implemented which has some benefits over the single element operation. Since the batch push operation assumes that the input is already sorted, it is able to insert ranges of the input array instead of single elements. Thereby the number of atomic operations is reduced. In the worst case, when each range holds only one element, the batching operation behaves similar to the regular push operation.
 
 %The interface of our implementation is shown in Listing \ref{lst:ppq-interface}.
 
