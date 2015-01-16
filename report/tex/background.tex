@@ -12,15 +12,12 @@ For the experimental evaluation presented in section \ref{sec:exp}, the STD impl
 Our lock-free implementation is based on a skip list \cite{Pugh:1990:SLP:78973.78977}.
 A skip list is a multi-level list where the list on the bottom level is equal to a single-linked list.
 The upper level lists have fewer nodes, in the sense that some nodes are skipped, thereby reducing the time to traverse them.
-% TODO Over how many levels a certain element spawns is determined upon insertion.
-Every node is pushed into the bottom level and reaches the next level with a probability of 0.5.
-A node occurs in level 2 with probability 0.5, in level 3 with probability 0.25, and so on.
-This leads to an index which is asymptotically equal to a binary tree.
+Every node is inserted into the bottom level and also linked the next level with a probability of 0.5.
+A node is reachable in level 2 with probability 0.5, in level 3 with probability 0.25, and so on. By traversing from the top level list to the bottom one, this structure serves as an index which is asymptotically equal to a binary tree.
 Therefore, every node on the bottom level can be accessed in $\mathcal{O}(\log{}n)$.
 Since the nodes are sorted, the \textit{pop} operation which removes the node with the highest priority, takes only $\Theta(1)$.
 
-On average, every node has two pointers to other nodes, and the same size as a node in a binary tree or heap.
+On average, every node has two pointers to other nodes. This is the same size as a node in a binary tree or heap.
 Consequently, the memory consumption of a skip list is similar.
 
-A lock-free skip list is a good choice for a concurrent priority queue, since the atomic operations are very local to two-three nodes, and the probabilty of conflicts between threads is minimized.
-That helps porting onto Xeon Phi which has 60 cores, and is suitable for running tens of threads.
+A lock-free skip list is a good choice for a concurrent priority queue, since the atomic operations are only involving a few nodes, and the probability of conflicts between threads is minimized.
