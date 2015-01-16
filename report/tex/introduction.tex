@@ -29,7 +29,7 @@ It provides probabilistic balancing using multiple levels, maintaining an ordere
 A heap-based concurrent priority queue which is designed for CUDA data parallel SIMT architecture is presented in \cite{DBLP:conf/hipc/HeAP12}.
 The authors use wide heap nodes in order to support thousands of push and pop operations at the same time.
 Sundell et al.~\cite{Sundell:2005:FLC:1073765.1073770} present a lock-free concurrent priority queue which uses a skip list, as the underlying data structure.
-Our lock-free implementation also uses a skip list, but different algorithms are used. Furthermore, our comparison is not limited to a lock-based implementations, but to other available ones.
+Our lock-free implementation also uses a skip list, but different algorithms are used for performing operations on it. Furthermore, our comparison is not limited to a lock-based implementations, but to other available ones.
 
 %\mypar{Structure}
 This paper is structured as follows.
