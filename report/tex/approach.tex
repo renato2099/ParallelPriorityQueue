@@ -9,7 +9,7 @@ In addition to the common skip list methods (e.g. empty, size, find, remove, and
 
 The implementation for \textit{pop} is straightforward in our concurrent priority queue, since the element with the highest priority is always located in the beginning of the skip list.
 Therefore a batch \textit{pop} operation would not lead to any performance benefit.
-On the other hand, an efficient batch \textit{push} operation is achieved, by presorting the elements and inserting them in subgroups. Thereby reducing the number of atomic operations. In the worst case, when each subgroups holds only one element, the batching operation is equal to the regular push operation.
+ On the other hand, an efficient batch push operation is achieved (when the elements are already sorted), by inserting them in subgroups.
 
 %The interface of our implementation is shown in Listing \ref{lst:ppq-interface}.
 
